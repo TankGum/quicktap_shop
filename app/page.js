@@ -4,13 +4,14 @@ import FaqAccordion from '@/components/FaqAccordion';
 import JsonLd from '@/components/JsonLd';
 import ProgressiveImg from '@/components/ProgressiveImg';
 import HeroVideo from '@/components/HeroVideo';
-import { NfcPlateArt, StandeeArt } from '@/components/illustrations';
+import CustomDesignsGallery from '@/components/CustomDesignsGallery';
+import HowtoToggle from '@/components/HowtoToggle';
+import { HeroArt, NfcPlateArt, StandeeArt } from '@/components/illustrations';
 import { siteConfig } from '@/lib/siteConfig';
 import { products } from '@/data/products';
-import { customDesigns } from '@/data/customDesigns';
 import { platforms } from '@/data/platforms';
 import { industries as industryData } from '@/data/industries';
-import { getVariantsByProduct } from '@/lib/airtable';
+import { getVariantsByProduct, getCustomDesigns, getSiteMedia } from '@/lib/airtable';
 import {
   PhoneIcon, ArrowRightIcon,
   BarsIcon, PinIcon, BoltIcon, PhoneOutlineIcon, LayersIcon, RefreshIcon,
@@ -72,6 +73,12 @@ export default async function HomePage() {
     Art: ART_BY_ID[p.id],
   }));
 
+  // Ảnh mẫu "Thiết kế riêng" — bảng Airtable riêng, xem lib/airtable.js.
+  const customDesigns = await getCustomDesigns();
+
+  // Video/ảnh hero + video demo — cũng từ bảng Airtable riêng. Ô nào trống thì null.
+  const media = await getSiteMedia();
+
   return (
     <>
       {/* ============ HERO ============ */}
@@ -81,7 +88,10 @@ export default async function HomePage() {
           <div className="hero-copy">
             <Reveal as="p" className="eyebrow">
               <span className="dot" aria-hidden="true" />
-              Bảng NFC &amp; standee QR cho quán
+              {/* Rút gọn theo tên sản phẩm mới ở data/products.js — giữ đúng 1 dòng, không
+                  dán nguyên 2 tên đầy đủ ("Bảng 10x10 dán tường & quầy" / "Standee để bàn
+                  A6") vào vì sẽ quá dài cho 1 dòng eyebrow. */}
+              Bảng dán tường &amp; standee để bàn cho quán
             </Reveal>
             <Reveal as="h1">Tăng đánh giá 5 sao<br /><em>chỉ với 1 chạm</em></Reveal>
             <Reveal as="p" className="lede">
@@ -89,10 +99,10 @@ export default async function HomePage() {
             </Reveal>
 
             <Reveal as="div" className="hero-actions">
-              <a className="btn btn-primary btn-lg" href={siteConfig.phoneHref}>
+              <Link className="btn btn-primary btn-lg" href="/lien-he">
                 <PhoneIcon className="i" />
-                Gọi đặt hàng ngay
-              </a>
+                Liên hệ đặt hàng
+              </Link>
               <Link className="btn btn-ghost btn-lg" href="#san-pham">
                 Xem sản phẩm
                 <ArrowRightIcon className="i" />
@@ -107,7 +117,9 @@ export default async function HomePage() {
             </Reveal>
           </div>
 
-          {/* Video/ảnh hero: thay URL trong lib/siteConfig.js (heroVideo / heroImage). */}
+          {/* Video/ảnh hero: upload vào bảng "media trang chủ" trên Airtable, dòng có
+              Key = heroVideo / heroImage. Ưu tiên video, rồi tới ảnh, cuối cùng là hình
+              minh hoạ SVG — nhờ vậy bảng Airtable trống thì hero vẫn có nội dung. */}
           <Reveal as="div" className="hero-art">
             {/* Sóng lan toả kiểu tín hiệu không dây/NFC — thuần trang trí, nằm sau video. */}
             <div className="hero-waves" aria-hidden="true">
@@ -115,18 +127,20 @@ export default async function HomePage() {
               <span className="hero-wave" />
               <span className="hero-wave" />
             </div>
-            {siteConfig.heroVideo ? (
+            {media.heroVideo ? (
               <HeroVideo
-                src={siteConfig.heroVideo}
-                poster={siteConfig.heroImage}
-                alt={siteConfig.heroImageAlt}
+                src={media.heroVideo.url}
+                poster={media.heroImage?.url}
+                alt={media.heroVideo.alt || siteConfig.heroImageAlt}
               />
-            ) : (
+            ) : media.heroImage ? (
               <ProgressiveImg
-                src={siteConfig.heroImage}
-                alt={siteConfig.heroImageAlt}
+                src={media.heroImage.url}
+                alt={media.heroImage.alt || siteConfig.heroImageAlt}
                 loading="eager"
               />
+            ) : (
+              <HeroArt aria-label={siteConfig.heroImageAlt} />
             )}
           </Reveal>
         </div>
@@ -156,27 +170,29 @@ export default async function HomePage() {
           </Reveal>
 
           <div className="howto" id="giai-phap">
-            <Reveal as="div" className="howto-video">
-              <HeroVideo src={siteConfig.demoVideo} alt={siteConfig.demoVideoAlt} />
-            </Reveal>
+            {/* Chưa có dòng demoVideo trong Airtable thì bỏ hẳn khung video, để bảng
+                so sánh Trước/Sau chiếm trọn chỗ — không chừa ô đen trống. */}
+            {media.demoVideo && (
+              <Reveal as="div" className="howto-video">
+                <HeroVideo
+                  src={media.demoVideo.url}
+                  alt={media.demoVideo.alt || siteConfig.demoVideoAlt}
+                />
+              </Reveal>
+            )}
 
             <Reveal as="div" className="howto-compare" delay={80}>
-              <div className="compare-row compare-before">
-                <span className="compare-tag">Trước</span>
-                <div className="steps-flow">
-                  <span>Mở app</span>
-                  <span>Tìm tên quán</span>
-                  <span>Chọn chi nhánh</span>
-                  <span>Cuộn tìm nút</span>
-                  <span>Viết</span>
-                </div>
+              {/* Câu dẫn mở đầu — nói bằng lời trước khi vào phần số liệu bên dưới. */}
+              <div className="howto-row">
+                <p className="howto-lede">
+                  Không cần mở app, không cần dò tìm tên quán trên bản đồ — khách chạm điện
+                  thoại vào bảng NFC hoặc quét mã QR là trang đánh giá mở ra ngay.
+                </p>
               </div>
-              <div className="compare-row compare-after">
-                <span className="compare-tag">Sau</span>
-                <div className="steps-flow">
-                  <span>Chạm</span>
-                  <span>Viết</span>
-                </div>
+
+              {/* Nút gạt Trước/Sau — bấm để đổi nội dung tại chỗ, xem components/HowtoToggle.jsx. */}
+              <div className="howto-row">
+                <HowtoToggle />
               </div>
             </Reveal>
           </div>
@@ -228,17 +244,13 @@ export default async function HomePage() {
             </p>
           </Reveal>
 
-          <ul className="custom-grid">
-            {customDesigns.map((d, i) => (
-              <Reveal as="li" className="custom-item" key={d.id} delay={(i % 3) * 60}>
-                <ProgressiveImg src={d.image} alt={d.alt} />
-              </Reveal>
-            ))}
-          </ul>
+          {/* Bảng Airtable chưa có mẫu nào thì CustomDesignsGallery tự ẩn lưới, phần chữ +
+              CTA bên dưới vẫn giữ. Bấm vào 1 ảnh sẽ mở popup xem chi tiết, có next/prev. */}
+          <CustomDesignsGallery designs={customDesigns} />
 
           <Reveal as="p" className="products-note">
             Có mẫu riêng trong đầu rồi?{' '}
-            <a href={siteConfig.phoneHref}>Gọi để trao đổi thiết kế</a>.
+            <Link href="/lien-he">Liên hệ để trao đổi thiết kế</Link>.
           </Reveal>
         </div>
       </section>
@@ -251,15 +263,20 @@ export default async function HomePage() {
             <h2>Vì sao nên đặt một chiếc ngay tại quầy</h2>
           </Reveal>
 
-          <div className="grid grid-3 benefits">
+          {/* Danh sách hàng ngang, không khung thẻ — icon trái, tiêu đề + mô tả phải, ngăn
+              cách bằng đường kẻ mảnh. Đổi từ kiểu 6 thẻ vuông đều nhau (nhìn đơn điệu) sang
+              phong cách này theo yêu cầu, xem app/globals.css để biết cách chia cột/đường kẻ. */}
+          <ul className="benefits-list">
             {benefits.map(({ Icon, title, body }, i) => (
-              <Reveal as="article" className="benefit" key={title} delay={(i % 3) * 60}>
+              <Reveal as="li" className="benefit-row" key={title} delay={(i % 2) * 60}>
                 <span className="benefit-icon" aria-hidden="true"><Icon /></span>
-                <h3>{title}</h3>
-                <p>{body}</p>
+                <div>
+                  <h3>{title}</h3>
+                  <p>{body}</p>
+                </div>
               </Reveal>
             ))}
-          </div>
+          </ul>
         </div>
       </section>
 
@@ -309,7 +326,6 @@ export default async function HomePage() {
             </p>
             <div className="cta-band-actions">
               <Link className="btn btn-primary btn-lg" href="/lien-he">Liên hệ đặt hàng</Link>
-              <a className="btn btn-outline btn-lg" href={siteConfig.phoneHref}>Gọi ngay</a>
             </div>
           </Reveal>
         </div>

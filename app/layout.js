@@ -42,7 +42,12 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="vi">
+    // suppressHydrationWarning: thẻ script ngay dưới đây gắn class "js" vào <html> TRƯỚC khi
+    // React hydrate, nên HTML từ server (chưa có class) và DOM lúc hydrate (đã có) lệch nhau
+    // — cố ý, không phải lỗi. Không thể render sẵn class này từ server: `.js .reveal` ẩn nội
+    // dung đi chờ hiệu ứng cuộn, ai tắt JS sẽ nhìn thấy trang trắng vĩnh viễn.
+    // Thuộc tính này chỉ bỏ qua cảnh báo cho đúng thẻ <html>, con bên trong vẫn được kiểm tra.
+    <html lang="vi" suppressHydrationWarning>
       <head>
         {/* Đánh dấu JS đã chạy trước khi trang vẽ khung hình đầu, để hiệu ứng
             "hiện dần khi cuộn" (.reveal) chỉ áp dụng khi JS thực sự hoạt động —

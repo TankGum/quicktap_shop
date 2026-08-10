@@ -4,13 +4,16 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { siteConfig } from '@/lib/siteConfig';
+import { products } from '@/data/products';
 import { PhoneIcon, NfcWaveIcon, MenuIcon, CloseIcon } from './icons';
 
-const NAV_LINKS = [
-  { href: '/san-pham/bang-nfc', label: 'Bảng NFC' },
-  { href: '/san-pham/standee', label: 'Standee' },
-  { href: '/lien-he', label: 'Liên hệ' },
-];
+// Lấy tên trực tiếp từ data/products.js (nguồn duy nhất của tên sản phẩm) thay vì hardcode
+// lại ở đây — trước đây header tự chép tay 'Bảng NFC'/'Standee', sửa tên sản phẩm ở
+// data/products.js không tự cập nhật vào đây, phải sửa 2 chỗ.
+//
+// Không có mục "Liên hệ" riêng trong nav — nút CTA bên cạnh (btn-primary, nổi bật hơn hẳn
+// 1 link chữ thường) đã trỏ /lien-he rồi, thêm 1 link "Liên hệ" nữa trong nav sẽ trùng lặp.
+const NAV_LINKS = products.map((p) => ({ href: p.href, label: p.title }));
 
 // Sidebar mobile có thêm mục Trang chủ ở đầu — logo trong header cũng dẫn về "/",
 // nhưng khi sidebar mở thì nó phủ lên cả header (z-index cao hơn) nên logo bị che,
@@ -87,10 +90,10 @@ export default function Header() {
           ))}
         </nav>
 
-        <a className="btn btn-primary btn-sm header-cta" href={siteConfig.phoneHref}>
+        <Link className="btn btn-primary btn-sm header-cta" href="/lien-he">
           <PhoneIcon className="i" />
-          Đặt hàng
-        </a>
+          Liên hệ
+        </Link>
 
         <button
           type="button"
@@ -147,10 +150,10 @@ export default function Header() {
           ))}
         </ul>
 
-        <a className="btn btn-primary btn-lg mobile-nav-cta" href={siteConfig.phoneHref}>
+        <Link className="btn btn-primary btn-lg mobile-nav-cta" href="/lien-he">
           <PhoneIcon className="i" />
-          Gọi {siteConfig.phoneDisplay}
-        </a>
+          Liên hệ ngay
+        </Link>
         <p className="mobile-nav-note">Trả lời trong vòng 2 phút · Đặt 1 cái cũng nhận</p>
       </nav>
     </>

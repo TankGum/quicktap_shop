@@ -9,7 +9,7 @@ export const products = [
     id: 'bang-nfc',
     href: '/san-pham/bang-nfc',
     kicker: 'Dạng 1',
-    title: 'Bảng NFC 10x10cm',
+    title: 'Bảng 10x10 dán tường & quầy',
     artLabel: 'Minh hoạ bảng NFC',
     // Câu ngắn dùng cho thẻ sản phẩm ngoài trang chủ (bản đầy đủ là `body` bên dưới).
     tagline: 'Bảng vuông 10x10 cm, dán lên tường, quầy hay mặt bàn.',
@@ -28,7 +28,7 @@ export const products = [
     id: 'standee',
     href: '/san-pham/standee',
     kicker: 'Dạng 2',
-    title: 'Standee để bàn (QR + NFC)',
+    title: 'Standee để bàn A6',
     artLabel: 'Minh hoạ standee để bàn',
     tagline: 'Đặt trên quầy thu ngân hay từng bàn, khách thấy ngay khi ngồi xuống.',
     body: 'Đứng vững trên quầy thu ngân hoặc từng bàn, khách nhìn thấy ngay khi ngồi xuống. Có cả mã QR để quét lẫn vùng NFC để chạm.',

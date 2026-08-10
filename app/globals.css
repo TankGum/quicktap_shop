@@ -589,11 +589,6 @@ p { text-wrap: pretty; }
   margin-inline: auto;
 }
 
-.grid { display: grid; gap: 20px; }
-@media (min-width: 700px)  { .grid-2 { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 700px)  { .grid-3 { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 1000px) { .grid-3 { grid-template-columns: repeat(3, 1fr); } }
-
 /* ---------- Cards ---------- */
 /* Thẻ phẳng, nền xám nhạt, không viền — sạch hơn kiểu thẻ nổi có bóng đổ. */
 .card {
@@ -645,7 +640,7 @@ p { text-wrap: pretty; }
   font-weight: 500;
 }
 
-/* ---------- Cách hoạt động: video demo + trước/sau ---------- */
+/* ---------- Cách hoạt động: video demo + tương phản "5 bước" / "1 chạm" ---------- */
 .howto { display: grid; gap: clamp(24px, 4vw, 44px); align-items: center; }
 @media (min-width: 880px) { .howto { grid-template-columns: 1.1fr .9fr; } }
 
@@ -664,56 +659,60 @@ p { text-wrap: pretty; }
   overflow: hidden;
   background: var(--surface);
 }
-.howto-compare .steps-flow span { background: var(--bg-alt); }
-.howto-compare .compare-after .steps-flow span { background: var(--accent); color: #fff; }
 
-/* Một khối liền (không phải 2 hộp rời) — "Trước" và "Sau" chỉ cách nhau bằng 1 đường
-   kẻ mảnh, đọc liền mạch như trước/sau của cùng một quy trình thay vì 2 mục tách biệt. */
-.solution-compare {
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: var(--surface);
-}
-.section-alt .solution-compare { background: var(--bg-alt); }
-.compare-row { padding: 20px 22px; }
-.compare-row + .compare-row { border-top: 1px solid var(--line-2); }
-.compare-tag {
-  display: block;
-  font-size: .82rem;
-  font-weight: 500;
-  color: var(--ink-3);
-  margin-bottom: 12px;
-}
-.compare-after .compare-tag { color: var(--accent); }
+/* Hàng đệm dùng chung: câu dẫn ở trên, khối tương phản số ở dưới — cách nhau bằng 1 đường
+   kẻ mảnh (không phải 2 khối rời) để đọc liền mạch như 1 câu chuyện, không phải 2 mục tách biệt. */
+.howto-row { padding: 22px 24px; }
+.howto-row + .howto-row { border-top: 1px solid var(--line-2); }
 
-/* Chuỗi bước nối bằng mũi tên "→" ở khoảng cách giữa 2 thẻ (vẽ bằng ::after đặt tuyệt
-   đối ra ngoài phần đệm của thẻ) — đọc như một luồng thao tác, không phải các thẻ rời
-   xếp cạnh nhau. */
-.steps-flow { display: flex; flex-wrap: wrap; row-gap: 14px; column-gap: 28px; }
-.steps-flow span {
-  position: relative;
-  font-size: .86rem;
-  font-weight: 500;
-  padding: .3em .75em;
-  border-radius: 980px;
-  background: var(--bg-alt);
+.howto-lede {
+  font-size: 1.02rem;
+  line-height: 1.55;
   color: var(--ink-2);
 }
-.section-alt .steps-flow span { background: var(--surface); }
-.compare-before .steps-flow span { text-decoration: line-through; opacity: .55; }
-.compare-after .steps-flow span {
-  background: var(--accent);
-  color: #fff;
+
+/* Nút gạt Trước/Sau — xem components/HowtoToggle.jsx. Segmented control kiểu iOS: 2 nút
+   trong 1 khung nền xám bo tròn, nút đang chọn nổi lên bằng nền trắng + đổ bóng nhẹ. Bấm để
+   đổi nội dung TẠI CHỖ (dùng `hidden`, không dựng/gỡ lại DOM) — khác hẳn kiểu so sánh 2 cột
+   song song trước đây. */
+.howto-toggle-switch {
+  display: inline-flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 980px;
+  background: var(--bg-alt);
 }
-.steps-flow span:not(:last-child)::after {
-  content: "→";
-  position: absolute;
-  top: 50%; right: -20px;
-  transform: translateY(-50%);
-  font-size: .78rem;
+.howto-toggle-btn {
+  padding: .5em 1.3em;
+  border: 0;
+  border-radius: 980px;
+  background: none;
+  font-size: .92rem;
+  font-weight: 500;
   color: var(--ink-3);
+  cursor: pointer;
+  transition: background .2s var(--ease), color .2s var(--ease), box-shadow .2s var(--ease);
 }
-.compare-after .steps-flow span:not(:last-child)::after { color: var(--accent); }
+.howto-toggle-btn.is-active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Chuỗi bước nối bằng mũi tên — 1 dòng chảy liền mạch. "Trước" 5 bước sẽ tự dài hơn hẳn
+   "Sau" (2 bước), độ dài dòng chữ tự nó cho thấy sự khác biệt, không cần gạch ngang hay
+   số liệu minh hoạ thêm. */
+.howto-toggle-flow {
+  margin-top: 24px;
+  font-size: clamp(1.1rem, 2.4vw, 1.35rem);
+  font-weight: 600;
+  letter-spacing: -.01em;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.howto-toggle-flow span { margin: 0 .25em; font-weight: 400; color: var(--ink-3); }
+.howto-toggle-flow-accent { color: var(--accent-ink); }
+.howto-toggle-flow-accent span { color: var(--accent); }
 
 @media (min-width: 880px) {
   .solution { grid-template-columns: 1.1fr .9fr; }
@@ -754,6 +753,10 @@ p { text-wrap: pretty; }
 .product-cta { margin-top: 1.7rem; width: 100%; }
 .product-ctas { margin-top: 1.8rem; display: flex; flex-wrap: wrap; gap: .6rem; }
 .product-ctas .btn { flex: 1 1 auto; white-space: nowrap; }
+/* Trang danh sách sản phẩm (bang-nfc/standee) giờ chỉ còn 1 nút ở đây (đã bỏ "Xem sản phẩm
+   khác") — flex:1 1 auto phía trên vẫn cần cho VariantDetail.jsx (còn 2 nút, chia đều chỗ),
+   nhưng 1 nút đứng một mình thì không nên kéo giãn hết chiều ngang. */
+.product-ctas .btn:only-child { flex: none; }
 
 /* Thẻ sản phẩm đứng một mình (trang chi tiết dòng sản phẩm) chiếm trọn chiều rộng —
    để nguyên tỉ lệ 4:3 thì ảnh cao gần 1000px. Tách thành 2 cột: ảnh trái, nội dung phải.
@@ -797,14 +800,21 @@ p { text-wrap: pretty; }
 @media (min-width: 760px) { .showcase-grid { grid-template-columns: repeat(2, 1fr); } }
 
 .showcase-card { display: block; text-decoration: none; color: inherit; }
+/* Không ép aspect-ratio cố định — ảnh thật của 2 dòng sản phẩm không cùng tỉ lệ (Bảng NFC
+   vuông ~1:1, Standee ~3:2). Ép chung 1 khung sẽ luôn phải cắt (cover) hoặc chừa viền xám
+   (contain); để khung tự co theo đúng kích thước ảnh thì không mất phần ảnh nào và cũng
+   không có viền thừa — đổi lại 2 thẻ có thể cao thấp khác nhau, chấp nhận được vì chỉ có 2 cột. */
 .showcase-media {
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--art-halo);
-  aspect-ratio: 4 / 3;
 }
-.showcase-media img { width: 100%; height: 100%; object-fit: cover; }
-.showcase-media svg { width: 100%; height: 100%; }
+.showcase-media img,
+.showcase-media svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
 /* Chỉ phóng ảnh bên trong khung, không phóng cả thẻ — chữ giữ nguyên độ nét. */
 .showcase-media img,
 .showcase-media svg { transition: transform .5s var(--ease); }
@@ -826,7 +836,7 @@ p { text-wrap: pretty; }
 .showcase-card:hover .showcase-link { text-decoration: underline; text-underline-offset: 3px; }
 .showcase-card:hover .showcase-link .i { transform: translateX(3px); }
 
-/* ---------- Thiết kế riêng (lưới ảnh mẫu — xem data/customDesigns.js) ---------- */
+/* ---------- Thiết kế riêng (lưới ảnh mẫu — xem getCustomDesigns trong lib/airtable.js) ---------- */
 .custom-grid {
   display: grid;
   gap: 18px;
@@ -846,6 +856,108 @@ p { text-wrap: pretty; }
   transition: transform .5s var(--ease);
 }
 .custom-item:hover img { transform: scale(1.04); }
+
+.custom-item-btn {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: zoom-in;
+  -webkit-tap-highlight-color: transparent;
+}
+.custom-item-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--radius);
+}
+
+/* ---------- Popup xem chi tiết "Thiết kế riêng" (xem components/CustomDesignsGallery.jsx) ---------- */
+.lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(16px, 4vw, 48px);
+  background: rgba(0, 0, 0, .85);
+  animation: lightbox-fade .25s var(--ease);
+}
+.lightbox {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: min(920px, 100%);
+  max-height: 100%;
+  outline: none;
+  animation: lightbox-scale-in .25s var(--ease);
+}
+.lightbox-figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-height: 100%;
+}
+.lightbox-img {
+  max-width: 100%;
+  max-height: 78vh;
+  width: auto;
+  height: auto;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  object-fit: contain;
+}
+.lightbox-caption {
+  color: #fff;
+  font-size: .95rem;
+  text-align: center;
+  opacity: .85;
+}
+.lightbox-counter {
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, .6);
+  font-size: .85rem;
+}
+.lightbox-close,
+.lightbox-nav {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .12);
+  color: #fff;
+  cursor: pointer;
+  transition: background .2s var(--ease);
+}
+.lightbox-close:hover, .lightbox-nav:hover { background: rgba(255, 255, 255, .24); }
+.lightbox-close:focus-visible,
+.lightbox-nav:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.lightbox-close svg, .lightbox-nav svg { width: 20px; height: 20px; }
+.lightbox-close { top: clamp(12px, 3vw, 28px); right: clamp(12px, 3vw, 28px); }
+.lightbox-prev { left: clamp(8px, 3vw, 28px); top: 50%; transform: translateY(-50%); }
+.lightbox-next { right: clamp(8px, 3vw, 28px); top: 50%; transform: translateY(-50%); }
+/* Dùng lại ArrowRightIcon, chỉ xoay ngược cho nút "trước" thay vì thêm icon mới. */
+.lightbox-prev svg { transform: rotate(180deg); }
+
+@media (max-width: 640px) {
+  .lightbox-close, .lightbox-nav { width: 38px; height: 38px; }
+}
+
+@keyframes lightbox-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lightbox-scale-in { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .lightbox-backdrop, .lightbox { animation: none; }
+}
 
 /* ---------- Product variants (mẫu thật: tên/giá/ảnh — xem lib/airtable.js) ---------- */
 .variant-gallery { margin-top: clamp(48px, 7vw, 84px); }
@@ -931,6 +1043,28 @@ p { text-wrap: pretty; }
 .variant-detail-image img,
 .variant-detail-image svg { width: 100%; height: 100%; object-fit: contain; display: block; }
 
+/* Dải thumbnail chọn ảnh — chỉ hiện khi mẫu có từ 2 ảnh trở lên, xem VariantGallery.jsx. */
+.variant-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.variant-thumb {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--art-halo);
+  cursor: pointer;
+  transition: border-color .2s var(--ease);
+}
+.variant-thumb:hover { border-color: var(--line); }
+.variant-thumb.is-active { border-color: var(--accent); }
+.variant-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
 .variant-detail-video video {
   width: 100%;
   border-radius: var(--radius-lg);
@@ -966,27 +1100,35 @@ p { text-wrap: pretty; }
 .products-note a:hover { text-decoration: underline; text-underline-offset: 3px; }
 
 /* ---------- Benefits ---------- */
-/* Thẻ có nền + icon màu nhấn, thay cho kiểu chữ trơ trước đây (nhìn quá đơn điệu,
-   6 mục trôi nổi không có ranh giới). */
-.benefits { gap: 20px; }
-.benefit {
-  padding: 30px 26px 32px;
-  border-radius: var(--radius-lg);
-  background: var(--bg-alt);
-  transition: transform .35s var(--ease), box-shadow .35s var(--ease);
+/* Danh sách hàng ngang, không khung thẻ — icon trái, tiêu đề + mô tả phải, ngăn cách bằng
+   đường kẻ mảnh, thay cho kiểu 6 thẻ vuông xám đều nhau trước đây (nhìn đơn điệu, mọi mục
+   cùng trọng lượng thị giác). 2 cột trên desktop (dòng 1: mục 1-2, dòng 2: mục 3-4, dòng 3:
+   mục 5-6, theo đúng thứ tự mảng `benefits`), xếp dọc 1 cột trên mobile. */
+.benefits-list { display: grid; }
+.benefit-row {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+  padding: 26px 0;
 }
-.section-alt .benefit { background: var(--surface); }
-.benefit:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
-.benefit h3 { margin-bottom: .5rem; }
-.benefit p { color: var(--ink-2); font-size: 1rem; line-height: 1.5; }
+.benefit-row:not(:first-child) { border-top: 1px solid var(--line-2); }
+@media (min-width: 700px) {
+  .benefits-list { grid-template-columns: repeat(2, 1fr); column-gap: 56px; }
+  /* Mục thứ 2 nằm cùng hàng với mục 1 ở layout 2 cột nên không cần đường kẻ trên nữa. Luật
+     này phải đứng SAU luật :not(:first-child) ở trên — 2 luật cùng độ đặc hiệu (0,2,0), luật
+     đứng sau trong file mới thắng, đứng trước như cũ sẽ bị .benefit-row:not(:first-child) đè lại. */
+  .benefit-row:nth-child(2) { border-top: none; }
+}
+.benefit-row h3 { margin-bottom: .4rem; }
+.benefit-row p { color: var(--ink-2); font-size: 1rem; line-height: 1.5; }
 .benefit-icon {
   display: grid;
   place-items: center;
+  flex: none;
   width: 46px; height: 46px;
   border-radius: 50%;
   background: var(--accent-soft);
   color: var(--accent);
-  margin-bottom: 1.3rem;
 }
 .benefit-icon svg { width: 22px; height: 22px; }
 

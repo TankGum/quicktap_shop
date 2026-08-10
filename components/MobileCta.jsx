@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { siteConfig } from '@/lib/siteConfig';
+import Link from 'next/link';
 import { PhoneIcon } from './icons';
 
 export default function MobileCta() {
@@ -32,10 +32,10 @@ export default function MobileCta() {
 
   return (
     <div className={`mobile-cta${visible ? ' is-visible' : ''}`}>
-      <a className="btn btn-primary" href={siteConfig.phoneHref}>
+      <Link className="btn btn-primary" href="/lien-he">
         <PhoneIcon className="i" />
-        Gọi đặt hàng · {siteConfig.phoneDisplay}
-      </a>
+        Liên hệ đặt hàng
+      </Link>
     </div>
   );
 }

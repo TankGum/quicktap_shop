@@ -80,7 +80,6 @@ export default async function StandeePage() {
               </ul>
               <div className="product-ctas">
                 <Link className="btn btn-primary" href="/lien-he">Đặt standee</Link>
-                <Link className="btn btn-ghost" href="/#san-pham">Xem sản phẩm khác</Link>
               </div>
             </div>
           </Reveal>
@@ -91,8 +90,7 @@ export default async function StandeePage() {
 
           <Reveal as="p" className="products-note">
             Đặt 1 cái cũng nhận — số lượng lớn cho chuỗi có giá riêng.{' '}
-            <a href={siteConfig.phoneHref}>Gọi để báo giá theo số lượng</a>
-            {' '}hoặc <Link href="/lien-he">xem đầy đủ thông tin liên hệ</Link>.
+            <Link href="/lien-he">Liên hệ để báo giá theo số lượng</Link>.
           </Reveal>
         </div>
       </section>
@@ -139,7 +137,6 @@ export default async function StandeePage() {
             </p>
             <div className="cta-band-actions">
               <Link className="btn btn-primary btn-lg" href="/lien-he">Xem thông tin liên hệ</Link>
-              <a className="btn btn-outline btn-lg" href={siteConfig.phoneHref}>Gọi ngay</a>
             </div>
           </Reveal>
         </div>

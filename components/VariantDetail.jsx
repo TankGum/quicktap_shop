@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 import JsonLd from '@/components/JsonLd';
-import ProgressiveImg from '@/components/ProgressiveImg';
+import VariantGallery from '@/components/VariantGallery';
 import { siteConfig } from '@/lib/siteConfig';
 
 export default function VariantDetail({ variant, product, FallbackArt }) {
@@ -20,13 +20,11 @@ export default function VariantDetail({ variant, product, FallbackArt }) {
 
           <Reveal as="div" className="variant-detail" id={variant.slug}>
             <div className="variant-detail-media">
-              <div className="variant-detail-image">
-                {variant.image ? (
-                  <ProgressiveImg src={variant.image} alt={variant.name} />
-                ) : FallbackArt ? (
-                  <FallbackArt aria-label={product.artLabel} />
-                ) : null}
-              </div>
+              <VariantGallery
+                images={variant.images || []}
+                alt={variant.name}
+                fallback={FallbackArt ? <FallbackArt aria-label={product.artLabel} /> : null}
+              />
 
               {variant.video && (
                 <div className="variant-detail-video">
@@ -61,7 +59,6 @@ export default function VariantDetail({ variant, product, FallbackArt }) {
             </p>
             <div className="cta-band-actions">
               <Link className="btn btn-primary btn-lg" href="/lien-he">Xem thông tin liên hệ</Link>
-              <a className="btn btn-outline btn-lg" href={siteConfig.phoneHref}>Gọi ngay</a>
             </div>
           </Reveal>
         </div>
@@ -75,7 +72,7 @@ export default function VariantDetail({ variant, product, FallbackArt }) {
               '@type': 'Product',
               name: variant.name,
               description: variant.description || product.body,
-              ...(variant.image ? { image: variant.image } : {}),
+              ...(variant.images?.length ? { image: variant.images } : {}),
               brand: { '@id': `${siteConfig.siteUrl}/#org` },
               category: product.title,
               ...(priceNumber
