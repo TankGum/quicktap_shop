@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import VariantDetail from '@/components/VariantDetail';
 import { NfcPlateArt } from '@/components/illustrations';
 import { getProduct } from '@/data/products';
-import { getVariantBySlug, getVariantSlugs } from '@/lib/airtable';
+import { getVariantBySlug, getVariantSlugs, toPlainText } from '@/lib/airtable';
 
 const PRODUCT_ID = 'bang-nfc';
 const product = getProduct(PRODUCT_ID);
@@ -17,7 +17,9 @@ export async function generateMetadata({ params }) {
   if (!variant) return {};
 
   const title = `${variant.name} — ${product.title}`;
-  const description = variant.description || product.body;
+  // <meta description>/OG bắt buộc văn bản thuần — <br> gõ tay trong Airtable phải bỏ đi,
+  // không thì hiện thành chữ "<br>" xấu xí trên kết quả tìm kiếm Google.
+  const description = variant.description ? toPlainText(variant.description) : product.body;
 
   return {
     title,

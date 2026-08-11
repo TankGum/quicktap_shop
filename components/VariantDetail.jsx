@@ -1,11 +1,33 @@
 // Nội dung trang chi tiết 1 mẫu cụ thể (điền từ Airtable).
 // Bố cục 2 cột: ảnh + video bên trái, tên/mô tả/giá dính (sticky) bên phải khi cuộn.
 
+import { Fragment } from 'react';
 import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 import JsonLd from '@/components/JsonLd';
 import VariantGallery from '@/components/VariantGallery';
 import { siteConfig } from '@/lib/siteConfig';
+import { toPlainText } from '@/lib/airtable';
+
+// Mô tả trong Airtable có thể chứa <br> (gõ tay để xuống dòng) hoặc xuống dòng thật (Enter
+// trong ô Long text) — render thẳng chuỗi thì React tự escape "<br>" thành chữ trần, còn
+// xuống dòng thật thì bị HTML gộp thành khoảng trắng theo mặc định. Chuẩn hoá cả 2 kiểu về
+// cùng 1 danh sách dòng rồi tự vẽ <br/> thật — không dùng dangerouslySetInnerHTML nên không
+// có rủi ro XSS dù dữ liệu đến từ Airtable (không lọc được ai gõ gì vào đó).
+function renderMultiline(text) {
+  const lines = text
+    .replace(/<br\s*\/?>/gi, '\n')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  return lines.map((line, i) => (
+    <Fragment key={i}>
+      {line}
+      {i < lines.length - 1 && <br />}
+    </Fragment>
+  ));
+}
 
 export default function VariantDetail({ variant, product, FallbackArt }) {
   const priceNumber = variant.price ? variant.price.replace(/[^\d]/g, '') : '';
@@ -37,7 +59,7 @@ export default function VariantDetail({ variant, product, FallbackArt }) {
               <p className="kicker">{product.title}</p>
               <h1 className="variant-detail-title">{variant.name}</h1>
               {variant.price && <p className="variant-detail-price">{variant.price}</p>}
-              {variant.description && <p className="variant-detail-desc">{variant.description}</p>}
+              {variant.description && <p className="variant-detail-desc">{renderMultiline(variant.description)}</p>}
 
               <div className="product-ctas">
                 <Link className="btn btn-primary" href="/lien-he">Đặt mẫu này</Link>
@@ -71,7 +93,7 @@ export default function VariantDetail({ variant, product, FallbackArt }) {
             {
               '@type': 'Product',
               name: variant.name,
-              description: variant.description || product.body,
+              description: variant.description ? toPlainText(variant.description) : product.body,
               ...(variant.images?.length ? { image: variant.images } : {}),
               brand: { '@id': `${siteConfig.siteUrl}/#org` },
               category: product.title,
