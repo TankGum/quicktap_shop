@@ -221,3 +221,13 @@ export function NfcWaveIcon(props) {
     </svg>
   );
 }
+
+export function WarningIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
+      <path d="M12 3.5 2.3 20.5h19.4L12 3.5Z" />
+      <path d="M12 10v4.5" />
+      <circle cx="12" cy="17.5" r=".6" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}

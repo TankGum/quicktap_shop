@@ -13,7 +13,7 @@ import { platforms } from '@/data/platforms';
 import { industries as industryData } from '@/data/industries';
 import { getVariantsByProduct, getCustomDesigns, getSiteMedia } from '@/lib/airtable';
 import {
-  PhoneIcon, ArrowRightIcon,
+  PhoneIcon, ArrowRightIcon, WarningIcon,
   BarsIcon, PinIcon, BoltIcon, PhoneOutlineIcon, LayersIcon, RefreshIcon,
   HotelIcon, HomestayIcon, RestaurantIcon, CafeIcon, SpaIcon, ShopIcon,
 } from '@/components/icons';
@@ -21,10 +21,10 @@ import {
 const ART_BY_ID = { 'bang-nfc': NfcPlateArt, standee: StandeeArt };
 
 const benefits = [
-  { Icon: BarsIcon, title: 'Nhiều đánh giá hơn', body: 'Bỏ đi rào cản lớn nhất: công sức.' },
+  { Icon: BarsIcon, title: 'Xin đánh giá nhanh hơn', body: 'Giảm thời gian khách hàng thao tác trên điện thoại.' },
   { Icon: PinIcon, title: 'Lên hạng tìm kiếm', body: 'Review đều đặn giúp quán nổi trên Google Maps.' },
-  { Icon: BoltIcon, title: 'Lắp trong 2 phút', body: 'Không phần mềm, không tích hợp POS.' },
-  { Icon: PhoneOutlineIcon, title: 'Khách không cài gì', body: 'Có sẵn trên iPhone và Android.' },
+  { Icon: BoltIcon, title: 'Không tốn công cài đặt', body: 'Dùng được ngay khi nhận hàng.' },
+  { Icon: PhoneOutlineIcon, title: 'Khách không cài gì', body: 'Có sẵn trên các dòng điện thoại.' },
   { Icon: LayersIcon, title: 'Nhiều nền tảng', body: 'Google Maps, Booking.com, TripAdvisor…' },
   { Icon: RefreshIcon, title: 'Đổi link bất cứ lúc nào', body: 'Không cần làm bảng mới.' },
 ];
@@ -59,7 +59,11 @@ const faqs = [
   },
   {
     q: 'Cần bao lâu để nhận hàng sau khi đặt?',
-    a: 'Tuỳ số lượng và địa chỉ giao — gọi trực tiếp để được báo thời gian cụ thể khi đặt hàng.',
+    a: 'Hà Nội giao trong ngày với các mẫu có sẵn, tuỳ số lượng và địa chỉ giao — liên hệ để được báo thời gian cụ thể khi đặt hàng.',
+  },
+  {
+    q: 'Dùng bảng NFC dán lên các bề mặt kim loại thì sao?',
+    a: 'Hạn chế tối đa bề mặt kim loại, hoặc dùng 1 tấm nhựa mỏng cách ly phía sau bảng NFC. Nếu không, sóng NFC sẽ bị cản và khách chạm không nhận.',
   },
 ];
 
@@ -91,11 +95,11 @@ export default async function HomePage() {
               {/* Rút gọn theo tên sản phẩm mới ở data/products.js — giữ đúng 1 dòng, không
                   dán nguyên 2 tên đầy đủ ("Bảng 10x10 dán tường & quầy" / "Standee để bàn
                   A6") vào vì sẽ quá dài cho 1 dòng eyebrow. */}
-              Bảng dán tường &amp; standee để bàn cho quán
+              Bảng dán tường &amp; standee để bàn
             </Reveal>
             <Reveal as="h1">Tăng đánh giá 5 sao<br /><em>chỉ với 1 chạm</em></Reveal>
             <Reveal as="p" className="lede">
-              Khách chạm điện thoại hoặc quét mã là mở thẳng trang đánh giá.
+              Khách chạm điện thoại hoặc quét mã là mở thẳng form đánh giá.
             </Reveal>
 
             <Reveal as="div" className="hero-actions">
@@ -113,7 +117,16 @@ export default async function HomePage() {
               <li>Trả lời trong vòng 2 phút</li>
               <li>Đặt 1 cái cũng nhận</li>
               <li>Khách không cần cài app</li>
-              <li>iPhone &amp; Android</li>
+              <li>Tương thích các dòng điện thoại</li>
+            </Reveal>
+
+            {/* Tách khỏi .hero-trust: đây là 1 lưu ý/giới hạn, không phải điểm mạnh — để chung
+                danh sách có dấu tick xanh (ngụ ý "tốt") sẽ đọc sai ý, lại là câu dài trong 1
+                danh sách toàn cụm ngắn nên xuống dòng lộn xộn. Icon cảnh báo + khối riêng cho
+                đúng bản chất "cần lưu ý" của nó. */}
+            <Reveal as="p" className="hero-warning">
+              <WarningIcon className="hero-warning-icon" aria-hidden="true" />
+              Một số điện thoại Android có chip NFC nằm ở giữa mặt lưng thay vì gần camera phía trên — khách chạm không nhận thì thử di chuyển sát khu vực đó.
             </Reveal>
           </div>
 
@@ -155,7 +168,7 @@ export default async function HomePage() {
                   {name}
                 </li>
               ))}
-              <li className="platform-more">…hoặc bất kỳ link nào bạn chọn</li>
+              <li className="platform-more">…hoặc bất kỳ link nào</li>
             </ul>
           </Reveal>
         </div>
@@ -166,7 +179,7 @@ export default async function HomePage() {
         <div className="container">
           <Reveal as="header" className="section-head">
             <p className="kicker">Cách hoạt động</p>
-            <h2>Rút gọn tất cả xuống còn <em>một chạm</em></h2>
+            <h2>Rút gọn tất cả xuống còn <em>một bước</em></h2>
           </Reveal>
 
           <div className="howto" id="giai-phap">
@@ -204,7 +217,7 @@ export default async function HomePage() {
         <div className="container">
           <Reveal as="header" className="section-head">
             <p className="kicker">Sản phẩm</p>
-            <h2>Hai dạng, chọn theo không gian quán</h2>
+            <h2>Hai kiểu, chọn sản phẩm phù hợp theo không gian</h2>
           </Reveal>
 
           <div className="showcase-grid">
@@ -238,9 +251,9 @@ export default async function HomePage() {
         <div className="container">
           <Reveal as="header" className="section-head">
             <p className="kicker">Thiết kế riêng</p>
-            <h2>In theo logo &amp; màu thương hiệu của bạn</h2>
+            <h2>In theo logo &amp; màu thương hiệu của bạn giá không đổi</h2>
             <p className="section-sub">
-              Gửi logo và link đánh giá, chúng tôi lên mẫu cho bạn duyệt trước khi in.
+              Chỉ cần gửi logo, chúng tôi lên mẫu cho bạn duyệt trước khi in.
             </p>
           </Reveal>
 
@@ -249,7 +262,7 @@ export default async function HomePage() {
           <CustomDesignsGallery designs={customDesigns} />
 
           <Reveal as="p" className="products-note">
-            Có mẫu riêng trong đầu rồi?{' '}
+            Có ý tưởng rồi?{' '}
             <Link href="/lien-he">Liên hệ để trao đổi thiết kế</Link>.
           </Reveal>
         </div>
@@ -285,7 +298,7 @@ export default async function HomePage() {
         <div className="container">
           <Reveal as="header" className="section-head">
             <p className="kicker">Phù hợp với</p>
-            <h2>Bất kỳ nơi nào khách ghé rồi rời đi</h2>
+            <h2>Các ngành nghề  dịch vụ chăm sóc khách hàng</h2>
           </Reveal>
 
           <ul className="industries">
@@ -320,9 +333,9 @@ export default async function HomePage() {
           <Reveal as="div" className="cta-card">
             <div className="contact-glow" aria-hidden="true" />
             <p className="kicker">Sẵn sàng chưa?</p>
-            <h2>Gửi tên và địa chỉ quán cho chúng tôi</h2>
+            <h2>Gửi tên và địa chỉ cho chúng tôi</h2>
             <p className="contact-sub">
-              Chỉ cần tên và địa chỉ quán, chúng tôi lo phần còn lại và giao tận nơi. Trả lời trong vòng 2 phút.
+              Chỉ cần tên và địa chỉ, chúng tôi lo phần còn lại và giao tận nơi. Trả lời trong vòng 2 phút.
             </p>
             <div className="cta-band-actions">
               <Link className="btn btn-primary btn-lg" href="/lien-he">Liên hệ đặt hàng</Link>

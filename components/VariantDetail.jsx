@@ -53,9 +53,9 @@ export default function VariantDetail({ variant, product, FallbackArt }) {
           <Reveal as="div" className="cta-card">
             <div className="contact-glow" aria-hidden="true" />
             <p className="kicker">Đặt hàng</p>
-            <h2>Chọn xong rồi? Gửi tên và địa chỉ quán cho chúng tôi</h2>
+            <h2>Chọn xong rồi? Gửi tên và địa chỉ cho chúng tôi</h2>
             <p className="contact-sub">
-              Chỉ cần tên và địa chỉ quán, chúng tôi lo phần còn lại và giao tận nơi. Trả lời trong vòng 2 phút.
+              Chỉ cần tên và địa chỉ, chúng tôi lo phần còn lại và giao tận nơi. Trả lời trong vòng 2 phút.
             </p>
             <div className="cta-band-actions">
               <Link className="btn btn-primary btn-lg" href="/lien-he">Xem thông tin liên hệ</Link>

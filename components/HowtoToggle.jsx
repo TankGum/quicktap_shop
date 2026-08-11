@@ -4,6 +4,9 @@
 // cả 2 song song. Mặc định mở "Sau" (cách dùng QuickTap): dẫn khách bằng sự đơn giản trước,
 // "Trước" chỉ để đối chiếu khi họ tò mò. Theo đúng khuôn FaqAccordion.jsx đã có trong site
 // (button aria-expanded/aria-selected + panel dùng `hidden`, không unmount/mount qua lại).
+//
+// Mỗi bước là 1 chip có màu (không phải chữ trơ nối bằng mũi tên mảnh) — bản chữ trơ ban đầu
+// bị chê "xấu quá" vì thiếu hẳn chất liệu thị giác, không có gì để mắt bấu vào.
 
 import { useState } from 'react';
 
@@ -11,6 +14,17 @@ const TABS = [
   { id: 'truoc', label: 'Trước' },
   { id: 'sau', label: 'Sau' },
 ];
+
+const STEPS_BEFORE = ['Mở app', 'Tìm kiếm tên', 'Chọn chi nhánh', 'Cuộn tìm nút', 'Viết'];
+const STEPS_AFTER = ['Chạm | Quét', 'Viết'];
+
+function StepChips({ steps, accent }) {
+  return (
+    <ul className={`howto-flow-steps${accent ? ' is-accent' : ''}`}>
+      {steps.map((s) => <li key={s}>{s}</li>)}
+    </ul>
+  );
+}
 
 export default function HowtoToggle() {
   const [active, setActive] = useState('sau');
@@ -38,23 +52,20 @@ export default function HowtoToggle() {
         id="howto-panel-truoc"
         role="tabpanel"
         aria-labelledby="howto-tab-truoc"
+        className="howto-toggle-panel"
         hidden={active !== 'truoc'}
       >
-        <p className="howto-toggle-flow">
-          Mở app <span aria-hidden="true">→</span> Tìm tên quán <span aria-hidden="true">→</span> Chọn chi
-          nhánh <span aria-hidden="true">→</span> Cuộn tìm nút <span aria-hidden="true">→</span> Viết
-        </p>
+        <StepChips steps={STEPS_BEFORE} />
       </div>
 
       <div
         id="howto-panel-sau"
         role="tabpanel"
         aria-labelledby="howto-tab-sau"
+        className="howto-toggle-panel"
         hidden={active !== 'sau'}
       >
-        <p className="howto-toggle-flow howto-toggle-flow-accent">
-          Chạm <span aria-hidden="true">→</span> Viết
-        </p>
+        <StepChips steps={STEPS_AFTER} accent />
       </div>
     </div>
   );

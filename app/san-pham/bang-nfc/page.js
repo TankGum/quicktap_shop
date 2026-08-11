@@ -52,10 +52,10 @@ export default async function NfcPlatePage() {
       <section className="page-hero">
         <div className="hero-glow" aria-hidden="true" />
         <div className="container">
-          <Reveal as="p" className="kicker">Sản phẩm · Dạng 1</Reveal>
+          <Reveal as="p" className="kicker">Sản phẩm · Kiểu 1</Reveal>
           <Reveal as="h1">Bảng NFC 10x10cm</Reveal>
           <Reveal as="p" className="page-hero-sub">
-            Bảng vuông 10x10cm, có cả chip NFC lẫn mã QR, dán ở đâu khách cũng thấy. Chạm điện thoại hoặc quét mã là mở thẳng trang đánh giá của quán.
+            Bảng vuông 10x10cm, có cả chip NFC lẫn mã QR, dán ở đâu khách cũng thấy. Chạm điện thoại hoặc quét mã là mở thẳng form đánh giá.
           </Reveal>
         </div>
       </section>
@@ -102,7 +102,7 @@ export default async function NfcPlatePage() {
             <p className="section-sub">Khách không cần biết NFC là gì. Chỉ cần chạm hoặc quét.</p>
           </Reveal>
 
-          <ol className="grid grid-3 steps">
+          <ol className="steps">
             <Reveal as="li" className="card step" delay={0}>
               <span className="step-num" aria-hidden="true">1</span>
               <span className="step-art" aria-hidden="true"><TapIcon /></span>
@@ -130,9 +130,9 @@ export default async function NfcPlatePage() {
           <Reveal as="div" className="cta-card">
             <div className="contact-glow" aria-hidden="true" />
             <p className="kicker">Đặt hàng</p>
-            <h2>Chọn xong rồi? Gửi tên và địa chỉ quán cho chúng tôi</h2>
+            <h2>Chọn xong rồi? Gửi tên và địa chỉ cho chúng tôi</h2>
             <p className="contact-sub">
-              Chỉ cần tên và địa chỉ quán, chúng tôi lo phần còn lại và giao tận nơi. Trả lời trong vòng 2 phút.
+              Chỉ cần tên và địa chỉ, chúng tôi lo phần còn lại và giao tận nơi. Trả lời trong vòng 2 phút.
             </p>
             <div className="cta-band-actions">
               <Link className="btn btn-primary btn-lg" href="/lien-he">Xem thông tin liên hệ</Link>

@@ -417,6 +417,29 @@ p { text-wrap: pretty; }
   transform: rotate(-45deg);
 }
 
+/* Khối lưu ý riêng (khác .hero-trust): dùng --star — tông vàng hổ phách sẵn có trong bảng
+   màu (vốn dùng cho sao đánh giá) — làm màu icon cảnh báo, không thêm màu mới vào hệ thống. */
+.hero-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: .55rem;
+  margin-top: 1.1rem;
+  padding: .75rem .95rem;
+  max-width: 30rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-alt);
+  font-size: .86rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.hero-warning-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: .1em;
+  color: var(--star);
+}
+
 .hero-art { position: relative; }
 /* Ảnh hero: bo góc lớn, cắt theo tỉ lệ 4:3 cố định để ảnh nào thay vào cũng giữ đúng
    bố cục. */
@@ -699,27 +722,59 @@ p { text-wrap: pretty; }
   box-shadow: var(--shadow-sm);
 }
 
-/* Chuỗi bước nối bằng mũi tên — 1 dòng chảy liền mạch. "Trước" 5 bước sẽ tự dài hơn hẳn
-   "Sau" (2 bước), độ dài dòng chữ tự nó cho thấy sự khác biệt, không cần gạch ngang hay
-   số liệu minh hoạ thêm. */
-.howto-toggle-flow {
-  margin-top: 24px;
-  font-size: clamp(1.1rem, 2.4vw, 1.35rem);
-  font-weight: 600;
-  letter-spacing: -.01em;
-  line-height: 1.5;
-  color: var(--ink);
+/* Khung chứa chuỗi bước — nền tint riêng để có "chất" thay vì chữ trơ nổi giữa khoảng trắng
+   (bản đầu bị chê xấu chính vì thiếu khung này). */
+.howto-toggle-panel {
+  margin-top: 20px;
+  padding: 22px;
+  border-radius: var(--radius);
+  background: var(--bg-alt);
 }
-.howto-toggle-flow span { margin: 0 .25em; font-weight: 400; color: var(--ink-3); }
-.howto-toggle-flow-accent { color: var(--accent-ink); }
-.howto-toggle-flow-accent span { color: var(--accent); }
+
+/* Mỗi bước là 1 chip — cùng công thức pill với .steps-flow (chip bg-alt, mũi tên "→" vẽ bằng
+   ::after ở khoảng đệm giữa 2 chip) nhưng to hơn, đứng một mình (không phải 2 hàng chen nhau
+   như bản Trước/Sau cũ) nên có chỗ để thở hơn hẳn. */
+.howto-flow-steps { display: flex; flex-wrap: wrap; row-gap: 16px; column-gap: 34px; }
+.howto-flow-steps li {
+  position: relative;
+  padding: .55em 1.1em;
+  border-radius: 980px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+.howto-flow-steps li:not(:last-child)::after {
+  content: "→";
+  position: absolute;
+  top: 50%; right: -26px;
+  transform: translateY(-50%);
+  font-size: .9rem;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+.howto-flow-steps.is-accent li {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: none;
+}
+.howto-flow-steps.is-accent li::after { color: var(--accent); }
 
 @media (min-width: 880px) {
   .solution { grid-template-columns: 1.1fr .9fr; }
 }
 
 /* ---------- Steps ---------- */
-.steps { counter-reset: step; }
+/* Trước đây dùng chung 2 class tiện ích .grid/.grid-3 (repeat 2 cột từ 700px, 3 cột từ
+   1000px) — nhưng đó là 2 class duy nhất còn lại chỉ mình .steps dùng, xoá .grid/.grid-3 lúc
+   dọn mục "Lợi ích" (đã kiểm tra app/page.js và components/ nhưng bỏ sót 2 trang
+   /san-pham/bang-nfc và /san-pham/standee) làm khối này mất hẳn layout lưới, 3 bước xếp dọc
+   đè lên nhau. Dồn thẳng luật grid vào đây — 1 nơi sở hữu, không còn class chung chung dễ bị
+   tưởng nhầm là "không ai dùng" nữa. */
+.steps { display: grid; gap: 20px; counter-reset: step; }
+@media (min-width: 700px)  { .steps { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1000px) { .steps { grid-template-columns: repeat(3, 1fr); } }
 .step { position: relative; }
 /* Số thứ tự nhỏ, nhạt — không còn số khổng lồ mờ phía sau. */
 .step-num {
@@ -1313,39 +1368,45 @@ p { text-wrap: pretty; }
 .cta-band-actions .btn-outline:hover { border-color: #fff; }
 
 /* ---------- Footer ---------- */
-/* Sáng, tối giản theo đúng kiểu chân trang thật của apple.com — không khối màu, không
-   nút CTA to, chỉ chữ nhỏ chia cột gọn gàng và 1 đường kẻ mảnh phân cách. */
+/* Tham khảo bố cục footer SaaS: logo + mô tả bên trái, các cột link bên phải, đường kẻ, dòng
+   bản quyền — rồi chữ thương hiệu khổng lồ phía dưới làm hoạ tiết kết trang. */
 .site-footer {
+  position: relative;
+  /* Bắt buộc: chữ thương hiệu cỡ vw có thể rộng hơn khung ở vài tỉ lệ màn hình, không cắt
+     thì cả trang bị đẩy rộng ngang và sinh thanh cuộn ngang. */
+  overflow: hidden;
   background: var(--bg-alt);
   border-top: 1px solid var(--line-2);
 }
 
+.footer-inner { padding-top: clamp(44px, 6vw, 68px); }
+
 .footer-top {
-  padding-block: clamp(40px, 6vw, 56px) clamp(28px, 4vw, 36px);
   display: grid;
-  gap: 32px;
+  gap: 36px;
+  padding-bottom: clamp(32px, 5vw, 48px);
+}
+@media (min-width: 700px) {
+  .footer-top { grid-template-columns: 1.3fr repeat(3, auto); gap: 24px; }
 }
 
-/* .brand vốn có margin-right:auto để đẩy nav sang phải trong header — ở đây không
-   nằm cạnh gì khác nên bỏ đi, không thì bị đẩy lệch sang trái quá mức trong lưới. */
-.footer-brand-mark { margin-right: 0; }
-.footer-brand-mark .brand-mark { width: 24px; height: 24px; border-radius: 6px; }
-.footer-brand-mark .brand-mark svg { width: 13px; height: 13px; }
-.footer-brand-mark .brand-name { font-size: .95rem; }
-
-.footer-columns {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 28px 20px;
+.footer-brand-block .brand { margin-right: 0; }
+.footer-desc {
+  margin-top: 14px;
+  max-width: 26rem;
+  font-size: .88rem;
+  line-height: 1.55;
+  color: var(--ink-3);
 }
-.footer-col { display: grid; gap: 2px; }
+
+.footer-col { display: grid; gap: 2px; align-content: start; }
 .footer-col-title {
   font-size: .78rem;
   font-weight: 600;
   color: var(--ink);
   margin-bottom: 8px;
 }
-.footer-col a, .footer-col-note {
+.footer-col a, .footer-col-note, .footer-col-phone {
   font-size: .86rem;
   color: var(--ink-3);
   text-decoration: none;
@@ -1353,26 +1414,42 @@ p { text-wrap: pretty; }
   width: fit-content;
   transition: color .2s var(--ease);
 }
-.footer-col a:hover { color: var(--accent); }
-.footer-col-note { color: var(--ink-3); opacity: .8; }
+.footer-col a:hover, .footer-col-phone:hover { color: var(--accent); }
+.footer-col-note { color: var(--ink-3); opacity: .75; }
+.footer-col-phone { display: inline-flex; align-items: center; gap: .4em; color: var(--ink); font-weight: 600; }
+.footer-col-phone .i { width: 14px; height: 14px; }
 
 .footer-bottom {
-  padding-block: 16px;
+  padding-block: 18px;
   border-top: 1px solid var(--line-2);
 }
 .copyright { color: var(--ink-3); font-size: .78rem; }
 
-@media (min-width: 640px) {
-  .footer-columns { grid-template-columns: repeat(3, 1fr); }
+/* Tên thương hiệu khổng lồ — vừa là hoạ tiết vừa là link về trang chủ. Cỡ chữ theo vw để
+   bám chiều ngang khung, chặn trên bằng clamp cho màn rộng (khung tối đa 1120px).
+   Cố ý để chữ chỉ lấp ~90% bề ngang chứ không sát mép: chiều rộng thật phụ thuộc font đang
+   render (font stack của site là SF Pro rồi mới tới font hệ thống), máy nào không có SF Pro
+   sẽ dùng font khác rộng hơn — sát mép quá thì trên máy đó chữ bị overflow:hidden cắt cụt. */
+.footer-wordmark {
+  display: block;
+  margin-top: clamp(4px, 1vw, 10px);
+  /* Đệm dưới bù line-height:1: chân chữ ("Q" có đuôi, "p" thò xuống) tràn khỏi hộp dòng,
+     không chừa chỗ thì mép container/.site-footer cắt ngang qua chúng. */
+  padding-bottom: clamp(10px, 1.6vw, 20px);
+  font-size: clamp(2.1rem, 11vw, 8.2rem);
+  font-weight: 600;
+  letter-spacing: -.05em;
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--ink);
+  transition: color .3s var(--ease);
 }
-@media (min-width: 760px) {
-  .footer-top {
-    grid-template-columns: auto 1fr;
-    align-items: start;
-    gap: 48px;
-  }
-  .footer-columns { max-width: 34rem; }
-}
+/* Đổi màu nền (--art-shadow, sáng hơn --ink) không còn hợp lý khi chữ đã là màu mực đậm —
+   hover sẽ trông như chữ bị mờ đi. Ngả sang màu nhấn của thương hiệu thay vào đó. */
+.footer-wordmark:hover { color: var(--accent); }
+/* "Review" nhạt hơn "QuickTap" — giữ đúng cách phân 2 tông của logo ở header/footer. */
+.footer-wordmark span span { color: var(--line-2); }
 
 /* ---------- Mobile sticky CTA ---------- */
 .mobile-cta {

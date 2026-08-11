@@ -8,7 +8,7 @@ export const products = [
   {
     id: 'bang-nfc',
     href: '/san-pham/bang-nfc',
-    kicker: 'Dạng 1',
+    kicker: 'Kiểu 1',
     title: 'Bảng 10x10 dán tường & quầy',
     artLabel: 'Minh hoạ bảng NFC',
     // Câu ngắn dùng cho thẻ sản phẩm ngoài trang chủ (bản đầy đủ là `body` bên dưới).
