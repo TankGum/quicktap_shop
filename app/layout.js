@@ -14,7 +14,11 @@ export const metadata = {
     'Bảng NFC 10x10cm (chip NFC + QR) dán tường/quầy và standee QR đặt tại quầy thu ngân. Khách chạm điện thoại hoặc quét mã là mở thẳng trang đánh giá Google Maps, Booking.com, TripAdvisor — không cần tìm tên quán, không cần cài app.',
   applicationName: siteConfig.brandName,
   icons: {
-    icon: '/favicon.svg',
+    // Thiếu `type` khiến vài trình duyệt không nhận SVG làm favicon rồi âm thầm rơi về
+    // /favicon.ico (trước đây chưa có file này nên 404, tab hiện icon mặc định trống).
+    // app/favicon.ico (quy ước file của Next.js App Router) giờ lo phần fallback đó —
+    // không cần khai báo tay ở đây, Next tự thêm <link rel="icon" href="/favicon.ico">.
+    icon: { url: '/favicon.svg', type: 'image/svg+xml' },
     apple: '/assets/img/apple-touch-icon.png',
   },
   openGraph: {
