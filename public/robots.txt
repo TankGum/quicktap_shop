@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://quicktapreview.vn/sitemap.xml
+Sitemap: https://quicktapreview.shop/sitemap.xml
