@@ -71,14 +71,11 @@ cập nhật khắp site.
 
 ### 2. Ảnh sản phẩm thật
 
-Hiện dùng hình vẽ SVG minh hoạ (`components/illustrations.jsx`). Khi có ảnh chụp thật, dùng
-`next/image` hoặc thẻ `<img>` thường:
-
-- **Hero** (`app/page.js`) — thay `<HeroArt />` bằng ảnh, ví dụ:
-  `<img src="/assets/img/hero.jpg" width={1040} height={1040} alt="Standee QR đặt tại quầy thu ngân" />`
-- **Sản phẩm** (`app/san-pham/page.js`) — thay `<p.Art .../>` trong từng thẻ sản phẩm bằng ảnh
-  tương tự (tỉ lệ ~400×260 là vừa khung `.product-media`).
-- Đặt file ảnh vào `public/assets/img/`, tham chiếu bằng đường dẫn tuyệt đối `/assets/img/...`.
+**Hero** (`components/HeroShowcase.jsx`) và phần "SẢN PHẨM" ở trang chủ tự lấy ảnh chụp thật
+của từng dòng sản phẩm từ Airtable (ảnh đầu tiên có trong bảng mẫu — xem `getVariantsByProduct`
+trong `lib/airtable.js`) — **không cần sửa code**, chỉ cần upload ảnh vào form Airtable. Dòng
+sản phẩm nào chưa có ảnh thật thì tự rơi về hình vẽ SVG minh hoạ (`components/illustrations.jsx`,
+`NfcPlateArt`/`StandeeArt`) làm placeholder tạm thời.
 
 ### 3. Ảnh chia sẻ (Open Graph)
 

@@ -4,6 +4,8 @@
 # next
 /.next/
 /out/
+# thư mục build tạm khi đặt NEXT_DIST_DIR — xem distDir trong next.config.js
+/.next-*/
 
 # cache dữ liệu Airtable/Cloudinary lúc dev/build — xem lib/airtable.js
 /.cache/

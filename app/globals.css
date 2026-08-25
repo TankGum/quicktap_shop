@@ -75,8 +75,27 @@ button, input, textarea { font: inherit; }
   /* Nhịp chuyển động chuẩn của Apple */
   --ease: cubic-bezier(.25, .1, .25, 1);
 
-  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
-          "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", Arial, sans-serif;
+  /* Máy Apple lấy SF Pro thật qua -apple-system/BlinkMacSystemFont. Máy khác rơi xuống Inter
+     (tải sẵn lúc build, xem app/layout.js) — bản thay thế mở gần SF nhất. CỐ TÌNH bỏ
+     "Segoe UI" và Roboto khỏi danh sách: để nguyên thì Windows/Android sẽ chọn chúng trước
+     Inter và chữ lại khác hẳn SF, đúng cái đang cần sửa. */
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+          var(--font-inter), "Helvetica Neue", Arial, sans-serif;
+
+  /* Thang chữ của apple.com (lấy từ chính bộ lớp typography-* của họ). Điểm cốt lõi làm nên
+     "chất Apple" không phải cỡ chữ mà là TRACKING ĐỔI THEO CỠ: chữ thân bài siết khá mạnh
+     (-.022em) trong khi tiêu đề lớn gần như không siết (-.015em) — ngược với trực giác
+     "chữ càng to càng siết". SF Pro tự đổi dáng theo cỡ nên phần siết đó đã nằm sẵn trong
+     font; CSS chỉ bù thêm chút ít. */
+  --tracking-hero:    -.015em;  /* apple: hero headline 80px */
+  --tracking-title:   -.012em;  /* apple: headline 48px (-.003em), siết thêm chút cho Inter */
+  --tracking-sub:     -.019em;  /* apple: 24px */
+  --tracking-body:    -.022em;  /* apple: body 17px */
+  --tracking-small:   -.016em;  /* apple: 14px */
+  --tracking-caption: -.01em;   /* apple: caption 12px */
+  --leading-hero:  1.05;
+  --leading-title: 1.0834;
+  --leading-body:  1.47059;
 }
 
 /* Trang luôn dùng giao diện sáng, KHÔNG tự đổi sang tối theo cài đặt hệ thống —
@@ -90,26 +109,33 @@ body {
   font-family: var(--font);
   background: var(--bg);
   color: var(--ink);
-  line-height: 1.5;
+  /* 17px/1.47059/-.022em — đúng bộ ba của lớp body trên apple.com. Trước đây là
+     1.5/-.01em: dòng thưa hơn và chữ nhả hơn thật so với Apple. */
   font-size: 17px;
-  letter-spacing: -.01em;
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
+  /* Inter và SF đều là font biến thiên có trục optical size — bật để chữ tự chỉnh nét theo cỡ,
+     đúng cách SF Pro Text/Display đổi dáng trên máy Apple. */
+  font-optical-sizing: auto;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
   overflow-x: hidden;
 }
 
 /* Tiêu đề dùng semibold (600) chứ không bold đậm — nét đặc trưng của Apple:
    chữ to, tracking âm, dòng sát nhau. */
 h1, h2, h3 {
-  font-weight: 600;
-  line-height: 1.08;
-  letter-spacing: -.025em;
+  line-height: var(--leading-title);
+  letter-spacing: var(--tracking-title);
   text-wrap: balance;
 }
-h1 { font-size: clamp(2.5rem, 6.4vw, 4.6rem); letter-spacing: -.04em; line-height: 1.04; }
-h2 { font-size: clamp(1.9rem, 4.4vw, 3.1rem); letter-spacing: -.035em; }
-h3 { font-size: 1.2rem; letter-spacing: -.02em; }
+/* Apple để tiêu đề ở 600, nhưng Inter (font dùng cho máy không phải Apple) ở cùng mức 600
+   render mảnh hơn SF Pro rõ rệt, nên tiêu đề lớn trông yếu. Đẩy lên 700 cho chắc nét. */
+h1, h2 { font-weight: 700; }
+h3 { font-weight: 600; }
+h1 { font-size: clamp(2.5rem, 6.4vw, 4.6rem); line-height: var(--leading-hero); letter-spacing: var(--tracking-hero); }
+h2 { font-size: clamp(1.9rem, 4.4vw, 3.1rem); }
+h3 { font-size: 1.2rem; letter-spacing: var(--tracking-sub); }
 
 /* <em> trong tiêu đề: không gradient, chỉ chuyển sang màu phụ để tạo nhịp đọc. */
 h1 em, h2 em, h3 em {
@@ -149,7 +175,7 @@ p { text-wrap: pretty; }
 .kicker {
   font-size: .95rem;
   font-weight: 600;
-  letter-spacing: -.01em;
+  letter-spacing: var(--tracking-caption);
   color: var(--ink-3);
   margin-bottom: .5rem;
 }
@@ -163,7 +189,7 @@ p { text-wrap: pretty; }
   gap: .5em;
   font-weight: 500;
   font-size: 1rem;
-  letter-spacing: -.01em;
+  letter-spacing: var(--tracking-caption);
   text-decoration: none;
   padding: .72em 1.35em;
   border-radius: 980px;
@@ -227,7 +253,7 @@ p { text-wrap: pretty; }
   gap: .5rem;
   text-decoration: none;
   font-weight: 600;
-  letter-spacing: -.025em;
+  letter-spacing: var(--tracking-title);
   font-size: 1.02rem;
   margin-right: auto;
 }
@@ -244,17 +270,76 @@ p { text-wrap: pretty; }
 .brand-mark svg { width: 15px; height: 15px; }
 .brand-name span { color: var(--ink-3); font-weight: 500; }
 
-.site-nav { display: none; gap: 2px; }
-.site-nav a {
+.site-nav { display: none; gap: 2px; align-items: center; }
+/* Chỉ nhắm các mục ở TẦNG ĐẦU của nav (link section + nút mở dropdown) — dùng `.site-nav a`
+   trống trải sẽ đè luôn lên các link bên trong dropdown, vốn cần cỡ chữ và khoảng đệm khác. */
+.site-nav > a,
+.nav-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: .2em;
   text-decoration: none;
   color: var(--ink-2);
   font-size: .88rem;
   font-weight: 400;
   padding: .4em .75em;
   border-radius: 8px;
+  white-space: nowrap;
   transition: color .2s var(--ease);
 }
-.site-nav a:hover { color: var(--ink); }
+.site-nav > a:hover,
+.nav-trigger:hover { color: var(--ink); }
+
+/* ----- Mục "Sản phẩm" có dropdown ----- */
+.nav-item { position: relative; }
+.nav-caret {
+  width: 13px;
+  height: 13px;
+  margin-top: 1px;
+  transition: transform .25s var(--ease);
+}
+.nav-item:hover .nav-caret,
+.nav-item:focus-within .nav-caret { transform: rotate(180deg); }
+
+.nav-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 5;
+  /* Đệm trên đóng vai trò "cây cầu" nối nút với bảng: chừa khe hở thật giữa hai thứ thì
+     con trỏ đi từ nút xuống bảng sẽ rời khỏi vùng :hover giữa chừng và bảng đóng sập. */
+  padding-top: 10px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity .22s var(--ease), transform .22s var(--ease), visibility .22s var(--ease);
+}
+.nav-item:hover .nav-dropdown,
+.nav-item:focus-within .nav-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.nav-dropdown ul {
+  width: 290px;
+  padding: 6px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  box-shadow: var(--shadow-lg);
+}
+.nav-dropdown a {
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  transition: background-color .2s var(--ease);
+}
+.nav-dropdown a:hover { background: var(--bg-alt); }
+.nav-dropdown-title { font-size: .92rem; font-weight: 500; color: var(--ink); }
+.nav-dropdown-desc { font-size: .82rem; line-height: 1.4; color: var(--ink-3); }
 
 .header-cta { display: none; }
 
@@ -310,17 +395,66 @@ p { text-wrap: pretty; }
 .mobile-nav-close { margin-right: -8px; }
 
 .mobile-nav-list { display: grid; gap: 2px; margin-bottom: 18px; }
-.mobile-nav-list a {
+/* `> li >` chứ không phải `.mobile-nav-list a`: các mẫu sản phẩm trong danh sách con bên dưới
+   cần cỡ chữ nhỏ hơn, để chung một luật sẽ bị đè thành 1.25rem. */
+.mobile-nav-list > li > a {
   display: block;
   padding: 14px 4px;
   font-size: 1.25rem;
   font-weight: 500;
-  letter-spacing: -.025em;
+  letter-spacing: var(--tracking-title);
   color: var(--ink);
   text-decoration: none;
-  border-bottom: 1px solid var(--line-2);
 }
+.mobile-nav-list > li > a { border-bottom: 1px solid var(--line-2); }
+/* Mục "Sản phẩm" có danh sách mẫu ngay bên dưới, kẻ ngang ở đây sẽ thành một vạch kẹp giữa
+   tiêu đề và đúng phần nội dung của nó — bỏ đi cho hai thứ dính liền thành một nhóm. */
+.mobile-nav-list > li:has(> .mobile-nav-sub) > a { border-bottom: 0; padding-bottom: 8px; }
 .mobile-nav-list a:active { color: var(--accent); }
+
+/* Danh sách mẫu: một khối liền có nền, các dòng ngăn nhau bằng kẻ mảnh — đọc như một nhóm con
+   thuộc về mục phía trên, thay vì mấy dòng chữ xám trôi nổi. */
+.mobile-nav-sub {
+  display: grid;
+  margin: 0 0 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-alt);
+  overflow: hidden;
+}
+/* --line chứ không phải --line-2: --line-2 (#ebebed) đặt trên nền --bg-alt (#f5f5f7) gần như
+   không nhìn ra. */
+.mobile-nav-sub li + li { border-top: 1px solid var(--line); }
+.mobile-nav-sub a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 14px;
+  font-size: .97rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+/* Mũi tên ">" vẽ bằng CSS, đẩy sang sát mép phải — dấu hiệu "bấm để đi tiếp". */
+.mobile-nav-sub a::after {
+  content: "";
+  flex: none;
+  margin-left: auto;
+  width: 7px;
+  height: 7px;
+  border-top: 1.8px solid var(--ink-3);
+  border-right: 1.8px solid var(--ink-3);
+  transform: rotate(45deg);
+}
+.mobile-nav-sub a[aria-current="page"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.mobile-nav-sub a[aria-current="page"]::after { border-color: var(--accent); }
+/* Vạch dọc của mục cấp 1 (xem .mobile-nav-list a[aria-current] ở cuối file) định vị
+   left:-14px, để nguyên thì nó rơi ra ngoài khối nền thành một gạch lơ lửng. */
+.mobile-nav-sub a[aria-current="page"]::before { content: none; }
+
 .mobile-nav-cta { width: 100%; }
 .mobile-nav-note {
   margin-top: .7rem;
@@ -329,7 +463,9 @@ p { text-wrap: pretty; }
   text-align: center;
 }
 
-@media (min-width: 860px) {
+/* Ngưỡng nâng từ 860px lên 1040px: nav giờ có 5 mục (Sản phẩm + 4 khối nội dung) thay vì 2,
+   nhét cùng logo và nút "Liên hệ" vào 860px là chúng dính sát nhau tới mức khó bấm. */
+@media (min-width: 1040px) {
   .site-nav { display: flex; }
   .header-cta { display: inline-flex; }
   /* Ở desktop đã có nav đầy đủ — ẩn hẳn hamburger và menu trượt. */
@@ -337,14 +473,13 @@ p { text-wrap: pretty; }
   .nav-scrim,
   .mobile-nav { display: none; }
 }
-
 /* ---------- Hero ---------- */
 .hero {
   position: relative;
-  padding-block: clamp(56px, 9vw, 104px) clamp(40px, 6vw, 68px);
+  padding-block: clamp(40px, 6vw, 76px) clamp(30px, 4vw, 52px);
   overflow: hidden;
 }
-/* Nền toả sáng chỉ còn là một lớp xám rất nhạt tạo chiều sâu, không màu mè. */
+/* Nền toả sáng chỉ là một lớp xám rất nhạt tạo chiều sâu, không màu mè. */
 .hero-glow {
   position: absolute;
   inset: -40% 0 auto -10%;
@@ -354,15 +489,15 @@ p { text-wrap: pretty; }
   opacity: .8;
 }
 
-.hero-inner { position: relative; display: grid; gap: clamp(32px, 5vw, 56px); }
-/* Grid item mặc định có min-width:auto (co theo nội dung/kích thước gốc của
-   SVG), có thể khiến cả trang bị đẩy rộng hơn viewport trên màn hình hẹp.
-   Ép min-width:0 để item co đúng theo cột lưới. */
-.hero-copy, .hero-art { min-width: 0; }
-/* H1 riêng cho hero nhỏ hơn H1 mặc định — chữ mặc định (tới 4.6rem) làm cột chữ cao
-   gần gấp đôi khối video 2:1 bên cạnh, rất lệch. Thu nhỏ lại để 2 cột cân đối hơn mà
-   vẫn là dòng tiêu đề lớn nhất trang. */
-.hero-copy h1 { font-size: clamp(2.1rem, 4.4vw, 3.1rem); line-height: 1.08; }
+/* Khối chữ trên vòng xoay: căn giữa, hẹp lại để dòng tiêu đề không kéo dài quá tầm mắt. */
+.hero-lead {
+  position: relative;
+  max-width: 46rem;
+  text-align: center;
+  margin-bottom: clamp(26px, 4vw, 46px);
+}
+.hero-lead h1 { font-size: clamp(2.2rem, 5.6vw, 3.9rem); line-height: 1.05; }
+.hero-lead .lede { margin-inline: auto; }
 
 /* Nhãn trên tiêu đề hero: chỉ là dòng chữ màu nhấn, bỏ viền và nền pill. */
 .eyebrow {
@@ -383,7 +518,7 @@ p { text-wrap: pretty; }
   margin-top: 1.3rem;
   font-size: clamp(1.1rem, 2.2vw, 1.32rem);
   line-height: 1.45;
-  letter-spacing: -.015em;
+  letter-spacing: var(--tracking-body);
   color: var(--ink-2);
   max-width: 30em;
 }
@@ -392,84 +527,144 @@ p { text-wrap: pretty; }
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
   margin-top: 1.9rem;
 }
 .hero-actions .btn { flex: 1 1 auto; min-width: 200px; }
-
-.hero-trust {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .5rem 1.6rem;
-  margin-top: 1.4rem;
-  font-size: .92rem;
-  color: var(--ink-3);
+@media (min-width: 900px) {
+  .hero-actions .btn { flex: 0 0 auto; min-width: 0; }
 }
-.hero-trust li { position: relative; padding-left: 1.4rem; }
-/* Dấu tick vẽ bằng CSS, mảnh và không nền — nhẹ hơn kiểu tick trong hình tròn. */
-.hero-trust li::after {
-  content: "";
+
+/* ---------- Vòng xoay 3D ở hero (components/HeroCarousel3D.jsx) ---------- */
+/* Mỗi mẫu sản phẩm là một thẻ đặt trên chu vi một vòng tròn trong không gian 3D (rotateY để
+   quay ra đúng hướng, translateZ để đẩy ra xa tâm), cả vòng quay quanh trục dọc qua biến
+   --spin do JS cập nhật mỗi frame. Bán kính --ring-r cũng do JS tính theo bề rộng thẻ và số
+   mẫu — xem HeroCarousel3D.jsx.
+
+   Không JS (hoặc JS lỗi): --spin giữ 0deg, vòng đứng yên — vẫn là một vòng sản phẩm 3D nhìn
+   được, chỉ không xoay. */
+.hero-stage {
+  position: relative;
+  /* Tràn hết hai mép màn hình: đặt NGOÀI .container trong app/page.js nên chỉ cần 100% là
+     đủ — dùng 100vw sẽ rộng dư đúng bằng bề ngang thanh cuộn và làm sân khấu lệch tâm. */
+  width: 100%;
+  height: clamp(360px, 44vw, 560px);
+  perspective: 1150px;
+  perspective-origin: 50% 45%;
+  /* Cắt gọn hai mép để thẻ vòng ra ngoài không đẩy trang rộng ra; đặt trên phần tử KHÔNG có
+     preserve-3d, nếu để chung với .hero-ring sẽ làm bẹt cả không gian 3D. */
+  overflow: hidden;
+  /* Vuốt dọc vẫn cuộn trang bình thường, chỉ vuốt ngang mới xoay vòng. */
+  touch-action: pan-y;
+  cursor: grab;
+  user-select: none;
+}
+.hero-stage.is-dragging { cursor: grabbing; }
+
+.hero-ring {
   position: absolute;
-  left: 1px; top: .42em;
-  width: 9px; height: 5px;
-  border-left: 1.6px solid var(--accent);
-  border-bottom: 1.6px solid var(--accent);
-  transform: rotate(-45deg);
+  top: 44%;
+  left: 50%;
+  width: var(--card-w);
+  height: 0;
+  transform-style: preserve-3d;
+  transform: translateX(-50%) rotateY(var(--spin, 0deg));
+  --card-w: clamp(132px, 17vw, 236px);
 }
 
-/* Khối lưu ý riêng (khác .hero-trust): dùng --star — tông vàng hổ phách sẵn có trong bảng
-   màu (vốn dùng cho sao đánh giá) — làm màu icon cảnh báo, không thêm màu mới vào hệ thống. */
-.hero-warning {
+.hero-ring-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--card-w);
+  /* 4:5 là mức dung hoà cho hai tỉ lệ ảnh đang có trong Airtable: ảnh bảng NFC vuông (1:1) và
+     ảnh standee dọc (3:4). Ép 3:4 thì ảnh vuông bị xén 12,5% mỗi bên, sát rìa tấm bảng; 4:5
+     chỉ xén ảnh vuông 10% mỗi bên và ảnh dọc 3% trên/dưới. Muốn không xén gì cả thì đổi
+     object-fit của .hero-ring-media img sang `contain` — đổi lại ảnh sẽ có viền trống. */
+  aspect-ratio: 4 / 5;
+  margin-top: calc(var(--card-w) * -5 / 4 / 2); /* kéo lên nửa chiều cao để tâm thẻ nằm đúng tâm vòng */
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--art-halo);
+  box-shadow: var(--shadow-lg);
+  /* Xoay thẻ thứ i ra đúng vị trí của nó trên vòng tròn rồi đẩy ra xa tâm đúng 1 bán kính. */
+  transform: rotateY(calc(var(--i) * var(--step))) translateZ(var(--ring-r, 320px));
+  transition: box-shadow .3s var(--ease);
+}
+.hero-ring-item:hover { box-shadow: 0 30px 70px -20px rgba(0, 0, 0, .34); }
+
+.hero-ring-media { display: block; width: 100%; height: 100%; }
+.hero-ring-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  -webkit-user-drag: none;
+}
+
+/* Vệt mờ dưới vòng xoay — gợi ý một mặt sàn để các thẻ trông như đang "đứng" trên đó chứ
+   không lơ lửng giữa nền trắng. */
+.hero-floor {
+  position: absolute;
+  left: 50%;
+  bottom: 84px;
+  translate: -50%;
+  width: min(760px, 88%);
+  height: 90px;
+  pointer-events: none;
+  background: radial-gradient(50% 50% at 50% 50%, rgba(0, 0, 0, .13), transparent 70%);
+}
+
+/* Tên + giá của mẫu đang quay ra trước. Khoảng cách tới đáy tính bằng px cố định (không phải
+   %) vì phía dưới còn dòng gợi ý "Kéo để xoay" — hai khối này phải xếp chồng nhau đúng thứ tự
+   ở mọi chiều cao sân khấu, dùng % thì trên màn hình lớn chúng chạy đè lên nhau. */
+.hero-stage-caption {
+  position: absolute;
+  left: 50%;
+  bottom: 48px;
+  translate: -50%;
+  z-index: 2;
   display: flex;
-  align-items: flex-start;
-  gap: .55rem;
-  margin-top: 1.1rem;
-  padding: .75rem .95rem;
-  max-width: 30rem;
-  border-radius: var(--radius-sm);
-  background: var(--bg-alt);
-  font-size: .86rem;
-  line-height: 1.5;
-  color: var(--ink-2);
+  align-items: baseline;
+  gap: .6rem;
+  padding: .5rem 1.1rem;
+  max-width: 92vw;
+  border-radius: 980px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid var(--line-2);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  white-space: nowrap;
+  pointer-events: none;
 }
-.hero-warning-icon {
-  flex: none;
-  width: 18px;
-  height: 18px;
-  margin-top: .1em;
-  color: var(--star);
+.hero-stage-name {
+  font-size: .95rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+.hero-stage-price { font-size: .88rem; color: var(--accent); font-weight: 600; flex: none; }
 
-.hero-art { position: relative; }
-/* Ảnh hero: bo góc lớn, cắt theo tỉ lệ 4:3 cố định để ảnh nào thay vào cũng giữ đúng
-   bố cục. */
-.hero-art img {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  border-radius: var(--radius-lg);
-  background: var(--art-halo);
+/* Nằm dưới nhãn tên, KHÔNG đặt ở đỉnh sân khấu: thẻ ở chính giữa được phối cảnh phóng to
+   ~1,5 lần nên đỉnh của nó chạm gần sát mép trên, chữ để trên đó sẽ đè lên ảnh sản phẩm. */
+.hero-stage-hint {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  translate: -50%;
+  z-index: 2;
+  font-size: .82rem;
+  color: var(--ink-3);
+  pointer-events: none;
+  transition: opacity .4s var(--ease);
 }
-/* Video hero: khớp đúng tỉ lệ khung hình gốc của video (1920x946 ≈ 2:1) thay vì ép
-   4:3 như ảnh — ép sai tỉ lệ sẽ làm video bị cắt mất 2 bên trái/phải khi phủ đầy
-   khung. Khớp đúng tỉ lệ thì object-fit: cover không phải cắt gì cả, hiện trọn video. */
-.hero-art video {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  aspect-ratio: 1920 / 946;
-  object-fit: cover;
-  border-radius: var(--radius-lg);
-  background: var(--art-halo);
-}
-/* Giữ lại cho hình minh hoạ SVG (HeroArt) nếu sau này dùng lại. */
-.hero-art .art { width: 100%; height: auto; overflow: visible; }
+.hero-stage-hint.is-hidden { opacity: 0; }
 
-/* Sóng lan toả kiểu tín hiệu NFC/không dây, phát ra từ tâm video — thuần trang trí
-   (aria-hidden), nằm sau video (z-index thấp hơn). Dùng border thay vì fill để nhìn
-   như vòng sóng chứ không phải khối tròn đặc. */
+/* Sóng lan toả kiểu tín hiệu NFC/không dây, phát ra từ tâm sân khấu — thuần trang trí
+   (aria-hidden), nằm sau các thẻ sản phẩm. Dùng border thay vì fill để nhìn như vòng sóng
+   chứ không phải khối tròn đặc. */
 .hero-waves {
   position: absolute;
   inset: 0;
@@ -478,42 +673,237 @@ p { text-wrap: pretty; }
   pointer-events: none;
   z-index: 0;
 }
+/* Kích thước neo theo chiều cao sân khấu, KHÔNG theo bề rộng: sân khấu rộng tràn màn hình nên
+   tính theo % bề rộng sẽ cho ra những vòng sóng khổng lồ trên màn hình lớn. */
 .hero-wave {
   position: absolute;
-  width: 55%;
+  height: 46%;
   aspect-ratio: 1;
   border-radius: 50%;
-  border: 1.5px solid color-mix(in srgb, var(--accent) 50%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--accent) 40%, transparent);
   opacity: 0;
   animation: hero-wave-ping 3.2s ease-out infinite;
 }
 .hero-wave:nth-child(2) { animation-delay: 1.05s; }
 .hero-wave:nth-child(3) { animation-delay: 2.1s; }
 @keyframes hero-wave-ping {
-  0%   { transform: scale(.55); opacity: .5; }
+  0%   { transform: scale(.55); opacity: .45; }
   70%  { opacity: .1; }
   100% { transform: scale(1.7); opacity: 0; }
 }
 
-.waves path { opacity: 0; animation: wave 2.6s ease-out infinite; }
-.waves .w1 { animation-delay: 0s; }
-.waves .w2 { animation-delay: .28s; }
-.waves .w3 { animation-delay: .56s; }
-@keyframes wave {
-  0%   { opacity: 0; }
-  22%  { opacity: .95; }
-  62%  { opacity: .95; }
-  100% { opacity: 0; }
+/* ---------- Dải điểm mạnh ngay dưới hero ---------- */
+/* Giữ ĐÚNG ngôn ngữ hình ảnh của khối "Lợi ích" bên dưới (.benefit-list): số thứ tự nhỏ màu
+   nhấn + tiêu đề + một dòng mô tả, ngăn nhau bằng kẻ mảnh, không khung không nền. Hai khối
+   cùng một kiểu thì trang đọc liền mạch. Khác biệt duy nhất: khối này chỉ có 4 ý và nằm ngay
+   dưới hero nên chữ nhỏ hơn một nấc và đệm dọc mỏng hơn, để nó đọc như phần đuôi của hero
+   chứ không tranh chỗ với khối "Lợi ích" thật sự. */
+.highlight-strip {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+.highlight-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 15px 0;
+  border-top: 1px solid var(--line-2);
+}
+.highlight-item:first-child { border-top: 0; }
+
+@media (min-width: 760px) {
+  .highlight-strip { grid-template-columns: repeat(2, 1fr); column-gap: 44px; }
+  /* Ô thứ 2 nằm cùng hàng với ô thứ nhất ở layout 2 cột nên cũng phải bỏ kẻ trên. Luật này
+     phải đứng SAU :first-child ở trên — cùng độ đặc hiệu thì luật sau thắng. */
+  .highlight-item:nth-child(2) { border-top: 0; }
 }
 
-@media (min-width: 900px) {
-  .hero-inner {
-    /* Cột video rộng hơn cột chữ — video ngang tỉ lệ ~2:1 cần nhiều chiều rộng hơn
-       ảnh 4:3 cũ mới không bị nhỏ hẳn đi so với trước. */
-    grid-template-columns: .92fr 1.08fr;
-    align-items: center;
+.highlight-num {
+  flex: none;
+  padding-top: .12rem;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: var(--accent);
+  /* Chữ số cùng bề rộng nên cột số thẳng hàng tăm tắp giữa các dòng. */
+  font-variant-numeric: tabular-nums;
+}
+.highlight-item h3 { font-size: .97rem; letter-spacing: var(--tracking-sub); margin-bottom: 2px; }
+.highlight-item p { color: var(--ink-2); font-size: .87rem; line-height: 1.4; }
+
+/* ---------- Spotlight: lưới ảnh chụp thật tại quán ---------- */
+.spotlight-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(12px, 2vw, 20px);
+}
+@media (min-width: 600px) { .spotlight-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 900px) { .spotlight-grid { grid-template-columns: repeat(4, 1fr); } }
+
+.spotlight-card {
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg-alt);
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease);
+}
+.spotlight-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+}
+
+.spotlight-card-link {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+}
+
+.spotlight-card-img {
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--art-halo);
+}
+.spotlight-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .4s var(--ease);
+}
+.spotlight-card:hover .spotlight-card-img img {
+  transform: scale(1.04);
+}
+
+.spotlight-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: clamp(10px, 1.5vw, 14px);
+}
+.spotlight-card-name {
+  font-size: .88rem;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.3;
+}
+.spotlight-card-price {
+  font-size: .82rem;
+  color: var(--ink-3);
+}
+
+/* ---------- Dải ảnh thật tại quán: mosaic kiểu trang quảng cáo ---------- */
+/* Trước đây là lưới 4 cột toàn ô vuông bằng nhau, ảnh bé đến mức không nhìn ra sản phẩm.
+   Giờ là mosaic có tâm điểm: ảnh ĐẦU TIÊN chiếm 2 cột x 2 hàng (to gấp bốn các ảnh còn lại),
+   phần còn lại vây quanh — mắt có chỗ dừng thay vì lướt qua một dải ô đều tăm tắp. */
+.photo-strip {
+  width: 100%;
+  padding-block: clamp(52px, 8vw, 104px);
+  background: var(--bg-alt);
+}
+.photo-strip-inner {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(10px, 1.4vw, 18px);
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+@media (min-width: 820px) {
+  .photo-strip-inner { grid-template-columns: repeat(3, 1fr); }
+  /* Ô tâm điểm. KHÔNG đặt aspect-ratio cho nó: chiều cao phải do đúng 2 hàng lưới (cộng khe
+     hở) quyết định, ép thêm tỉ lệ vào sẽ đá nhau và làm lưới hụt/thừa một khoảng. */
+  .photo-strip-item:first-child {
+    grid-column: span 2;
+    grid-row: span 2;
+    aspect-ratio: auto;
   }
-  .hero-actions .btn { flex: 0 0 auto; min-width: 0; }
+}
+
+.photo-strip-item {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--art-halo);
+  /* Khổ dọc 4:5 thay cho ô vuông: ảnh chụp tại quán đều là khổ dọc hoặc vuông, khung dọc cho
+     ảnh cao hơn mà không phải cắt sâu hai bên. */
+  aspect-ratio: 4 / 5;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow .35s var(--ease);
+}
+.photo-strip-item:hover { box-shadow: var(--shadow-lg); }
+
+/* Ảnh phủ tuyệt đối chứ không theo dòng chảy: ô tâm điểm lấy chiều cao từ lưới (không có
+   aspect-ratio), ô thường lấy từ aspect-ratio — cách này đúng cho cả hai mà không cần luật riêng. */
+.photo-strip-item img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Phóng chậm (kế thừa nhịp .85s của .img-fade) — chậm mới ra chất quảng cáo, nhanh thành giật. */
+.photo-strip-item:hover img { transform: scale(1.06); }
+
+/* Lớp phủ tối chân ảnh để chữ luôn đọc được, kể cả trên ảnh nền sáng. */
+.photo-strip-item::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 62%;
+  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .78));
+  opacity: .82;
+  transition: opacity .35s var(--ease);
+  pointer-events: none;
+}
+.photo-strip-item:hover::after { opacity: 1; }
+
+.photo-strip-cap {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: clamp(12px, 1.6vw, 20px);
+  color: #fff;
+  transition: transform .35s var(--ease);
+}
+.photo-strip-item:hover .photo-strip-cap { transform: translateY(-3px); }
+
+.photo-strip-name {
+  font-size: clamp(.86rem, 1.3vw, 1rem);
+  font-weight: 600;
+  letter-spacing: var(--tracking-body);
+  line-height: 1.25;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, .4);
+}
+.photo-strip-price {
+  font-size: clamp(.8rem, 1.1vw, .92rem);
+  font-weight: 600;
+  /* --accent (#0071e3) trên ảnh tối tương phản kém — dùng tông xanh sáng hơn đã có trong bảng màu. */
+  color: var(--accent-2);
+}
+/* Ô tâm điểm to gấp bốn nên chữ cũng phải lớn theo, để nó không lọt thỏm trong khung. */
+@media (min-width: 820px) {
+  .photo-strip-item:first-child .photo-strip-name { font-size: clamp(1.1rem, 1.9vw, 1.5rem); }
+  .photo-strip-item:first-child .photo-strip-price { font-size: 1.02rem; }
+}
+
+/* ---------- Video sản phẩm (section riêng ngay sau Hero — xem media.heroVideo trong
+   lib/airtable.js) ---------- */
+/* Cùng cách xử lý như .howto-video: tỉ lệ dưới đây chỉ là dự phòng lúc chờ metadata, tỉ lệ
+   thật do HeroVideo.jsx gán đè. Trước đây ghim cứng 1920/946 theo đúng một file video cụ thể —
+   thay video khác tỉ lệ là bị cắt mà không ai hay. */
+.video-showcase-media video {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  border-radius: var(--radius-lg);
+  background: var(--art-halo);
+  box-shadow: var(--shadow-lg);
 }
 
 /* ---------- Sub-page hero (Sản phẩm / Liên hệ) ---------- */
@@ -535,7 +925,7 @@ p { text-wrap: pretty; }
   margin-top: 1.1rem;
   font-size: clamp(1.05rem, 2vw, 1.25rem);
   line-height: 1.45;
-  letter-spacing: -.015em;
+  letter-spacing: var(--tracking-body);
   color: var(--ink-2);
   margin-inline: auto;
   max-width: 34em;
@@ -588,6 +978,14 @@ p { text-wrap: pretty; }
 /* ---------- Sections ---------- */
 /* Khoảng thở rộng giữa các khối — yếu tố tạo cảm giác "cao cấp". */
 .section { padding-block: clamp(72px, 11vw, 130px); }
+/* Dải phụ trợ đi kèm khối phía trên (vd dải điểm mạnh ngay dưới hero) — đệm mỏng hơn hẳn để
+   nó đọc như phần đuôi của hero chứ không phải một khối riêng ngang hàng. */
+.section-tight { padding-block: clamp(34px, 5vw, 56px); }
+
+/* Menu trên header có các mục nhảy tới từng khối (#loi-ich, #faq...). Thanh header lại dính
+   trên cùng (position: sticky, cao ~52px), nên nhảy tới nơi là tiêu đề khối chui tọt xuống
+   dưới nó. Chừa sẵn khoảng này để điểm dừng luôn nằm ngay dưới header. */
+[id] { scroll-margin-top: 68px; }
 .section-alt { background: var(--bg-alt); }
 
 /* Khối ngay sau tiêu đề trang con thì không cần đệm trên đầy đủ nữa —
@@ -607,7 +1005,7 @@ p { text-wrap: pretty; }
   color: var(--ink-2);
   font-size: clamp(1.05rem, 2vw, 1.2rem);
   line-height: 1.45;
-  letter-spacing: -.015em;
+  letter-spacing: var(--tracking-body);
   max-width: 34em;
   margin-inline: auto;
 }
@@ -653,7 +1051,7 @@ p { text-wrap: pretty; }
   background: var(--bg-alt);
 }
 .section-alt .solution { background: var(--surface); }
-.solution h3 { font-size: clamp(1.5rem, 3.4vw, 2.2rem); margin-bottom: .9rem; letter-spacing: -.03em; }
+.solution h3 { font-size: clamp(1.5rem, 3.4vw, 2.2rem); margin-bottom: .9rem; letter-spacing: var(--tracking-title); }
 .solution p { color: var(--ink-2); }
 .solution p + p { margin-top: .9rem; }
 .solution-note {
@@ -667,10 +1065,16 @@ p { text-wrap: pretty; }
 .howto { display: grid; gap: clamp(24px, 4vw, 44px); align-items: center; }
 @media (min-width: 880px) { .howto { grid-template-columns: 1.1fr .9fr; } }
 
+/* Tỉ lệ ở đây chỉ là DỰ PHÒNG, giữ sẵn một khung có kích thước trong lúc chờ đọc metadata
+   (tránh trang giật khi video hiện ra). Tỉ lệ thật của file video được HeroVideo.jsx gán đè
+   bằng style inline ngay khi biết — xem components/HeroVideo.jsx.
+   object-fit: contain chứ KHÔNG phải cover: cover sẽ cắt cụt video nào không đúng tỉ lệ dự
+   phòng, còn contain thì cùng lắm chừa hai dải nền, không mất phần hình nào. */
 .howto-video video {
   width: 100%;
+  height: auto;
   aspect-ratio: 16 / 9;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: var(--radius-lg);
   background: var(--art-halo);
   display: block;
@@ -803,7 +1207,7 @@ p { text-wrap: pretty; }
 .product-media svg { width: 100%; height: auto; }
 .product-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .product-body { padding: 32px 30px 36px; }
-.product-body h3, .product-title { font-size: 1.5rem; letter-spacing: -.03em; margin-bottom: .7rem; }
+.product-body h3, .product-title { font-size: 1.5rem; letter-spacing: var(--tracking-title); margin-bottom: .7rem; }
 .product-body > p { color: var(--ink-2); font-size: 1rem; line-height: 1.5; }
 .product-cta { margin-top: 1.7rem; width: 100%; }
 .product-ctas { margin-top: 1.8rem; display: flex; flex-wrap: wrap; gap: .6rem; }
@@ -850,65 +1254,112 @@ p { text-wrap: pretty; }
   transform: rotate(-45deg);
 }
 
-/* ---------- Showcase (2 thẻ sản phẩm ngoài trang chủ, dẫn vào trang chi tiết) ---------- */
-.showcase-grid { display: grid; gap: clamp(28px, 4vw, 44px); }
-@media (min-width: 760px) { .showcase-grid { grid-template-columns: repeat(2, 1fr); } }
+/* ---------- Sản phẩm: chia đôi, đổi chiều luân phiên ---------- */
+/* Mỗi dòng sản phẩm chiếm trọn một dải ngang riêng — ảnh thật cỡ lớn một bên, chữ bên kia.
+   Thay cho kiểu 2 thẻ nhỏ cạnh nhau trước đây, vốn làm ảnh sản phẩm bé đến mức khó nhìn ra. */
+.product-splits { display: flex; flex-direction: column; gap: clamp(56px, 8vw, 104px); }
 
-.showcase-card { display: block; text-decoration: none; color: inherit; }
-/* Không ép aspect-ratio cố định — ảnh thật của 2 dòng sản phẩm không cùng tỉ lệ (Bảng NFC
-   vuông ~1:1, Standee ~3:2). Ép chung 1 khung sẽ luôn phải cắt (cover) hoặc chừa viền xám
-   (contain); để khung tự co theo đúng kích thước ảnh thì không mất phần ảnh nào và cũng
-   không có viền thừa — đổi lại 2 thẻ có thể cao thấp khác nhau, chấp nhận được vì chỉ có 2 cột. */
-.showcase-media {
+.product-split {
+  display: grid;
+  gap: clamp(22px, 4vw, 56px);
+  align-items: center;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+@media (min-width: 860px) {
+  .product-split { grid-template-columns: 1.05fr .95fr; }
+  /* Dòng thứ hai đảo chỗ ảnh và chữ. Dùng `order` chứ không đổi thứ tự trong HTML: thứ tự đọc
+     của trình đọc màn hình và của bàn phím vẫn phải là ảnh rồi tới chữ ở cả hai khối. */
+  .product-split.is-flipped .product-split-media { order: 2; }
+}
+
+.product-split-media {
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--art-halo);
 }
-.showcase-media img,
-.showcase-media svg {
-  display: block;
+/* Không ép tỉ lệ cố định: ảnh bảng NFC vuông (1:1) và ảnh standee dọc (3:4) khác tỉ lệ nhau,
+   ép chung một khung thì hoặc phải cắt mất rìa sản phẩm, hoặc chừa viền xám. Để khung tự co
+   theo ảnh thì không mất gì cả. */
+.product-split-media img,
+.product-split-media svg { display: block; width: 100%; height: auto; }
+
+.product-split-copy { display: flex; flex-direction: column; align-items: flex-start; gap: .85rem; }
+.product-split-copy h3 {
+  font-size: clamp(1.6rem, 3.4vw, 2.35rem);
+  letter-spacing: var(--tracking-title);
+  line-height: 1.1;
+}
+.product-split-desc { color: var(--ink-2); font-size: 1.03rem; line-height: 1.55; }
+
+.product-split-ticks { display: grid; gap: .5rem; font-size: .97rem; color: var(--ink-2); }
+.product-split-ticks li { position: relative; padding-left: 1.5rem; line-height: 1.45; }
+.product-split-ticks li::after {
+  content: "";
+  position: absolute;
+  left: 1px; top: .45em;
+  width: 9px; height: 5px;
+  border-left: 1.7px solid var(--accent);
+  border-bottom: 1.7px solid var(--accent);
+  transform: rotate(-45deg);
+}
+
+.product-split-price { display: flex; align-items: baseline; gap: .5rem; margin-top: .2rem; }
+.product-split-price span { color: var(--ink-3); font-size: .95rem; }
+.product-split-price b { font-size: 1.7rem; font-weight: 600; letter-spacing: var(--tracking-title); }
+
+.product-split-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: .4rem; }
+.product-split-actions .i { width: 1em; height: 1em; }
+
+/* ---------- Thiết kế riêng: dải ảnh chạy ngang (xem components/CustomDesignsGallery.jsx) ---------- */
+/* Dải tràn hết bề ngang màn hình, thoát khỏi .container của section — ảnh chạy ra tận hai mép
+   mới ra dáng một dải trôi, chứ dừng lại đúng lề nội dung thì nhìn như cái khay bị cắt cụt. */
+.custom-marquee {
+  /* Đã đặt ngoài .container trong app/page.js nên chỉ cần 100% — không dùng 100vw vì nó tính
+     cả bề ngang thanh cuộn, thừa ra chừng 15px và đẩy dải lệch tâm. */
   width: 100%;
-  height: auto;
+  margin-block: clamp(6px, 1.5vw, 18px);
+  overflow: hidden;
+  /* Mờ dần hai mép để ảnh trôi vào/ra thay vì bị cắt phựt ở biên. */
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
 }
-/* Chỉ phóng ảnh bên trong khung, không phóng cả thẻ — chữ giữ nguyên độ nét. */
-.showcase-media img,
-.showcase-media svg { transition: transform .5s var(--ease); }
-.showcase-card:hover .showcase-media img,
-.showcase-card:hover .showcase-media svg { transform: scale(1.04); }
 
-.showcase-body { padding-top: 1.3rem; }
-.showcase-title { font-size: clamp(1.35rem, 2.6vw, 1.75rem); letter-spacing: -.03em; margin-bottom: .4rem; }
-.showcase-desc { color: var(--ink-2); font-size: 1.02rem; line-height: 1.45; }
-.showcase-link {
-  display: inline-flex;
-  align-items: center;
-  gap: .35em;
-  margin-top: .8rem;
-  color: var(--accent);
-  font-size: 1rem;
-}
-.showcase-link .i { width: 1em; height: 1em; transition: transform .3s var(--ease); }
-.showcase-card:hover .showcase-link { text-decoration: underline; text-underline-offset: 3px; }
-.showcase-card:hover .showcase-link .i { transform: translateX(3px); }
-
-/* ---------- Thiết kế riêng (lưới ảnh mẫu — xem getCustomDesigns trong lib/airtable.js) ---------- */
-.custom-grid {
-  display: grid;
+.custom-marquee-track {
+  display: flex;
   gap: 18px;
-  grid-template-columns: repeat(2, 1fr);
+  width: max-content;
+  will-change: transform;
+  animation: custom-marquee-scroll var(--marquee-duration, 48s) linear infinite;
 }
-@media (min-width: 760px)  { .custom-grid { grid-template-columns: repeat(3, 1fr); } }
+/* Trượt sang trái đúng bề rộng MỘT lượt. Track gồm --sets lượt giống hệt nhau, nên một lượt
+   bằng 100%/--sets bề rộng track — tới đó thì lượt kế tiếp đã nằm khít vào chỗ cũ, vòng lặp
+   không lộ mối nối. (translateX theo % là tính trên bề rộng của chính track.) */
+@keyframes custom-marquee-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(calc(-100% / var(--sets))); }
+}
+
+/* Dừng khi khách rê chuột vào hoặc tab tới một ảnh — ảnh bấm được, cứ trôi tiếp thì nhắm
+   trúng ảnh muốn xem là chuyện bực mình. */
+.custom-marquee:hover .custom-marquee-track,
+.custom-marquee:focus-within .custom-marquee-track { animation-play-state: paused; }
+
 .custom-item {
+  /* Bề rộng cố định (không co theo lưới nữa) để mỗi lượt lặp rộng đúng bằng nhau — lượt trước
+     và lượt sau lệch nhau một chút thôi là vòng lặp giật một cái mỗi vòng. */
+  flex: 0 0 auto;
+  width: clamp(210px, 24vw, 290px);
+  aspect-ratio: 4 / 3;
   border-radius: var(--radius);
   overflow: hidden;
   background: var(--art-halo);
-  aspect-ratio: 4 / 3;
 }
 .custom-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform .5s var(--ease);
 }
 .custom-item:hover img { transform: scale(1.04); }
 
@@ -926,6 +1377,14 @@ p { text-wrap: pretty; }
   outline: 2px solid var(--accent);
   outline-offset: 3px;
   border-radius: var(--radius);
+}
+
+/* Khách bật "giảm hiệu ứng chuyển động": không tự chạy nữa. Nhưng track vẫn dài hơn màn hình,
+   nên phải cho cuộn ngang bằng tay — không thì phần lớn ảnh nằm ngoài màn hình và không có
+   cách nào xem được. */
+@media (prefers-reduced-motion: reduce) {
+  .custom-marquee { overflow-x: auto; }
+  .custom-marquee-track { animation: none; }
 }
 
 /* ---------- Popup xem chi tiết "Thiết kế riêng" (xem components/CustomDesignsGallery.jsx) ---------- */
@@ -1026,7 +1485,7 @@ p { text-wrap: pretty; }
 .variant-gallery .kicker {
   font-size: clamp(1.3rem, 2.6vw, 1.7rem);
   font-weight: 600;
-  letter-spacing: -.03em;
+  letter-spacing: var(--tracking-title);
   color: var(--ink);
   margin-bottom: 1.2rem;
 }
@@ -1067,7 +1526,7 @@ p { text-wrap: pretty; }
   -webkit-backdrop-filter: saturate(180%) blur(10px);
 }
 .variant-info { padding: .95rem .3rem 1.1rem; display: grid; gap: .25rem; }
-.variant-name { font-size: 1rem; font-weight: 500; color: var(--ink); letter-spacing: -.015em; }
+.variant-name { font-size: 1rem; font-weight: 600; color: var(--ink); letter-spacing: var(--tracking-body); }
 .variant-price { font-size: .92rem; color: var(--ink-3); }
 
 /* ---------- Variant detail page (trang chi tiết 1 mẫu): ảnh/video trái, info dính phải ---------- */
@@ -1152,13 +1611,13 @@ p { text-wrap: pretty; }
 }
 .variant-detail-title {
   font-size: clamp(1.9rem, 3.8vw, 2.8rem);
-  letter-spacing: -.035em;
+  letter-spacing: var(--tracking-title);
   margin-bottom: .6rem;
 }
 .variant-detail-price {
   font-size: 1.35rem;
   font-weight: 500;
-  letter-spacing: -.02em;
+  letter-spacing: var(--tracking-sub);
   color: var(--ink);
   margin-bottom: 1.1rem;
 }
@@ -1173,38 +1632,43 @@ p { text-wrap: pretty; }
 .products-note a { color: var(--accent); text-decoration: none; }
 .products-note a:hover { text-decoration: underline; text-underline-offset: 3px; }
 
-/* ---------- Benefits ---------- */
-/* Danh sách hàng ngang, không khung thẻ — icon trái, tiêu đề + mô tả phải, ngăn cách bằng
-   đường kẻ mảnh, thay cho kiểu 6 thẻ vuông xám đều nhau trước đây (nhìn đơn điệu, mọi mục
-   cùng trọng lượng thị giác). 2 cột trên desktop (dòng 1: mục 1-2, dòng 2: mục 3-4, dòng 3:
-   mục 5-6, theo đúng thứ tự mảng `benefits`), xếp dọc 1 cột trên mobile. */
-.benefits-list { display: grid; }
-.benefit-row {
-  display: flex;
-  gap: 18px;
-  align-items: flex-start;
-  padding: 26px 0;
-}
-.benefit-row:not(:first-child) { border-top: 1px solid var(--line-2); }
-@media (min-width: 700px) {
-  .benefits-list { grid-template-columns: repeat(2, 1fr); column-gap: 56px; }
-  /* Mục thứ 2 nằm cùng hàng với mục 1 ở layout 2 cột nên không cần đường kẻ trên nữa. Luật
-     này phải đứng SAU luật :not(:first-child) ở trên — 2 luật cùng độ đặc hiệu (0,2,0), luật
-     đứng sau trong file mới thắng, đứng trước như cũ sẽ bị .benefit-row:not(:first-child) đè lại. */
-  .benefit-row:nth-child(2) { border-top: none; }
-}
-.benefit-row h3 { margin-bottom: .4rem; }
-.benefit-row p { color: var(--ink-2); font-size: 1rem; line-height: 1.5; }
-.benefit-icon {
+/* ---------- Benefits: danh sách đánh số kiểu biên tập ---------- */
+/* Bỏ icon, chỉ còn số thứ tự nhỏ màu nhấn + tiêu đề + một dòng mô tả, ngăn nhau bằng kẻ mảnh.
+   Chữ làm chủ đạo, hợp tông tối giản của site hơn kiểu 6 thẻ icon trần trước đây — và vì mỗi
+   dòng sát nhau (không có khoảng hở giữa các ô), tổng chiều cao trên điện thoại ngắn hơn hẳn
+   dù vẫn là 1 cột. */
+.benefit-list {
   display: grid;
-  place-items: center;
-  flex: none;
-  width: 46px; height: 46px;
-  border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent);
+  grid-template-columns: 1fr;
 }
-.benefit-icon svg { width: 22px; height: 22px; }
+.benefit-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 18px 0;
+  border-top: 1px solid var(--line-2);
+}
+.benefit-item:first-child { border-top: 0; }
+
+@media (min-width: 760px) {
+  .benefit-list { grid-template-columns: repeat(2, 1fr); column-gap: 44px; }
+  /* Ô thứ 2 nằm cùng hàng với ô thứ nhất ở layout 2 cột nên cũng phải bỏ kẻ trên. Luật này
+     phải đứng SAU :first-child ở trên — cùng độ đặc hiệu thì luật sau thắng. */
+  .benefit-item:nth-child(2) { border-top: 0; }
+}
+
+.benefit-num {
+  flex: none;
+  padding-top: .15rem;
+  font-size: .82rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: var(--accent);
+  /* Chữ số cùng bề rộng nên cột số thẳng hàng tăm tắp giữa các dòng. */
+  font-variant-numeric: tabular-nums;
+}
+.benefit-item h3 { font-size: 1.02rem; letter-spacing: var(--tracking-sub); margin-bottom: 3px; }
+.benefit-item p { color: var(--ink-2); font-size: .9rem; line-height: 1.45; }
 
 /* ---------- Industries ---------- */
 .industries {
@@ -1223,7 +1687,7 @@ p { text-wrap: pretty; }
   background: var(--surface);
   font-weight: 500;
   font-size: .98rem;
-  letter-spacing: -.015em;
+  letter-spacing: var(--tracking-body);
   transition: transform .35s var(--ease);
 }
 .industry:hover { transform: scale(1.03); }
@@ -1300,7 +1764,7 @@ p { text-wrap: pretty; }
   margin-top: .6rem;
   font-size: clamp(2rem, 5.5vw, 3rem);
   font-weight: 600;
-  letter-spacing: -.03em;
+  letter-spacing: var(--tracking-title);
   line-height: 1.1;
   color: #fff;
 }
@@ -1353,7 +1817,7 @@ p { text-wrap: pretty; }
   margin-inline: auto;
   font-size: clamp(1.02rem, 2vw, 1.15rem);
   line-height: 1.45;
-  letter-spacing: -.015em;
+  letter-spacing: var(--tracking-body);
 }
 
 /* ---------- CTA band (index) ---------- */
@@ -1457,7 +1921,7 @@ p { text-wrap: pretty; }
   padding-bottom: clamp(10px, 1.6vw, 20px);
   font-size: clamp(2.1rem, 11vw, 8.2rem);
   font-weight: 600;
-  letter-spacing: -.05em;
+  letter-spacing: var(--tracking-hero);
   line-height: 1;
   white-space: nowrap;
   text-decoration: none;
@@ -1524,7 +1988,7 @@ body { padding-bottom: 0; }
 .stat-value {
   font-size: clamp(2.4rem, 6vw, 3.6rem);
   font-weight: 600;
-  letter-spacing: -.04em;
+  letter-spacing: var(--tracking-hero);
   line-height: 1;
   color: var(--ink);
 }
@@ -1550,7 +2014,7 @@ body { padding-bottom: 0; }
   border-bottom: 1px solid var(--line-2);
   background: none;
 }
-.faq-item h3 { font-size: 1.05rem; font-weight: 500; }
+.faq-item h3 { font-size: 1.05rem; font-weight: 600; }
 .faq-trigger {
   width: 100%;
   display: flex;
@@ -1562,8 +2026,8 @@ body { padding-bottom: 0; }
   border: none;
   text-align: left;
   font: inherit;
-  font-weight: 500;
-  letter-spacing: -.015em;
+  font-weight: 600;
+  letter-spacing: var(--tracking-body);
   color: var(--ink);
   cursor: pointer;
   transition: color .2s var(--ease);
@@ -1579,13 +2043,32 @@ body { padding-bottom: 0; }
 .faq-panel { padding: 0 4px 24px; }
 .faq-panel p { color: var(--ink-2); font-size: 1rem; line-height: 1.55; max-width: 40em; }
 
+/* Lưu ý kỹ thuật dưới khối FAQ (trước đây nằm ở chân hero). Dùng --star — tông vàng hổ phách
+   sẵn có trong bảng màu — cho icon cảnh báo, không thêm màu mới vào hệ thống. */
+.faq-note {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  margin-top: clamp(22px, 3vw, 34px);
+  padding: .9rem 1.1rem;
+  border-radius: var(--radius-sm);
+  background: var(--bg-alt);
+  font-size: .9rem;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+.faq-note-icon { flex: none; width: 18px; height: 18px; margin-top: .15em; color: var(--star); }
+
 /* ---------- Nav "đang ở trang này" ---------- */
 /* Desktop: đổi sang màu mực đậm + nền xám nhạt — đủ nhận ra mà không ồn ào. */
-.site-nav a[aria-current="page"] {
+.site-nav > a[aria-current="page"],
+.nav-trigger[aria-current="page"] {
   color: var(--ink);
   font-weight: 500;
   background: var(--bg-alt);
 }
+/* Trong dropdown thì nền xám của mục đang xem lẫn với nền xám lúc rê chuột — dùng màu nhấn. */
+.nav-dropdown a[aria-current="page"] .nav-dropdown-title { color: var(--accent); }
 /* Sidebar mobile: chữ màu nhấn + vạch dọc bên trái. */
 .mobile-nav-list a[aria-current="page"] {
   color: var(--accent);
@@ -1629,11 +2112,34 @@ body { padding-bottom: 0; }
 }
 
 /* ---------- Ảnh thật đang tải (ProgressiveImg) ---------- */
-/* Ảnh hiện dần thay vì nhấp nháy — nền chờ là màu xám phẳng, không shimmer loè loẹt. */
+/* Ảnh "nét dần": vừa hiện lên vừa gỡ mờ và thu từ hơi phóng về đúng cỡ. Ảnh sản phẩm nhờ vậy
+   ra mắt như một tấm ảnh bìa chứ không như ô ảnh đang nạp — kiểu chỉ tăng độ đục phẳng lì
+   trước đây làm ảnh trông rẻ tiền. Nền chờ vẫn là màu xám phẳng, không shimmer loè loẹt.
+
+   Độ mờ dài hơn độ đục một nhịp (.85s so với .55s) là cố ý: ảnh hiện ra gần như ngay lập tức
+   rồi mới từ từ ăn nét, nên mắt bắt được ảnh sớm mà vẫn thấy chuyển động. */
 .img-fade {
   background: var(--art-halo);
   opacity: 0;
-  transition: opacity .5s var(--ease);
+  filter: blur(14px);
+  transform: scale(1.05);
+  transition:
+    opacity .55s var(--ease),
+    filter .85s var(--ease),
+    transform .85s var(--ease);
 }
-.img-fade.is-loaded { opacity: 1; }
-@media (prefers-reduced-motion: reduce) { .img-fade { opacity: 1; } }
+.img-fade.is-loaded {
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+/* Tắt hẳn cả chuyển động lẫn transition — để lại transition thì ảnh vẫn trườn/nhoè một nhịp,
+   đúng thứ mà "giảm hiệu ứng chuyển động" muốn tránh. */
+@media (prefers-reduced-motion: reduce) {
+  .img-fade {
+    opacity: 1;
+    filter: none;
+    transform: none;
+    transition: none;
+  }
+}

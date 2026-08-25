@@ -1,4 +1,21 @@
+import { Inter } from 'next/font/google';
 import './globals.css';
+
+// Chữ trên máy KHÔNG phải Apple. Máy Apple đã có sẵn SF Pro thật qua -apple-system (xem --font
+// trong globals.css); còn Android/Windows trước đây rơi về Roboto/Segoe UI, khác hẳn SF. Inter
+// là bản thay thế mở gần SF Pro Text nhất và có đủ dấu tiếng Việt.
+//
+// SF Pro KHÔNG thể tự host: giấy phép của Apple chỉ cho dùng để phát triển ứng dụng trên nền
+// tảng Apple, không cho nhúng vào website.
+//
+// next/font TẢI SẴN file font lúc build rồi phục vụ từ chính tên miền của mình — không có
+// request nào ra CDN ngoài lúc chạy, đúng nguyên tắc của dự án (xem README).
+const inter = Inter({
+  subsets: ['latin', 'vietnamese'],
+  // Hiện chữ bằng font dự phòng ngay rồi đổi khi font tải xong, thay vì để trống chữ.
+  display: 'swap',
+  variable: '--font-inter',
+});
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import MobileCta from '@/components/MobileCta';
@@ -51,7 +68,7 @@ export default function RootLayout({ children }) {
     // — cố ý, không phải lỗi. Không thể render sẵn class này từ server: `.js .reveal` ẩn nội
     // dung đi chờ hiệu ứng cuộn, ai tắt JS sẽ nhìn thấy trang trắng vĩnh viễn.
     // Thuộc tính này chỉ bỏ qua cảnh báo cho đúng thẻ <html>, con bên trong vẫn được kiểm tra.
-    <html lang="vi" suppressHydrationWarning>
+    <html lang="vi" className={inter.variable} suppressHydrationWarning>
       <head>
         {/* Đánh dấu JS đã chạy trước khi trang vẽ khung hình đầu, để hiệu ứng
             "hiện dần khi cuộn" (.reveal) chỉ áp dụng khi JS thực sự hoạt động —

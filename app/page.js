@@ -4,9 +4,10 @@ import FaqAccordion from '@/components/FaqAccordion';
 import JsonLd from '@/components/JsonLd';
 import ProgressiveImg from '@/components/ProgressiveImg';
 import HeroVideo from '@/components/HeroVideo';
+import HeroCarousel3D from '@/components/HeroCarousel3D';
 import CustomDesignsGallery from '@/components/CustomDesignsGallery';
 import HowtoToggle from '@/components/HowtoToggle';
-import { HeroArt, NfcPlateArt, StandeeArt } from '@/components/illustrations';
+import { NfcPlateArt, StandeeArt } from '@/components/illustrations';
 import { siteConfig } from '@/lib/siteConfig';
 import { products } from '@/data/products';
 import { platforms } from '@/data/platforms';
@@ -19,6 +20,33 @@ import {
 } from '@/components/icons';
 
 const ART_BY_ID = { 'bang-nfc': NfcPlateArt, standee: StandeeArt };
+
+// "99.000đ" -> 99000. Chỉ dùng để SO SÁNH giá, không dùng để hiển thị — chuỗi gốc đã định
+// dạng sẵn trong Airtable nên cứ hiện nguyên chuỗi đó.
+function toNumber(price) {
+  return Number(String(price).replace(/\D/g, '')) || 0;
+}
+
+// [[a1, a2, a3], [b1, b2]] -> [a1, b1, a2, b2, a3]. Danh sách nào hết trước thì thôi, phần dư
+// của danh sách dài hơn nối tiếp vào cuối — không bỏ sót mẫu nào.
+function interleave(lists) {
+  const out = [];
+  const longest = Math.max(0, ...lists.map((l) => l.length));
+  for (let i = 0; i < longest; i++) {
+    for (const list of lists) {
+      if (list[i]) out.push(list[i]);
+    }
+  }
+  return out;
+}
+
+// Dải ngay dưới hero — mỗi ý vài chữ, không phải câu dài (khuôn "top features" của Samsung).
+const highlights = [
+  { Icon: PhoneOutlineIcon, title: 'Không cần cài app', body: 'Khách chạm là xong' },
+  { Icon: RefreshIcon, title: 'Đổi link bất cứ lúc nào', body: 'Không phải làm bảng mới' },
+  { Icon: BoltIcon, title: 'Dùng được ngay', body: 'Không phải cài đặt gì' },
+  { Icon: LayersIcon, title: 'Đặt 1 cái cũng nhận', body: 'Giao trong ngày tại Hà Nội' },
+];
 
 const benefits = [
   { Icon: BarsIcon, title: 'Xin đánh giá nhanh hơn', body: 'Giảm thời gian khách hàng thao tác trên điện thoại.' },
@@ -68,19 +96,37 @@ const faqs = [
 ];
 
 export default async function HomePage() {
-  // Lấy ảnh thật của từng dòng sản phẩm (ảnh đầu tiên có trong Airtable) để làm ảnh
-  // giới thiệu ngoài trang chủ; chưa có ảnh thì rơi về hình minh hoạ SVG.
+  // Lấy ảnh thật của từng dòng sản phẩm (ảnh đầu tiên có trong Airtable) để làm ảnh giới
+  // thiệu — dùng chung cho cả hero lẫn phần "SẢN PHẨM" bên dưới; chưa có ảnh thì rơi về hình
+  // minh hoạ SVG.
   const variantsByProduct = await getVariantsByProduct();
-  const showcase = products.map((p) => ({
-    ...p,
-    image: (variantsByProduct[p.id] || []).find((v) => v.image)?.image || null,
-    Art: ART_BY_ID[p.id],
-  }));
+  const showcase = products.map((p) => {
+    const variants = variantsByProduct[p.id] || [];
+    return {
+      ...p,
+      image: variants.find((v) => v.image)?.image || null,
+      Art: ART_BY_ID[p.id],
+      // Giá thấp nhất của dòng, để hiện "Chỉ ..." ngay ngoài trang chủ. Giá trong Airtable
+      // là chuỗi đã định dạng ("99.000đ") nên phải rút số ra mới so sánh được.
+      priceFrom: variants
+        .map((v) => v.price)
+        .filter(Boolean)
+        .sort((a, b) => toNumber(a) - toNumber(b))[0] || null,
+    };
+  });
+
+  // Toàn bộ mẫu thật (có ảnh) cho dải chọn mẫu ở hero — XEN KẼ hai dòng sản phẩm thay vì nối
+  // đuôi nhau, để dải không rơi vào cảnh "4 bảng liền một mạch rồi mới tới standee".
+  const heroItems = interleave(
+    products.map((p) => (variantsByProduct[p.id] || []).filter((v) => v.image))
+  ).map(({ id, href, name, price, image }) => ({ id, href, name, price, image }));
 
   // Ảnh mẫu "Thiết kế riêng" — bảng Airtable riêng, xem lib/airtable.js.
   const customDesigns = await getCustomDesigns();
 
-  // Video/ảnh hero + video demo — cũng từ bảng Airtable riêng. Ô nào trống thì null.
+  // Video demo — bảng "media trang chủ" riêng trên Airtable. Ô trống thì null; heroVideo giờ
+  // chỉ dùng cho section "VIDEO SẢN PHẨM" riêng ngay sau Hero (không còn nằm trong Hero nữa —
+  // Hero dùng ảnh thật của 2 dòng sản phẩm qua HeroShowcase ở trên).
   const media = await getSiteMedia();
 
   return (
@@ -88,78 +134,58 @@ export default async function HomePage() {
       {/* ============ HERO ============ */}
       <section className="hero" id="top">
         <div className="hero-glow" aria-hidden="true" />
-        <div className="container hero-inner">
-          <div className="hero-copy">
-            <Reveal as="p" className="eyebrow">
-              <span className="dot" aria-hidden="true" />
-              {/* Rút gọn theo tên sản phẩm mới ở data/products.js — giữ đúng 1 dòng, không
-                  dán nguyên 2 tên đầy đủ ("Bảng 10x10 dán tường & quầy" / "Standee để bàn
-                  A6") vào vì sẽ quá dài cho 1 dòng eyebrow. */}
-              Bảng dán tường &amp; standee để bàn
-            </Reveal>
-            <Reveal as="h1">Tăng đánh giá 5 sao<br /><em>chỉ với 1 chạm</em></Reveal>
-            <Reveal as="p" className="lede">
-              Khách chạm điện thoại hoặc quét mã là mở thẳng form đánh giá.
-            </Reveal>
 
-            <Reveal as="div" className="hero-actions">
-              <Link className="btn btn-primary btn-lg" href="/lien-he">
-                <PhoneIcon className="i" />
-                Liên hệ đặt hàng
-              </Link>
-              <Link className="btn btn-ghost btn-lg" href="#san-pham">
-                Xem sản phẩm
-                <ArrowRightIcon className="i" />
-              </Link>
-            </Reveal>
+        <div className="container hero-lead">
+          <Reveal as="h1">Tăng đánh giá 5 sao <em>chỉ với 1 chạm</em></Reveal>
+          <Reveal as="p" className="lede">
+            Khách chạm điện thoại hoặc quét mã là mở thẳng form đánh giá.
+          </Reveal>
 
-            <Reveal as="ul" className="hero-trust">
-              <li>Trả lời trong vòng 2 phút</li>
-              <li>Đặt 1 cái cũng nhận</li>
-              <li>Khách không cần cài app</li>
-              <li>Tương thích các dòng điện thoại</li>
-            </Reveal>
-
-            {/* Tách khỏi .hero-trust: đây là 1 lưu ý/giới hạn, không phải điểm mạnh — để chung
-                danh sách có dấu tick xanh (ngụ ý "tốt") sẽ đọc sai ý, lại là câu dài trong 1
-                danh sách toàn cụm ngắn nên xuống dòng lộn xộn. Icon cảnh báo + khối riêng cho
-                đúng bản chất "cần lưu ý" của nó. */}
-            <Reveal as="p" className="hero-warning">
-              <WarningIcon className="hero-warning-icon" aria-hidden="true" />
-              Một số điện thoại Android có chip NFC nằm ở giữa mặt lưng thay vì gần camera phía trên — khách chạm không nhận thì thử di chuyển sát khu vực đó.
-            </Reveal>
-          </div>
-
-          {/* Video/ảnh hero: upload vào bảng "media trang chủ" trên Airtable, dòng có
-              Key = heroVideo / heroImage. Ưu tiên video, rồi tới ảnh, cuối cùng là hình
-              minh hoạ SVG — nhờ vậy bảng Airtable trống thì hero vẫn có nội dung. */}
-          <Reveal as="div" className="hero-art">
-            {/* Sóng lan toả kiểu tín hiệu không dây/NFC — thuần trang trí, nằm sau video. */}
-            <div className="hero-waves" aria-hidden="true">
-              <span className="hero-wave" />
-              <span className="hero-wave" />
-              <span className="hero-wave" />
-            </div>
-            {media.heroVideo ? (
-              <HeroVideo
-                src={media.heroVideo.url}
-                poster={media.heroImage?.url}
-                alt={media.heroVideo.alt || siteConfig.heroImageAlt}
-              />
-            ) : media.heroImage ? (
-              <ProgressiveImg
-                src={media.heroImage.url}
-                alt={media.heroImage.alt || siteConfig.heroImageAlt}
-                loading="eager"
-              />
-            ) : (
-              <HeroArt aria-label={siteConfig.heroImageAlt} />
-            )}
+          <Reveal as="div" className="hero-actions">
+            <Link className="btn btn-primary btn-lg" href="/lien-he">
+              <PhoneIcon className="i" />
+              Liên hệ đặt hàng
+            </Link>
+            <Link className="btn btn-ghost btn-lg" href="#san-pham">
+              Xem sản phẩm
+              <ArrowRightIcon className="i" />
+            </Link>
           </Reveal>
         </div>
 
+        {/* Vòng xoay 3D chiếm trọn bề ngang, đặt NGOÀI .container để tràn hết hai mép màn hình —
+            xem components/HeroCarousel3D.jsx. Airtable chưa có mẫu nào kèm ảnh thì component
+            trả về null: hero rút gọn còn phần chữ, vẫn đọc được bình thường. */}
+        <HeroCarousel3D items={heroItems} />
+      </section>
+
+      {/* ============ DẢI ĐIỂM MẠNH ============ */}
+      {/* Khuôn "top features" của Samsung: ngay dưới hero là một dải ngắn các ý bán hàng, mỗi ý
+          một icon và vài chữ — không phải đoạn văn. Trước đây các ý này bị nhồi vào chân hero
+          làm hero rối. */}
+      <section className="section section-tight" id="diem-manh">
         <div className="container">
-          <Reveal as="div" className="platform-strip">
+          {/* Dùng ĐÚNG kiểu của khối "Lợi ích" bên dưới (xem .benefit-list): số thứ tự nhỏ màu
+              nhấn, tiêu đề, một dòng mô tả, ngăn nhau bằng kẻ mảnh. Hai khối cùng ngôn ngữ
+              hình ảnh nên trang đọc liền mạch, không phải mỗi khối một kiểu.
+
+              Số chỉ để đánh dấu thị giác, KHÔNG mang nghĩa thứ tự — nên giữ <ul> chứ không
+              phải <ol>, và số thì aria-hidden để trình đọc màn hình không đọc "01, 02...". */}
+          <Reveal as="ul" className="highlight-strip">
+            {highlights.map(({ title, body }, i) => (
+              <li className="highlight-item" key={title}>
+                <span className="highlight-num" aria-hidden="true">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <div>
+                  <h3>{title}</h3>
+                  <p>{body}</p>
+                </div>
+              </li>
+            ))}
+          </Reveal>
+
+          <Reveal as="div" className="platform-strip" delay={80}>
             <span className="platform-label">Đưa khách thẳng tới</span>
             <ul className="platform-list">
               {platforms.map(({ name, icon }) => (
@@ -173,6 +199,26 @@ export default async function HomePage() {
           </Reveal>
         </div>
       </section>
+
+      {/* ============ VIDEO SẢN PHẨM ============ */}
+      {/* Trước đây video này nằm trong Hero (field heroVideo) — chuyển xuống thành section
+          riêng ngay sau Hero để Hero tập trung vào ảnh sản phẩm. Airtable chưa có heroVideo
+          thì ẩn hẳn section, không để khung trống. */}
+      {media.heroVideo && (
+        <section className="section video-showcase" id="video-san-pham">
+          <div className="container">
+            <Reveal as="header" className="section-head">
+              <h2>Một chạm, trang đánh giá mở ra ngay</h2>
+            </Reveal>
+            <Reveal as="div" className="video-showcase-media" delay={80}>
+              <HeroVideo
+                src={media.heroVideo.url}
+                alt={media.heroVideo.alt || siteConfig.heroImageAlt}
+              />
+            </Reveal>
+          </div>
+        </section>
+      )}
 
       {/* ============ CÁCH HOẠT ĐỘNG ============ */}
       <section className="section section-alt" id="cach-hoat-dong">
@@ -213,36 +259,80 @@ export default async function HomePage() {
       </section>
 
       {/* ============ SẢN PHẨM ============ */}
+      {/* Khuôn "split" của Samsung: mỗi dòng sản phẩm chiếm trọn một dải ngang riêng, ảnh thật
+          cỡ lớn một bên, chữ bên kia, và ĐỔI CHIỀU luân phiên để mắt không đi thẳng một mạch.
+          Khác hẳn kiểu 2 thẻ nhỏ nằm cạnh nhau trước đây — ảnh giờ đủ to để nhìn ra sản phẩm. */}
       <section className="section" id="san-pham">
         <div className="container">
           <Reveal as="header" className="section-head">
             <p className="kicker">Sản phẩm</p>
-            <h2>Hai kiểu, chọn sản phẩm phù hợp theo không gian</h2>
+            <h2>Hai kiểu, chọn theo không gian quán</h2>
           </Reveal>
+        </div>
 
-          <div className="showcase-grid">
-            {showcase.map((p, i) => (
-              <Reveal as="div" key={p.id} delay={i * 80}>
-                <Link className="showcase-card" href={p.href}>
-                  <div className="showcase-media">
-                    {p.image ? (
-                      <ProgressiveImg src={p.image} alt={p.title} />
-                    ) : (
-                      <p.Art aria-label={p.artLabel} />
-                    )}
-                  </div>
-                  <div className="showcase-body">
-                    <h3 className="showcase-title">{p.title}</h3>
-                    <p className="showcase-desc">{p.tagline}</p>
-                    <span className="showcase-link">
-                      Xem chi tiết
-                      <ArrowRightIcon className="i" />
-                    </span>
-                  </div>
-                </Link>
-              </Reveal>
-            ))}
-          </div>
+        <div className="product-splits">
+          {showcase.map((p, i) => (
+            <Reveal as="article" key={p.id} className={`product-split${i % 2 ? ' is-flipped' : ''}`}>
+              <div className="product-split-media">
+                {p.image ? (
+                  <ProgressiveImg src={p.image} alt={p.title} sizes="(min-width: 860px) 50vw, 100vw" />
+                ) : (
+                  <p.Art aria-label={p.artLabel} />
+                )}
+              </div>
+
+              <div className="product-split-copy">
+                <p className="kicker">{p.kicker}</p>
+                <h3>{p.title}</h3>
+                <p className="product-split-desc">{p.body}</p>
+
+                <ul className="product-split-ticks">
+                  {p.ticks.map((t) => <li key={t}>{t}</li>)}
+                </ul>
+
+                {p.priceFrom && (
+                  <p className="product-split-price">
+                    <span>Chỉ</span>
+                    <b>{p.priceFrom}</b>
+                  </p>
+                )}
+
+                <div className="product-split-actions">
+                  <Link className="btn btn-primary" href="/lien-he">{p.cta}</Link>
+                  <Link className="btn btn-ghost" href={p.href}>
+                    {p.detail}
+                    <ArrowRightIcon className="i" />
+                  </Link>
+                </div>
+              </div>
+            </Reveal>
+          ))}
+        </div>
+      </section>
+
+      {/* ============ ẢNH THẬT TẠI QUÁN ============ */}
+      {/* Mosaic ảnh lớn — nhịp nghỉ thị giác giữa các khối chữ, đồng thời là chỗ bán hàng:
+          mỗi ô dẫn thẳng vào trang mẫu đó, tên và giá đè sẵn lên ảnh nên khách không phải
+          bấm vào mới biết giá. Ảnh đầu tiên là tâm điểm, to gấp bốn (xem app/globals.css). */}
+      <section className="photo-strip" id="anh-that">
+        <div className="photo-strip-inner">
+          {heroItems.map((it, i) => (
+            <Link className="photo-strip-item" key={it.id} href={it.href}>
+              {/* Ảnh tâm điểm hiện ngay từ đầu, các ảnh còn lại tải thong thả khi cuộn tới.
+                  `sizes` phải khác nhau vì ô đầu chiếm 2/3 bề ngang lưới, các ô sau chỉ 1/3 —
+                  khai báo chung một giá trị thì hoặc ô lớn bị vỡ, hoặc 7 ô nhỏ tải ảnh dư gấp đôi. */}
+              <ProgressiveImg
+                src={it.image}
+                alt={it.name}
+                loading={i === 0 ? 'eager' : 'lazy'}
+                sizes={i === 0 ? '(min-width: 820px) 66vw, 50vw' : '(min-width: 820px) 33vw, 50vw'}
+              />
+              <span className="photo-strip-cap">
+                <span className="photo-strip-name">{it.name}</span>
+                {it.price && <span className="photo-strip-price">{it.price}</span>}
+              </span>
+            </Link>
+          ))}
         </div>
       </section>
 
@@ -257,10 +347,15 @@ export default async function HomePage() {
             </p>
           </Reveal>
 
-          {/* Bảng Airtable chưa có mẫu nào thì CustomDesignsGallery tự ẩn lưới, phần chữ +
-              CTA bên dưới vẫn giữ. Bấm vào 1 ảnh sẽ mở popup xem chi tiết, có next/prev. */}
-          <CustomDesignsGallery designs={customDesigns} />
+        </div>
 
+        {/* Đặt NGOÀI .container để dải ảnh chạy ra tận hai mép màn hình. Để bên trong rồi kéo
+            rộng bằng 100vw thì thừa ra đúng bề ngang thanh cuộn và làm dải lệch tâm.
+            Bảng Airtable chưa có mẫu nào thì CustomDesignsGallery tự ẩn dải, phần chữ + CTA
+            bên dưới vẫn giữ. Bấm vào 1 ảnh sẽ mở popup xem chi tiết, có next/prev. */}
+        <CustomDesignsGallery designs={customDesigns} />
+
+        <div className="container">
           <Reveal as="p" className="products-note">
             Có ý tưởng rồi?{' '}
             <Link href="/lien-he">Liên hệ để trao đổi thiết kế</Link>.
@@ -276,13 +371,19 @@ export default async function HomePage() {
             <h2>Vì sao nên đặt một chiếc ngay tại quầy</h2>
           </Reveal>
 
-          {/* Danh sách hàng ngang, không khung thẻ — icon trái, tiêu đề + mô tả phải, ngăn
-              cách bằng đường kẻ mảnh. Đổi từ kiểu 6 thẻ vuông đều nhau (nhìn đơn điệu) sang
-              phong cách này theo yêu cầu, xem app/globals.css để biết cách chia cột/đường kẻ. */}
-          <ul className="benefits-list">
-            {benefits.map(({ Icon, title, body }, i) => (
-              <Reveal as="li" className="benefit-row" key={title} delay={(i % 2) * 60}>
-                <span className="benefit-icon" aria-hidden="true"><Icon /></span>
+          {/* Danh sách đánh số kiểu biên tập: bỏ icon, chỉ còn số thứ tự nhỏ màu nhấn, tiêu đề
+              và một dòng mô tả, ngăn nhau bằng kẻ mảnh. Chữ làm chủ đạo — hợp tông tối giản
+              của site hơn kiểu 6 thẻ icon trần trước đây.
+
+              Số chỉ để đánh dấu thị giác, KHÔNG mang nghĩa thứ tự (6 lợi ích ngang hàng nhau),
+              nên để <ul> chứ không phải <ol>, và số thì aria-hidden để trình đọc màn hình
+              không đọc "01, 02..." như thể đây là các bước phải làm theo trình tự. */}
+          <ul className="benefit-list">
+            {benefits.map(({ title, body }, i) => (
+              <Reveal as="li" className="benefit-item" key={title} delay={(i % 2) * 60}>
+                <span className="benefit-num" aria-hidden="true">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
                 <div>
                   <h3>{title}</h3>
                   <p>{body}</p>
@@ -323,6 +424,13 @@ export default async function HomePage() {
           </Reveal>
           <Reveal as="div">
             <FaqAccordion items={faqs} />
+          </Reveal>
+
+          {/* Lưu ý này trước đây nằm ở chân hero — một câu dài giữa toàn cụm ngắn, làm hero
+              rối. Đây mới đúng chỗ của nó: khối giải đáp thắc mắc trước khi đặt hàng. */}
+          <Reveal as="p" className="faq-note" delay={80}>
+            <WarningIcon className="faq-note-icon" aria-hidden="true" />
+            Một số điện thoại Android có chip NFC nằm ở giữa mặt lưng thay vì gần camera phía trên — khách chạm không nhận thì thử di chuyển sát khu vực đó.
           </Reveal>
         </div>
       </section>

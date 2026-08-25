@@ -5,20 +5,34 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { siteConfig } from '@/lib/siteConfig';
 import { products } from '@/data/products';
-import { PhoneIcon, NfcWaveIcon, MenuIcon, CloseIcon } from './icons';
+import { PhoneIcon, NfcWaveIcon, MenuIcon, CloseIcon, ChevronDownIcon } from './icons';
 
 // Lấy tên trực tiếp từ data/products.js (nguồn duy nhất của tên sản phẩm) thay vì hardcode
 // lại ở đây — trước đây header tự chép tay 'Bảng NFC'/'Standee', sửa tên sản phẩm ở
 // data/products.js không tự cập nhật vào đây, phải sửa 2 chỗ.
-//
+const PRODUCT_LINKS = products.map((p) => ({ href: p.href, label: p.title, desc: p.tagline }));
+
+// Các mục dẫn tới từng khối nội dung trên trang chủ. BẮT BUỘC có "/" ở đầu chứ không phải
+// mỗi "#loi-ich": bấm từ trang con (vd /san-pham/standee) thì "#loi-ich" chỉ tìm khối đó
+// trong chính trang con — không có, nên chẳng đi đâu cả. Có "/" thì về trang chủ rồi mới cuộn.
+const SECTION_LINKS = [
+  { href: '/#cach-hoat-dong', label: 'Cách hoạt động' },
+  { href: '/#thiet-ke-rieng', label: 'Thiết kế riêng' },
+  { href: '/#loi-ich', label: 'Lợi ích' },
+  { href: '/#faq', label: 'Câu hỏi' },
+];
+
+// Đích của mục "Sản phẩm": khối giới thiệu 2 dòng sản phẩm ngoài trang chủ.
+const PRODUCTS_HREF = '/#san-pham';
+
+// "/#loi-ich" -> "loi-ich". Trả null cho link không phải dạng neo tới khối trên trang chủ.
+const hashId = (href) => (href.startsWith('/#') ? href.slice(2) : null);
+
+// Các khối trên trang chủ mà menu trỏ tới — dùng để biết khách đang xem khối nào.
+const TRACKED_IDS = [PRODUCTS_HREF, ...SECTION_LINKS.map((l) => l.href)].map(hashId);
+
 // Không có mục "Liên hệ" riêng trong nav — nút CTA bên cạnh (btn-primary, nổi bật hơn hẳn
 // 1 link chữ thường) đã trỏ /lien-he rồi, thêm 1 link "Liên hệ" nữa trong nav sẽ trùng lặp.
-const NAV_LINKS = products.map((p) => ({ href: p.href, label: p.title }));
-
-// Sidebar mobile có thêm mục Trang chủ ở đầu — logo trong header cũng dẫn về "/",
-// nhưng khi sidebar mở thì nó phủ lên cả header (z-index cao hơn) nên logo bị che,
-// không bấm được. Nav desktop thì không cần vì logo luôn lộ ra, thêm vào sẽ bị trùng.
-const MOBILE_NAV_LINKS = [{ href: '/', label: 'Trang chủ' }, ...NAV_LINKS];
 
 export default function Header() {
   const [stuck, setStuck] = useState(false);
@@ -28,6 +42,51 @@ export default function Header() {
   // Mục đang xem: khớp chính xác, hoặc đang ở trang con của nó (vd trang chi tiết
   // một mẫu /san-pham/standee/standee-google-map-... vẫn tính là đang ở "Standee").
   const isActive = (href) => pathname === href || pathname.startsWith(`${href}/`);
+
+  // Mục "Sản phẩm" sáng lên khi đang ở bất kỳ trang sản phẩm nào. Không dùng isActive được:
+  // nó trỏ tới '/#san-pham' — một khối trên TRANG CHỦ, không phải một trang riêng.
+  const onProductPage = pathname.startsWith('/san-pham');
+
+  // Id khối đang xem trên trang chủ (null = còn ở trên cùng, chưa tới khối nào).
+  const [activeId, setActiveId] = useState(null);
+
+  // Các mục dẫn tới khối trên trang chủ chỉ đổi phần #hash chứ KHÔNG đổi pathname, nên không
+  // thể suy ra mục đang xem từ pathname: bấm "Lợi ích" xong pathname vẫn là "/" và mục
+  // "Trang chủ" cứ sáng mãi. Phải tự bám theo vị trí cuộn.
+  useEffect(() => {
+    if (pathname !== '/') { setActiveId(null); return; }
+
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      // Mốc so sánh nằm ngay dưới thanh header dính, khớp với scroll-margin-top của các khối.
+      const line = 90;
+      let current = null;
+      let best = -Infinity;
+      // Chọn khối có mép trên gần mốc nhất mà CHƯA vượt qua nó — tức khối đang chiếm màn hình.
+      // Cách này không phụ thuộc thứ tự mảng, nên đảo thứ tự khối trong trang cũng không sai.
+      for (const id of TRACKED_IDS) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const top = el.getBoundingClientRect().top;
+        if (top <= line && top > best) { best = top; current = id; }
+      }
+      setActiveId(current);
+    };
+
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [pathname]);
+
+  // Mục neo tới khối: sáng khi đang xem đúng khối đó.
+  const isSectionActive = (href) => pathname === '/' && activeId === hashId(href);
 
   useEffect(() => {
     const onScroll = () => setStuck(window.scrollY > 8);
@@ -67,7 +126,10 @@ export default function Header() {
     // và menu trượt bên trong header, chúng sẽ bị nhốt trong khung header cao ~52px —
     // menu chỉ hiện một mẩu và nền mờ không phủ được trang.
     <>
-      <header className={`site-header${stuck ? ' is-stuck' : ''}`} id="siteHeader">
+      <header
+        className={`site-header${stuck ? ' is-stuck' : ''}`}
+        id="siteHeader"
+      >
       <div className="container header-inner">
         <Link className="brand" href="/" aria-label={`${siteConfig.brandName} — về trang chủ`}>
           <span className="brand-mark" aria-hidden="true">
@@ -79,11 +141,40 @@ export default function Header() {
         </Link>
 
         <nav className="site-nav" aria-label="Điều hướng chính">
-          {NAV_LINKS.map((l) => (
+          {/* Dropdown mở bằng CSS thuần (:hover / :focus-within), KHÔNG dùng state React —
+              nhờ vậy nó vẫn mở được cả khi JS chưa chạy, và bản thân "Sản phẩm" là một link
+              thật (không phải <button>) nên máy cảm ứng bấm vào vẫn tới được khối sản phẩm
+              ngoài trang chủ thay vì bấm hụt. Tab tới link này cũng làm bung dropdown, từ đó
+              tab tiếp vào được các mục bên trong — xem .nav-item:focus-within trong globals.css. */}
+          <div className="nav-item">
+            <Link
+              className="nav-trigger"
+              href={PRODUCTS_HREF}
+              aria-current={onProductPage || isSectionActive(PRODUCTS_HREF) ? 'page' : undefined}
+            >
+              Sản phẩm
+              <ChevronDownIcon className="nav-caret" aria-hidden="true" />
+            </Link>
+
+            <div className="nav-dropdown">
+              <ul>
+                {PRODUCT_LINKS.map((p) => (
+                  <li key={p.href}>
+                    <Link href={p.href} aria-current={isActive(p.href) ? 'page' : undefined}>
+                      <span className="nav-dropdown-title">{p.label}</span>
+                      <span className="nav-dropdown-desc">{p.desc}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {SECTION_LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              aria-current={isActive(l.href) ? 'page' : undefined}
+              aria-current={isSectionActive(l.href) ? 'page' : undefined}
             >
               {l.label}
             </Link>
@@ -136,12 +227,58 @@ export default function Header() {
           </button>
         </div>
 
+        {/* Sidebar mobile có thêm mục Trang chủ ở đầu — logo trong header cũng dẫn về "/",
+            nhưng khi sidebar mở thì nó phủ lên cả header (z-index cao hơn) nên logo bị che,
+            không bấm được. Nav desktop thì không cần vì logo luôn lộ ra, thêm vào sẽ bị trùng.
+
+            Mọi link đều phải tự đóng menu bằng onClick: các mục section chỉ đổi phần #hash chứ
+            KHÔNG đổi pathname, nên useEffect theo dõi pathname ở trên không hề chạy — thiếu
+            onClick là bấm xong menu vẫn nằm chình ình đè lên chỗ vừa cuộn tới. */}
         <ul className="mobile-nav-list">
-          {MOBILE_NAV_LINKS.map((l) => (
+          <li>
+            {/* Chỉ sáng khi thực sự đang ở đầu trang chủ. Trước đây chỉ xét pathname nên bấm
+                sang khối nào ở trang chủ thì "Trang chủ" vẫn sáng, còn khối vừa chọn thì không. */}
+            <Link
+              href="/"
+              aria-current={pathname === '/' && !activeId ? 'page' : undefined}
+              onClick={() => setMenuOpen(false)}
+            >
+              Trang chủ
+            </Link>
+          </li>
+
+          {/* Danh sách mẫu luôn mở, không bung/thu — chỉ có 2 mẫu, giấu đi rồi bắt bấm thêm
+              một nhịp nữa là thừa. Chỉ hiện TÊN mẫu, bỏ câu mô tả: cột sidebar rộng chừng
+              240px nên mỗi câu tagline xuống 3 dòng, hai mục gộp lại thành một khối chữ lổn
+              nhổn — đó mới là thứ làm khối này xấu, không phải chuyện đóng hay mở. */}
+          <li>
+            <Link
+              href={PRODUCTS_HREF}
+              aria-current={onProductPage || isSectionActive(PRODUCTS_HREF) ? 'page' : undefined}
+              onClick={() => setMenuOpen(false)}
+            >
+              Sản phẩm
+            </Link>
+            <ul className="mobile-nav-sub">
+              {PRODUCT_LINKS.map((p) => (
+                <li key={p.href}>
+                  <Link
+                    href={p.href}
+                    aria-current={isActive(p.href) ? 'page' : undefined}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {p.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </li>
+
+          {SECTION_LINKS.map((l) => (
             <li key={l.href}>
               <Link
                 href={l.href}
-                aria-current={isActive(l.href) ? 'page' : undefined}
+                aria-current={isSectionActive(l.href) ? 'page' : undefined}
                 onClick={() => setMenuOpen(false)}
               >
                 {l.label}
