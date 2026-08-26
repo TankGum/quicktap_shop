@@ -193,39 +193,44 @@ export default function HeroCarousel3D({ items }) {
   const current = items[active];
 
   return (
-    <div className="hero-stage" ref={stageRef}>
-      {/* Sóng lan toả kiểu tín hiệu NFC + vệt sáng dưới sàn — thuần trang trí, nằm sau vòng xoay. */}
-      <div className="hero-waves" aria-hidden="true">
-        <span className="hero-wave" />
-        <span className="hero-wave" />
-        <span className="hero-wave" />
-      </div>
-      <div className="hero-floor" aria-hidden="true" />
+    // Sân khấu 3D và phần nhãn chữ là HAI khối xếp dọc, không lồng nhau: trước đây nhãn tên
+    // + giá nằm đè lên sân khấu (position:absolute) nên trên màn hình hẹp — nơi sân khấu chỉ
+    // cao 360px mà nhãn dài phải xuống 2 dòng — nó trùm lên đáy các thẻ sản phẩm.
+    <div className="hero-showcase">
+      <div className="hero-stage" ref={stageRef}>
+        {/* Sóng lan toả kiểu tín hiệu NFC + vệt sáng dưới sàn — thuần trang trí, nằm sau vòng xoay. */}
+        <div className="hero-waves" aria-hidden="true">
+          <span className="hero-wave" />
+          <span className="hero-wave" />
+          <span className="hero-wave" />
+        </div>
+        <div className="hero-floor" aria-hidden="true" />
 
-      <div className="hero-ring" ref={ringRef}>
-        {items.map((item, i) => (
-          <Link
-            key={item.id}
-            href={item.href}
-            className="hero-ring-item"
-            ref={(el) => { itemsRef.current[i] = el; }}
-            style={{ '--i': i, '--step': `${step}deg` }}
-            draggable={false}
-          >
-            <span className="hero-ring-media">
-              {/* Thẻ rộng tối đa 236px, phối cảnh phóng thẻ trước lên ~1,5 lần nên cần tới ~360px.
-                  Khai báo cố định theo px (không phải vw) vì bề rộng thẻ do --card-w quyết định,
-                  không co theo bề ngang màn hình. */}
-              <ProgressiveImg
-                src={item.image}
-                alt={item.name}
-                loading="eager"
-                sizes="(min-width: 900px) 360px, 220px"
-                draggable={false}
-              />
-            </span>
-          </Link>
-        ))}
+        <div className="hero-ring" ref={ringRef}>
+          {items.map((item, i) => (
+            <Link
+              key={item.id}
+              href={item.href}
+              className="hero-ring-item"
+              ref={(el) => { itemsRef.current[i] = el; }}
+              style={{ '--i': i, '--step': `${step}deg` }}
+              draggable={false}
+            >
+              <span className="hero-ring-media">
+                {/* Thẻ rộng tối đa 236px, phối cảnh phóng thẻ trước lên ~1,5 lần nên cần tới ~360px.
+                    Khai báo cố định theo px (không phải vw) vì bề rộng thẻ do --card-w quyết định,
+                    không co theo bề ngang màn hình. */}
+                <ProgressiveImg
+                  src={item.image}
+                  alt={item.name}
+                  loading="eager"
+                  sizes="(min-width: 900px) 360px, 220px"
+                  draggable={false}
+                />
+              </span>
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Tên + giá của mẫu đang quay ra trước. KHÔNG đặt aria-live: vòng tự xoay vài giây một

@@ -322,7 +322,9 @@ p { text-wrap: pretty; }
 }
 
 .nav-dropdown ul {
-  width: 290px;
+  /* Vừa đủ cho tên dài nhất ("Bảng 10x10 dán tường & quầy") nằm gọn MỘT dòng cạnh ô ảnh —
+     hụt vài px là nó xuống 2 dòng và hai mục cao thấp lệch nhau. */
+  width: 288px;
   padding: 6px;
   border-radius: var(--radius);
   background: var(--surface);
@@ -330,16 +332,28 @@ p { text-wrap: pretty; }
   box-shadow: var(--shadow-lg);
 }
 .nav-dropdown a {
-  display: grid;
-  gap: 2px;
-  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
   border-radius: var(--radius-sm);
   text-decoration: none;
   transition: background-color .2s var(--ease);
 }
 .nav-dropdown a:hover { background: var(--bg-alt); }
-.nav-dropdown-title { font-size: .92rem; font-weight: 500; color: var(--ink); }
-.nav-dropdown-desc { font-size: .82rem; line-height: 1.4; color: var(--ink-3); }
+.nav-dropdown-title { font-size: .92rem; font-weight: 500; line-height: 1.3; color: var(--ink); }
+
+/* Ảnh mẫu tiêu biểu đứng trước tên, dùng chung cho dropdown ở header và danh sách trong
+   sidebar. flex:none để ô ảnh không bị bóp méo khi tên dài đẩy chỗ. */
+.nav-thumb {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--art-halo);
+  border: 1px solid var(--line-2);
+}
 
 .header-cta { display: none; }
 
@@ -428,7 +442,7 @@ p { text-wrap: pretty; }
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 13px 14px;
+  padding: 9px 12px;
   font-size: .97rem;
   font-weight: 500;
   line-height: 1.3;
@@ -544,6 +558,11 @@ p { text-wrap: pretty; }
 
    Không JS (hoặc JS lỗi): --spin giữ 0deg, vòng đứng yên — vẫn là một vòng sản phẩm 3D nhìn
    được, chỉ không xoay. */
+/* Khối bọc: sân khấu 3D ở trên, nhãn tên/giá và dòng gợi ý xếp DƯỚI nó theo dòng chảy bình
+   thường. Nhãn từng nằm đè lên sân khấu (position:absolute) — trên màn hình hẹp sân khấu chỉ
+   cao 360px, nhãn dài xuống 2 dòng là trùm lên đáy các thẻ sản phẩm. */
+.hero-showcase { width: 100%; }
+
 .hero-stage {
   position: relative;
   /* Tràn hết hai mép màn hình: đặt NGOÀI .container trong app/page.js nên chỉ cần 100% là
@@ -616,45 +635,63 @@ p { text-wrap: pretty; }
   background: radial-gradient(50% 50% at 50% 50%, rgba(0, 0, 0, .13), transparent 70%);
 }
 
-/* Tên + giá của mẫu đang quay ra trước. Khoảng cách tới đáy tính bằng px cố định (không phải
-   %) vì phía dưới còn dòng gợi ý "Kéo để xoay" — hai khối này phải xếp chồng nhau đúng thứ tự
-   ở mọi chiều cao sân khấu, dùng % thì trên màn hình lớn chúng chạy đè lên nhau. */
+/* Tên + giá của mẫu đang quay ra trước — nằm DƯỚI sân khấu, xem .hero-showcase ở trên. */
 .hero-stage-caption {
-  position: absolute;
-  left: 50%;
-  bottom: 48px;
-  translate: -50%;
-  z-index: 2;
+  /* Kéo ngược lên ăn vào khoảng trống chết ở đáy sân khấu. Vòng xoay được canh tâm ở 44%
+     chiều cao sân khấu nên phía dưới thẻ thấp nhất luôn thừa ~100px; để nhãn rơi hẳn xuống
+     dưới khoảng đó thì nó cách sản phẩm tới 120px, trông như một mẩu chữ lạc lõng.
+     -56px chừa lại ~45px hở — đủ thoáng mà vẫn không đụng vào thẻ ở mọi bề ngang. */
+  margin: -56px auto 0;
   display: flex;
-  align-items: baseline;
-  gap: .6rem;
-  padding: .5rem 1.1rem;
-  max-width: 92vw;
+  align-items: center;
+  justify-content: center;
+  /* Hết chỗ thì cho GIÁ rớt xuống dòng dưới, đừng cắt cụt tên. Tên mẫu dài nhất hiện nay
+     ("Bảng Google Map Review Xanh Matcha") chiếm ~270px; trước đây ép cả tên lẫn giá nằm
+     chung một dòng trong 92vw nên trên máy 360-390px là tên bị cắt thành "…". */
+  flex-wrap: wrap;
+  column-gap: .55rem;
+  row-gap: .3rem;
+  padding: .5rem .6rem .5rem 1.05rem;
+  /* Chặn trần theo px: pill dài gần hết bề ngang màn hình trông như một thanh trạng thái,
+     không còn ra dáng nhãn tên gắn dưới sản phẩm. */
+  max-width: min(92vw, 460px);
   border-radius: 980px;
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  border: 1px solid var(--line-2);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  white-space: nowrap;
+  /* Không còn nằm trên ảnh nên bỏ kính mờ: nền đặc, viền --line (không phải --line-2 quá
+     nhạt) mới thấy được khung pill trên nền trắng của hero. */
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
   pointer-events: none;
 }
 .hero-stage-name {
+  /* Thiếu min-width:0 thì flex item không chịu co dưới bề rộng nội dung, text-overflow không
+     bao giờ chạy — chữ cứ tràn ra rồi bị cắt phăng giữa nét, không có dấu "…". */
+  min-width: 0;
+  max-width: 100%;
   font-size: .95rem;
   font-weight: 600;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.hero-stage-price { font-size: .88rem; color: var(--accent); font-weight: 600; flex: none; }
+/* Giá làm thành một viên chip riêng: trước đây tên và giá đều đậm, chỉ khác màu và cách nhau
+   một khoảng hở — đọc lướt thành một cụm chữ dính liền, không ra "tên + giá". */
+.hero-stage-price {
+  flex: none;
+  padding: .2em .7em;
+  border-radius: 980px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: .84rem;
+  font-weight: 600;
+}
 
-/* Nằm dưới nhãn tên, KHÔNG đặt ở đỉnh sân khấu: thẻ ở chính giữa được phối cảnh phóng to
-   ~1,5 lần nên đỉnh của nó chạm gần sát mép trên, chữ để trên đó sẽ đè lên ảnh sản phẩm. */
+/* Dòng gợi ý xếp dưới cùng, sau nhãn tên — cùng lý do với nhãn: mọi chữ đều nằm NGOÀI sân
+   khấu để không che thẻ sản phẩm. */
 .hero-stage-hint {
-  position: absolute;
-  bottom: 12px;
-  left: 50%;
-  translate: -50%;
-  z-index: 2;
+  margin-top: 10px;
+  text-align: center;
   font-size: .82rem;
   color: var(--ink-3);
   pointer-events: none;
@@ -790,106 +827,27 @@ p { text-wrap: pretty; }
   color: var(--ink-3);
 }
 
-/* ---------- Dải ảnh thật tại quán: mosaic kiểu trang quảng cáo ---------- */
-/* Trước đây là lưới 4 cột toàn ô vuông bằng nhau, ảnh bé đến mức không nhìn ra sản phẩm.
-   Giờ là mosaic có tâm điểm: ảnh ĐẦU TIÊN chiếm 2 cột x 2 hàng (to gấp bốn các ảnh còn lại),
-   phần còn lại vây quanh — mắt có chỗ dừng thay vì lướt qua một dải ô đều tăm tắp. */
-.photo-strip {
-  width: 100%;
-  padding-block: clamp(52px, 8vw, 104px);
-  background: var(--bg-alt);
-}
-.photo-strip-inner {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: clamp(10px, 1.4vw, 18px);
-  max-width: var(--container);
+/* ---------- Ảnh dùng thật (#dung-that) ----------
+   Mượn khuôn .product-split nhưng ảnh này là khổ dọc 3:4 VÀ còn chừa nhiều nền trắng trên
+   dưới, để nguyên thì riêng khối ảnh đã cao hơn 800px, nuốt trọn màn hình chỉ cho một tấm.
+   Ghìm bề ngang lại và cắt về 5:6 — cắt vừa đủ phần nền trắng thừa, hai bàn tay vẫn nguyên. */
+.usage-split .product-split-media { max-width: 520px; margin-inline: auto; width: 100%; }
+.usage-split .product-split-media img { aspect-ratio: 5 / 6; object-fit: cover; }
+
+/* ---------- Dàn mẫu có sẵn (một tấm ảnh lớn, xem #anh-that trong app/page.js) ----------
+   Thẻ nền trắng cho ảnh: ảnh chụp trên nền trắng, để trần trên nền xám của .section-alt thì
+   rìa trắng của ảnh cắt thẳng vào nền xám trông như lỗi cắt ảnh. */
+.lineup-photo {
+  max-width: 1040px;
   margin-inline: auto;
-  padding-inline: var(--gutter);
-}
-@media (min-width: 820px) {
-  .photo-strip-inner { grid-template-columns: repeat(3, 1fr); }
-  /* Ô tâm điểm. KHÔNG đặt aspect-ratio cho nó: chiều cao phải do đúng 2 hàng lưới (cộng khe
-     hở) quyết định, ép thêm tỉ lệ vào sẽ đá nhau và làm lưới hụt/thừa một khoảng. */
-  .photo-strip-item:first-child {
-    grid-column: span 2;
-    grid-row: span 2;
-    aspect-ratio: auto;
-  }
-}
-
-.photo-strip-item {
-  position: relative;
-  display: block;
+  padding: clamp(10px, 1.6vw, 22px);
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  border-radius: var(--radius);
-  background: var(--art-halo);
-  /* Khổ dọc 4:5 thay cho ô vuông: ảnh chụp tại quán đều là khổ dọc hoặc vuông, khung dọc cho
-     ảnh cao hơn mà không phải cắt sâu hai bên. */
-  aspect-ratio: 4 / 5;
-  text-decoration: none;
-  color: inherit;
+  background: var(--surface);
   box-shadow: var(--shadow-sm);
-  transition: box-shadow .35s var(--ease);
 }
-.photo-strip-item:hover { box-shadow: var(--shadow-lg); }
-
-/* Ảnh phủ tuyệt đối chứ không theo dòng chảy: ô tâm điểm lấy chiều cao từ lưới (không có
-   aspect-ratio), ô thường lấy từ aspect-ratio — cách này đúng cho cả hai mà không cần luật riêng. */
-.photo-strip-item img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-/* Phóng chậm (kế thừa nhịp .85s của .img-fade) — chậm mới ra chất quảng cáo, nhanh thành giật. */
-.photo-strip-item:hover img { transform: scale(1.06); }
-
-/* Lớp phủ tối chân ảnh để chữ luôn đọc được, kể cả trên ảnh nền sáng. */
-.photo-strip-item::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: 62%;
-  background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .78));
-  opacity: .82;
-  transition: opacity .35s var(--ease);
-  pointer-events: none;
-}
-.photo-strip-item:hover::after { opacity: 1; }
-
-.photo-strip-cap {
-  position: absolute;
-  inset: auto 0 0;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: clamp(12px, 1.6vw, 20px);
-  color: #fff;
-  transition: transform .35s var(--ease);
-}
-.photo-strip-item:hover .photo-strip-cap { transform: translateY(-3px); }
-
-.photo-strip-name {
-  font-size: clamp(.86rem, 1.3vw, 1rem);
-  font-weight: 600;
-  letter-spacing: var(--tracking-body);
-  line-height: 1.25;
-  text-shadow: 0 1px 12px rgba(0, 0, 0, .4);
-}
-.photo-strip-price {
-  font-size: clamp(.8rem, 1.1vw, .92rem);
-  font-weight: 600;
-  /* --accent (#0071e3) trên ảnh tối tương phản kém — dùng tông xanh sáng hơn đã có trong bảng màu. */
-  color: var(--accent-2);
-}
-/* Ô tâm điểm to gấp bốn nên chữ cũng phải lớn theo, để nó không lọt thỏm trong khung. */
-@media (min-width: 820px) {
-  .photo-strip-item:first-child .photo-strip-name { font-size: clamp(1.1rem, 1.9vw, 1.5rem); }
-  .photo-strip-item:first-child .photo-strip-price { font-size: 1.02rem; }
-}
+/* Không ép tỉ lệ: khung cao theo đúng tỉ lệ ảnh, thay ảnh khác cỡ cũng không bị cắt rìa. */
+.lineup-photo img { display: block; width: 100%; height: auto; border-radius: var(--radius); }
 
 /* ---------- Video sản phẩm (section riêng ngay sau Hero — xem media.heroVideo trong
    lib/airtable.js) ---------- */
@@ -1934,33 +1892,6 @@ p { text-wrap: pretty; }
 /* "Review" nhạt hơn "QuickTap" — giữ đúng cách phân 2 tông của logo ở header/footer. */
 .footer-wordmark span span { color: var(--line-2); }
 
-/* ---------- Mobile sticky CTA ---------- */
-.mobile-cta {
-  position: fixed;
-  left: 0; right: 0; bottom: 0;
-  z-index: 60;
-  display: flex;
-  gap: 10px;
-  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
-  background: color-mix(in srgb, var(--bg) 80%, transparent);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-top: 1px solid var(--line-2);
-  transform: translateY(110%);
-  transition: transform .4s var(--ease);
-}
-.mobile-cta.is-visible { transform: translateY(0); }
-.mobile-cta .btn { flex: 1; }
-.mobile-cta .btn-outline { flex: 0 0 auto; }
-
-body { padding-bottom: 0; }
-@media (max-width: 859px) {
-  body.has-mobile-cta { padding-bottom: 80px; }
-}
-@media (min-width: 860px) {
-  .mobile-cta { display: none; }
-}
-
 /* ---------- Reveal on scroll ----------
    Chỉ ẩn khi JS chạy được (html.js), để trang vẫn đọc bình thường nếu JS lỗi. */
 .js .reveal {
@@ -2142,4 +2073,61 @@ body { padding-bottom: 0; }
     transform: none;
     transition: none;
   }
+}
+
+/* ---------- Nút Zalo nổi (góc phải dưới, mọi trang) ----------
+   z-index thấp hơn drawer menu (70–80) và lightbox (200) — nút chat không được nằm đè
+   lên thứ đang mở. */
+.zalo-fab {
+  /* Đúng màu xanh trong file logo — lệch một chút là thấy ngay đường viền vuông của
+     hình nổi lên trên nền tròn của nút. */
+  --zalo-blue: #0068ff;
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  z-index: 55;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--zalo-blue);
+  box-shadow: 0 10px 28px -8px rgba(0, 104, 255, .55), var(--shadow-sm);
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease);
+}
+.zalo-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px -8px rgba(0, 104, 255, .6), var(--shadow-sm);
+}
+.zalo-fab:active { transform: translateY(0); }
+.zalo-fab:focus-visible { outline: 2px solid var(--zalo-blue); outline-offset: 3px; }
+.zalo-fab-logo { width: 44px; height: 44px; }
+
+/* Vòng sáng lan ra để mắt bắt được nút giữa lúc đang cuộn đọc. Nằm dưới nội dung nút
+   (z-index âm) và không nhận chuột, nên không cản cú bấm. */
+.zalo-fab-pulse {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--zalo-blue);
+  pointer-events: none;
+  animation: zalo-pulse 2.6s var(--ease) infinite;
+}
+@keyframes zalo-pulse {
+  0%   { transform: scale(1);    opacity: .45; }
+  70%  { transform: scale(1.35); opacity: 0; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+/* Khách bật "giảm hiệu ứng chuyển động": bỏ hẳn vòng sáng. Chỉ dựa vào rule chung ở đầu
+   file (rút animation còn .001ms) thì vòng sáng đứng yên ở khung hình cuối — vẫn còn một
+   quầng mờ bám quanh nút. */
+@media (prefers-reduced-motion: reduce) {
+  .zalo-fab-pulse { display: none; }
+}
+
+/* Trên mobile thu nhỏ lại một nhịp cho đỡ chiếm màn hình. */
+@media (max-width: 859px) {
+  .zalo-fab { width: 52px; height: 52px; }
+  .zalo-fab-logo { width: 40px; height: 40px; }
 }

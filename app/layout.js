@@ -18,8 +18,10 @@ const inter = Inter({
 });
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import MobileCta from '@/components/MobileCta';
+import ZaloButton from '@/components/ZaloButton';
 import { siteConfig } from '@/lib/siteConfig';
+import { products } from '@/data/products';
+import { getVariantsByProduct } from '@/lib/airtable';
 
 export const metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
@@ -61,7 +63,20 @@ export const viewport = {
   themeColor: '#ffffff',
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  // Ảnh tiêu biểu cho từng dòng sản phẩm, để menu "Sản phẩm" (cả dropdown ở header lẫn danh
+  // sách trong sidebar) hiện được ảnh nhỏ bên cạnh tên. Header là Client Component nên KHÔNG
+  // tự gọi Airtable được — layout (Server Component) đọc sẵn rồi truyền xuống dạng chuỗi.
+  // getVariantsByProduct có cache riêng nên trang chủ gọi lại cũng không tốn thêm request.
+  const variantsByProduct = await getVariantsByProduct();
+  const productLinks = products.map((p) => ({
+    href: p.href,
+    label: p.title,
+    // Lấy mẫu ĐẦU TIÊN có ảnh, giống cách trang chủ chọn ảnh giới thiệu cho mỗi dòng.
+    // Airtable chưa có mẫu nào kèm ảnh thì để null — menu tự bỏ ô ảnh, chỉ còn tên.
+    image: (variantsByProduct[p.id] || []).find((v) => v.image)?.image || null,
+  }));
+
   return (
     // suppressHydrationWarning: thẻ script ngay dưới đây gắn class "js" vào <html> TRƯỚC khi
     // React hydrate, nên HTML từ server (chưa có class) và DOM lúc hydrate (đã có) lệch nhau
@@ -80,10 +95,10 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <a className="skip-link" href="#main">Bỏ qua tới nội dung chính</a>
-        <Header />
+        <Header productLinks={productLinks} />
         <main id="main">{children}</main>
         <Footer />
-        <MobileCta />
+        <ZaloButton />
       </body>
     </html>
   );

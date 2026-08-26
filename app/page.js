@@ -258,6 +258,45 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ============ ẢNH DÙNG THẬT ============ */}
+      {/* Ảnh "một chạm ra kết quả": tay cầm standee + điện thoại đang mở form đánh giá.
+          Đặt ngay sau phần "Cách hoạt động" vì nó chính là ảnh chứng minh cho đoạn vừa đọc.
+          Mượn nguyên khuôn .product-split của phần Sản phẩm bên dưới để không đẻ thêm một
+          kiểu bố cục mới — ảnh một bên, chữ một bên, tự xuống hàng dưới 860px. */}
+      <section className="section" id="dung-that">
+        <Reveal as="div" className="product-split usage-split">
+          <div className="product-split-media">
+            <ProgressiveImg
+              src="/assets/img/qc.webp"
+              alt="Một tay cầm standee QR có logo Google, tay kia cầm điện thoại đang mở sẵn form đánh giá 5 sao"
+              sizes="(min-width: 860px) 50vw, 100vw"
+            />
+          </div>
+
+          <div className="product-split-copy">
+            <p className="kicker">Khách thấy gì</p>
+            <h3>Chạm xong là form đánh giá đã nằm sẵn trên tay khách</h3>
+            <p className="product-split-desc">
+              Không có bước trung gian nào: không mở app, không gõ tên quán, không dò trên bản
+              đồ. Khách chỉ việc chọn sao rồi bấm gửi.
+            </p>
+
+            <ul className="product-split-ticks">
+              <li>Chạm NFC hoặc quét QR đều được, tuỳ điện thoại của khách</li>
+              <li>Trang đánh giá mở thẳng đúng quán của bạn</li>
+              <li>Cả quá trình gọn trong vài giây, ngay tại quầy</li>
+            </ul>
+
+            <div className="product-split-actions">
+              <Link className="btn btn-primary" href="/lien-he">
+                <PhoneIcon className="i" />
+                Liên hệ đặt hàng
+              </Link>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
       {/* ============ SẢN PHẨM ============ */}
       {/* Khuôn "split" của Samsung: mỗi dòng sản phẩm chiếm trọn một dải ngang riêng, ảnh thật
           cỡ lớn một bên, chữ bên kia, và ĐỔI CHIỀU luân phiên để mắt không đi thẳng một mạch.
@@ -310,29 +349,37 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ============ ẢNH THẬT TẠI QUÁN ============ */}
-      {/* Mosaic ảnh lớn — nhịp nghỉ thị giác giữa các khối chữ, đồng thời là chỗ bán hàng:
-          mỗi ô dẫn thẳng vào trang mẫu đó, tên và giá đè sẵn lên ảnh nên khách không phải
-          bấm vào mới biết giá. Ảnh đầu tiên là tâm điểm, to gấp bốn (xem app/globals.css). */}
-      <section className="photo-strip" id="anh-that">
-        <div className="photo-strip-inner">
-          {heroItems.map((it, i) => (
-            <Link className="photo-strip-item" key={it.id} href={it.href}>
-              {/* Ảnh tâm điểm hiện ngay từ đầu, các ảnh còn lại tải thong thả khi cuộn tới.
-                  `sizes` phải khác nhau vì ô đầu chiếm 2/3 bề ngang lưới, các ô sau chỉ 1/3 —
-                  khai báo chung một giá trị thì hoặc ô lớn bị vỡ, hoặc 7 ô nhỏ tải ảnh dư gấp đôi. */}
-              <ProgressiveImg
-                src={it.image}
-                alt={it.name}
-                loading={i === 0 ? 'eager' : 'lazy'}
-                sizes={i === 0 ? '(min-width: 820px) 66vw, 50vw' : '(min-width: 820px) 33vw, 50vw'}
-              />
-              <span className="photo-strip-cap">
-                <span className="photo-strip-name">{it.name}</span>
-                {it.price && <span className="photo-strip-price">{it.price}</span>}
-              </span>
-            </Link>
-          ))}
+      {/* ============ DÀN MẪU CÓ SẴN ============ */}
+      {/* Trước đây chỗ này là lưới mosaic ghép từ ảnh Airtable, mỗi ô dẫn vào một trang mẫu.
+          Nay thay bằng MỘT tấm ảnh chụp cả dàn mẫu — nên phần dẫn đường vào trang sản phẩm
+          không còn nằm trên ảnh nữa, phải bù lại bằng hai link ở dưới, đừng bỏ đi.
+
+          Ảnh nền trắng nên phải lồng trong thẻ nền trắng: đặt trần lên nền xám của
+          .section-alt sẽ lộ ra một hình chữ nhật trắng lơ lửng giữa khoảng xám. */}
+      <section className="section section-alt" id="anh-that">
+        <div className="container">
+          <Reveal as="header" className="section-head">
+            <p className="kicker">Mẫu có sẵn</p>
+            <h2>Chọn màu hợp với không gian quán</h2>
+            <p className="section-sub">
+              Cùng một chiếc bảng NFC, đổi màu và nền tảng đánh giá theo quán bạn — hoặc in
+              riêng theo logo và màu thương hiệu.
+            </p>
+          </Reveal>
+
+          <Reveal as="div" className="lineup-photo" delay={80}>
+            <ProgressiveImg
+              src="/assets/img/qc2.webp"
+              alt="Bốn mẫu bảng NFC: nâu, xanh lá, xanh dương dẫn tới Google và một mẫu trắng xanh dẫn tới Tripadvisor"
+              sizes="(min-width: 1120px) 1040px, 100vw"
+            />
+          </Reveal>
+
+          <Reveal as="p" className="products-note" delay={120}>
+            Xem đủ mẫu và giá: <Link href="/san-pham/bang-nfc">Bảng NFC</Link>
+            {' · '}
+            <Link href="/san-pham/standee">Standee QR</Link>
+          </Reveal>
         </div>
       </section>
 

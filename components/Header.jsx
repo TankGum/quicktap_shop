@@ -5,12 +5,16 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { siteConfig } from '@/lib/siteConfig';
 import { products } from '@/data/products';
+import ProgressiveImg from './ProgressiveImg';
 import { PhoneIcon, NfcWaveIcon, MenuIcon, CloseIcon, ChevronDownIcon } from './icons';
 
 // Lấy tên trực tiếp từ data/products.js (nguồn duy nhất của tên sản phẩm) thay vì hardcode
 // lại ở đây — trước đây header tự chép tay 'Bảng NFC'/'Standee', sửa tên sản phẩm ở
 // data/products.js không tự cập nhật vào đây, phải sửa 2 chỗ.
-const PRODUCT_LINKS = products.map((p) => ({ href: p.href, label: p.title, desc: p.tagline }));
+//
+// Dùng khi không được truyền `productLinks` (ảnh mẫu do app/layout.js đọc từ Airtable rồi
+// truyền xuống — xem chú thích ở đó). Không có ảnh thì menu vẫn chạy, chỉ thiếu ô ảnh.
+const FALLBACK_PRODUCT_LINKS = products.map((p) => ({ href: p.href, label: p.title, image: null }));
 
 // Các mục dẫn tới từng khối nội dung trên trang chủ. BẮT BUỘC có "/" ở đầu chứ không phải
 // mỗi "#loi-ich": bấm từ trang con (vd /san-pham/standee) thì "#loi-ich" chỉ tìm khối đó
@@ -34,7 +38,8 @@ const TRACKED_IDS = [PRODUCTS_HREF, ...SECTION_LINKS.map((l) => l.href)].map(has
 // Không có mục "Liên hệ" riêng trong nav — nút CTA bên cạnh (btn-primary, nổi bật hơn hẳn
 // 1 link chữ thường) đã trỏ /lien-he rồi, thêm 1 link "Liên hệ" nữa trong nav sẽ trùng lặp.
 
-export default function Header() {
+export default function Header({ productLinks }) {
+  const PRODUCT_LINKS = productLinks?.length ? productLinks : FALLBACK_PRODUCT_LINKS;
   const [stuck, setStuck] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -161,8 +166,17 @@ export default function Header() {
                 {PRODUCT_LINKS.map((p) => (
                   <li key={p.href}>
                     <Link href={p.href} aria-current={isActive(p.href) ? 'page' : undefined}>
+                      {/* alt rỗng: tên sản phẩm nằm ngay bên cạnh, đặt alt nữa thì trình đọc
+                          màn hình đọc đúng một cái tên hai lần cho mỗi mục. */}
+                      {p.image && (
+                        <ProgressiveImg
+                          className="nav-thumb"
+                          src={p.image}
+                          alt=""
+                          sizes="44px"
+                        />
+                      )}
                       <span className="nav-dropdown-title">{p.label}</span>
-                      <span className="nav-dropdown-desc">{p.desc}</span>
                     </Link>
                   </li>
                 ))}
@@ -267,6 +281,14 @@ export default function Header() {
                     aria-current={isActive(p.href) ? 'page' : undefined}
                     onClick={() => setMenuOpen(false)}
                   >
+                    {p.image && (
+                      <ProgressiveImg
+                        className="nav-thumb"
+                        src={p.image}
+                        alt=""
+                        sizes="44px"
+                      />
+                    )}
                     {p.label}
                   </Link>
                 </li>
