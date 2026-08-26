@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { siteConfig } from '@/lib/siteConfig';
 import { products } from '@/data/products';
 import ProgressiveImg from './ProgressiveImg';
+import MetallicText, { inkMetal } from './MetallicText';
 import { PhoneIcon, NfcWaveIcon, MenuIcon, CloseIcon, ChevronDownIcon } from './icons';
 
 // Lấy tên trực tiếp từ data/products.js (nguồn duy nhất của tên sản phẩm) thay vì hardcode
@@ -141,7 +142,11 @@ export default function Header({ productLinks }) {
             <NfcWaveIcon />
           </span>
           <span className="brand-name">
-            {siteConfig.brandFirst}<span>{siteConfig.brandLast}</span>
+            {/* "Review" phủ hiệu ứng kim loại lỏng — xem components/MetallicText.jsx.
+                scale nhỏ hơn 2 chỗ kia vì chữ ở đây chỉ cao ~14px: để nguyên scale mặc định
+                thì các dải kim loại chen nhau trong vài pixel, nhìn ra nhiễu chứ không ra kim loại. */}
+            {siteConfig.brandFirst}
+            <MetallicText text={siteConfig.brandLast} {...inkMetal} scale={1.8} />
           </span>
         </Link>
 

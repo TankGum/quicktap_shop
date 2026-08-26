@@ -730,42 +730,44 @@ p { text-wrap: pretty; }
 }
 
 /* ---------- Dải điểm mạnh ngay dưới hero ---------- */
-/* Giữ ĐÚNG ngôn ngữ hình ảnh của khối "Lợi ích" bên dưới (.benefit-list): số thứ tự nhỏ màu
-   nhấn + tiêu đề + một dòng mô tả, ngăn nhau bằng kẻ mảnh, không khung không nền. Hai khối
-   cùng một kiểu thì trang đọc liền mạch. Khác biệt duy nhất: khối này chỉ có 4 ý và nằm ngay
-   dưới hero nên chữ nhỏ hơn một nấc và đệm dọc mỏng hơn, để nó đọc như phần đuôi của hero
-   chứ không tranh chỗ với khối "Lợi ích" thật sự. */
+/* Dải "điểm mạnh" ngay dưới hero: 4 THẺ khối, mỗi thẻ một icon + tiêu đề + một dòng mô tả.
+   Trước đây là 4 dòng ngăn nhau bằng kẻ mảnh — với nội dung ngắn cỡ này trông như phần chú
+   thích còn sót của hero chứ không ra "điểm mạnh".
+
+   Dùng lại ngôn ngữ thẻ sẵn có của trang (.card: nền xám nhạt, bo góc) nhưng gọn hơn một nấc
+   — thẻ ở đây chỉ chứa một dòng mô tả nên đệm và cỡ chữ phải nhỏ hơn thẻ thường, nếu không
+   nó át cả khối "Lợi ích" thật sự bên dưới. Thẻ CHỈ CÓ CHỮ: nội dung mỗi thẻ vỏn vẹn vài chữ,
+   thêm icon vào chỉ làm loãng. */
 .highlight-strip {
   display: grid;
+  /* Chỉ máy hẹp nhất (< 360px, cỡ iPhone SE) mới 1 cột: ở đó ép 2 cột thì "Đổi link bất cứ
+     lúc nào" vỡ thành 3-4 dòng. Từ 360px trở lên — tức gần như mọi điện thoại đang dùng —
+     xếp 2 cột, vì mỗi thẻ chỉ vài chữ, để 1 cột thì 4 thẻ kéo thành một dải dọc dài lê thê
+     ngay dưới hero. */
   grid-template-columns: 1fr;
+  gap: 10px;
 }
+@media (min-width: 360px) { .highlight-strip { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+@media (min-width: 900px) {
+  .highlight-strip { grid-template-columns: repeat(4, 1fr); gap: 16px; }
+}
+
 .highlight-item {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-  padding: 15px 0;
-  border-top: 1px solid var(--line-2);
+  display: grid;
+  gap: 8px;
+  /* Nội dung dồn lên đầu thẻ: các thẻ cùng hàng bị kéo cao bằng nhau theo thẻ có tiêu đề dài
+     nhất, không có dòng này thì chữ trong thẻ thấp bị dàn giãn ra cho đầy. */
+  align-content: start;
+  padding: clamp(16px, 2.4vw, 22px);
+  border-radius: var(--radius);
+  background: var(--bg-alt);
+  transition: background-color .3s var(--ease), transform .25s var(--ease);
 }
-.highlight-item:first-child { border-top: 0; }
+/* Trên nền đã xám thì thẻ đổi sang trắng để vẫn tách lớp — cùng quy ước với .card. */
+.section-alt .highlight-item { background: var(--surface); }
+.highlight-item:hover { transform: translateY(-3px); }
 
-@media (min-width: 760px) {
-  .highlight-strip { grid-template-columns: repeat(2, 1fr); column-gap: 44px; }
-  /* Ô thứ 2 nằm cùng hàng với ô thứ nhất ở layout 2 cột nên cũng phải bỏ kẻ trên. Luật này
-     phải đứng SAU :first-child ở trên — cùng độ đặc hiệu thì luật sau thắng. */
-  .highlight-item:nth-child(2) { border-top: 0; }
-}
-
-.highlight-num {
-  flex: none;
-  padding-top: .12rem;
-  font-size: .78rem;
-  font-weight: 700;
-  letter-spacing: .02em;
-  color: var(--accent);
-  /* Chữ số cùng bề rộng nên cột số thẳng hàng tăm tắp giữa các dòng. */
-  font-variant-numeric: tabular-nums;
-}
-.highlight-item h3 { font-size: .97rem; letter-spacing: var(--tracking-sub); margin-bottom: 2px; }
+.highlight-item h3 { font-size: .97rem; letter-spacing: var(--tracking-sub); }
 .highlight-item p { color: var(--ink-2); font-size: .87rem; line-height: 1.4; }
 
 /* ---------- Spotlight: lưới ảnh chụp thật tại quán ---------- */
@@ -2130,4 +2132,34 @@ p { text-wrap: pretty; }
 @media (max-width: 859px) {
   .zalo-fab { width: 52px; height: 52px; }
   .zalo-fab-logo { width: 40px; height: 40px; }
+}
+
+/* ---------- Chữ kim loại (components/MetallicText.jsx) ----------
+   Chữ THẬT luôn nằm trong DOM; khi hiệu ứng bật thì nó chỉ trong suốt đi chứ không bị xoá,
+   nên vẫn bôi đen copy được, trình đọc màn hình vẫn đọc, Google vẫn thấy chữ.
+   Không bật được (thiếu WebGL2, chữ xuống 2 dòng...) thì khối này chẳng khác gì <span> thường. */
+.metallic-text { display: inline; }
+.metallic-text.is-on {
+  position: relative;
+  /* inline-block để canvas phủ tuyệt đối lên đúng hộp chữ; nowrap giữ chắc đoạn chữ trên một
+     dòng — canvas phẳng không phủ được 2 mảnh chữ ở 2 dòng khác nhau. */
+  display: inline-block;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+.metallic-text.is-on .metallic-text-ink {
+  color: transparent;
+  /* Mốc định vị của canvas: khối inline này CHÍNH LÀ hộp chữ, nên canvas chỉ cần lùi ra
+     đúng phần lề đã chừa. Neo vào wrapper bên ngoài sẽ lệch, xem chú thích trong JSX. */
+  position: relative;
+}
+
+.metallic-text-canvas { display: none; }
+.metallic-text.is-on .metallic-text-canvas {
+  display: block;
+  position: absolute;
+  /* left/top/width/height do component đặt, đo theo HỘP CHỮ chứ không theo hộp wrapper —
+     wrapper cao theo line-height nên lấy nó làm mốc là lệch vài px. Có chừa lề để hiệu ứng
+     không bị cắt cụt ở mép nét. */
+  pointer-events: none;
 }

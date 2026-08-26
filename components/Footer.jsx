@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { siteConfig } from '@/lib/siteConfig';
 import { NfcWaveIcon, PhoneIcon } from './icons';
 import { products } from '@/data/products';
+import MetallicText, { inkMetal } from './MetallicText';
 
 // Tham khảo bố cục footer kiểu SaaS hiện đại (thẻ trắng: logo + mô tả bên trái, các cột link
 // bên phải, đường kẻ, dòng bản quyền) + chữ thương hiệu khổng lồ phía dưới làm hoạ tiết.
@@ -30,7 +31,8 @@ export default function Footer() {
                 <NfcWaveIcon />
               </span>
               <span className="brand-name">
-                {siteConfig.brandFirst}<span>{siteConfig.brandLast}</span>
+                {siteConfig.brandFirst}
+                <MetallicText text={siteConfig.brandLast} {...inkMetal} scale={1.8} />
               </span>
             </Link>
             <p className="footer-desc">
@@ -74,7 +76,8 @@ export default function Footer() {
       <div className="container">
         <Link className="footer-wordmark" href="/" aria-label={`${siteConfig.brandName} — về trang chủ`}>
           <span aria-hidden="true">
-            {siteConfig.brandFirst}<span>{siteConfig.brandLast}</span>
+            {siteConfig.brandFirst}
+            <MetallicText text={siteConfig.brandLast} {...inkMetal} scale={4} />
           </span>
         </Link>
       </div>

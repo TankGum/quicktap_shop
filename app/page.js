@@ -165,22 +165,18 @@ export default async function HomePage() {
           làm hero rối. */}
       <section className="section section-tight" id="diem-manh">
         <div className="container">
-          {/* Dùng ĐÚNG kiểu của khối "Lợi ích" bên dưới (xem .benefit-list): số thứ tự nhỏ màu
-              nhấn, tiêu đề, một dòng mô tả, ngăn nhau bằng kẻ mảnh. Hai khối cùng ngôn ngữ
-              hình ảnh nên trang đọc liền mạch, không phải mỗi khối một kiểu.
+          {/* Mỗi ý là một THẺ riêng (nền xám nhạt, bo góc) thay vì các dòng ngăn nhau bằng kẻ
+              mảnh như trước: 4 ý ngắn xếp thành dải kẻ ngang trông như phần chú thích rơi rớt
+              lại của hero chứ không ra "điểm mạnh".
 
-              Số chỉ để đánh dấu thị giác, KHÔNG mang nghĩa thứ tự — nên giữ <ul> chứ không
-              phải <ol>, và số thì aria-hidden để trình đọc màn hình không đọc "01, 02...". */}
+              Thẻ chỉ có chữ, KHÔNG icon và KHÔNG số thứ tự: nội dung mỗi thẻ vỏn vẹn 3-5 chữ
+              nên thêm một hình nhỏ ở đầu chỉ làm loãng, mà số thì không mang nghĩa thứ tự.
+              Vì vậy <ul> chứ không phải <ol>. */}
           <Reveal as="ul" className="highlight-strip">
-            {highlights.map(({ title, body }, i) => (
+            {highlights.map(({ title, body }) => (
               <li className="highlight-item" key={title}>
-                <span className="highlight-num" aria-hidden="true">
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                <div>
-                  <h3>{title}</h3>
-                  <p>{body}</p>
-                </div>
+                <h3>{title}</h3>
+                <p>{body}</p>
               </li>
             ))}
           </Reveal>
