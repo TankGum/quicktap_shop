@@ -2495,3 +2495,44 @@ p { text-wrap: pretty; }
 .studio-color input::-webkit-color-swatch-wrapper { padding: 0; }
 .studio-color input::-webkit-color-swatch { border: 1px solid var(--line); border-radius: 50%; }
 .studio-color input::-moz-color-swatch { border: 1px solid var(--line); border-radius: 50%; }
+
+/* ---------- Mục nav được làm nổi (hiện đang là "Thiết kế riêng") ----------
+   Đặt SAU khối "Nav đang ở trang này" ở trên: hai bên cùng độ đặc hiệu nên luật sau thắng,
+   nhờ vậy mục nổi giữ được màu nhấn kể cả khi đang đứng ở chính trang đó. */
+.site-nav > a.nav-hot {
+  /* Nền xanh RẤT nhạt + chữ màu nhấn: nổi hẳn giữa mấy link chữ xám, nhưng không đọc thành
+     "nút bấm thứ hai" cạnh nút CTA xanh đặc ngay bên phải. */
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-weight: 500;
+  padding-right: .45em;
+  transition: background-color .2s var(--ease), color .2s var(--ease);
+}
+.site-nav > a.nav-hot:hover {
+  background: color-mix(in srgb, var(--accent-soft) 78%, var(--accent));
+  color: var(--accent-ink);
+}
+.site-nav > a.nav-hot[aria-current="page"] {
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--accent));
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.nav-badge {
+  display: inline-block;
+  margin-left: .5em;
+  padding: .12em .5em;
+  border-radius: 980px;
+  background: var(--accent);
+  color: #fff;
+  font-size: .68rem;
+  font-weight: 600;
+  /* Chip nhỏ nên bỏ phần siết chữ của toàn trang, nếu không 3 ký tự dính vào nhau. */
+  letter-spacing: 0;
+  line-height: 1.5;
+  vertical-align: middle;
+}
+
+/* Sidebar mobile: chữ đã to sẵn nên chỉ cần đổi màu + chip, không cần thêm nền. */
+.mobile-nav-list > li > a.nav-hot { color: var(--accent-ink); }
+.mobile-nav-list > li > a.nav-hot .nav-badge { font-size: .6rem; margin-left: .6em; }

@@ -22,7 +22,9 @@ const FALLBACK_PRODUCT_LINKS = products.map((p) => ({ href: p.href, label: p.tit
 // trong chính trang con — không có, nên chẳng đi đâu cả. Có "/" thì về trang chủ rồi mới cuộn.
 const SECTION_LINKS = [
   { href: '/#cach-hoat-dong', label: 'Cách hoạt động' },
-  { href: '/thiet-ke-rieng', label: 'Thiết kế riêng' },
+  // `hot` = mục được làm nổi trong nav (nền xanh nhạt + chip "Mới"). Để ở dữ liệu chứ không
+  // hardcode trong JSX, để sau này chuyển sang mục khác chỉ cần dời một chữ.
+  { href: '/thiet-ke-rieng', label: 'Thiết kế riêng', hot: true },
   { href: '/#loi-ich', label: 'Lợi ích' },
   { href: '/#faq', label: 'Câu hỏi' },
 ];
@@ -204,9 +206,13 @@ export default function Header({ productLinks }) {
             <Link
               key={l.href}
               href={l.href}
+              className={l.hot ? 'nav-hot' : undefined}
               aria-current={isNavActive(l.href) ? 'page' : undefined}
             >
               {l.label}
+              {/* KHÔNG aria-hidden: trình đọc màn hình đọc "Thiết kế riêng, Mới" là đúng ý,
+                  giấu đi thì người dùng bàn phím mất luôn thông tin mà mắt thường thấy. */}
+              {l.hot && <span className="nav-badge">New</span>}
             </Link>
           ))}
         </nav>
@@ -316,10 +322,12 @@ export default function Header({ productLinks }) {
             <li key={l.href}>
               <Link
                 href={l.href}
+                className={l.hot ? 'nav-hot' : undefined}
                 aria-current={isNavActive(l.href) ? 'page' : undefined}
                 onClick={() => setMenuOpen(false)}
               >
                 {l.label}
+                {l.hot && <span className="nav-badge">Mới</span>}
               </Link>
             </li>
           ))}
