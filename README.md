@@ -248,12 +248,36 @@ nền tối sẽ làm QR không quét được. Khách vẫn tự chọn màu b�
 Nếu Airtable lỗi (vd sai tên cột lúc mới cấu hình), ảnh đã nằm sẵn trên Cloudinary và link
 được ghi vào log kèm mã đơn + số điện thoại, nên đơn không mất trắng.
 
-**Chạy thử tại máy** (có cả Function, khác `npx serve out` vốn chỉ phục vụ file tĩnh):
+### Chạy thử & dò lỗi
+
+**`npm run dev` KHÔNG phục vụ endpoint này.** Next dev server không biết gì về thư mục
+`functions/` — đó là Pages Function của Cloudflare. Gọi `localhost:3000/api/thiet-ke-rieng` sẽ
+ra 404 hoặc "Server action not found"; đó là hành vi đúng, không phải lỗi.
+
+Muốn chạy thử có cả Function (nhớ tắt `npm run dev` trước — hai bên dùng chung thư mục `.next`
+nên chạy song song sẽ giẫm lên nhau):
 
 ```bash
-npm run build
-npx wrangler pages dev out
+npm run preview     # = next build && wrangler pages dev out --kv KV_BINDING
 ```
+
+Wrangler tự nạp `.env.local`, nên đơn gửi ở máy sẽ ghi THẬT vào Airtable và Cloudinary.
+
+**Dò lỗi cấu hình:** mở thẳng `/api/thiet-ke-rieng` bằng trình duyệt (GET). Nó trả về đúng danh
+sách khoá còn thiếu của môi trường đang chạy — chỉ TÊN khoá, không bao giờ trả giá trị:
+
+```json
+{ "ready": false, "missing": ["KV_BINDING"] }
+```
+
+**Bị 503 trên production?** Gần như luôn là một trong bốn nguyên nhân này:
+
+1. Đổi biến/thêm binding xong nhưng **chưa deploy lại**. Cấu hình chỉ áp cho bản deploy MỚI;
+   bản đang chạy vẫn giữ nguyên cấu hình lúc nó được tạo.
+2. Chỉ đặt cho **Preview** mà không đặt cho **Production** (hoặc ngược lại).
+3. Tạo KV namespace rồi nhưng **chưa bind** vào project ở Settings → Functions → KV namespace
+   bindings với đúng tên `KV_BINDING`.
+4. Gõ sai tên biến.
 
 ### Host tĩnh khác
 

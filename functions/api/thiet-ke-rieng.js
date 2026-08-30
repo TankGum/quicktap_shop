@@ -158,19 +158,24 @@ async function uploadToCloudinary(file, { env, folder, publicId }) {
 
 // ---------- Xử lý đơn ----------
 
+// Mọi thứ Function cần để chạy. `KV_BINDING` là binding KV (Cloudflare Pages -> Settings ->
+// Functions -> KV namespace bindings), CỐ TÌNH để bắt buộc: thiếu nó thì endpoint vẫn chạy
+// nhưng không còn gì chặn spam — hỏng đúng thứ đang cần bảo vệ mà nhìn từ ngoài lại tưởng
+// mọi thứ bình thường.
+const REQUIRED = [
+  'AIRTABLE_TOKEN',
+  'AIRTABLE_BASE_ID',
+  'AIRTABLE_DESIGN_ORDERS_TABLE_ID',
+  'CLOUDINARY_CLOUD_NAME',
+  'CLOUDINARY_API_KEY',
+  'CLOUDINARY_API_SECRET',
+  'KV_BINDING',
+];
+
+const missingConfig = (env) => REQUIRED.filter((k) => !env[k]);
+
 export async function onRequestPost({ request, env }) {
-  const missing = [
-    'AIRTABLE_TOKEN',
-    'AIRTABLE_BASE_ID',
-    'AIRTABLE_DESIGN_ORDERS_TABLE_ID',
-    'CLOUDINARY_CLOUD_NAME',
-    'CLOUDINARY_API_KEY',
-    'CLOUDINARY_API_SECRET',
-    // Binding KV (tên đặt trong Cloudflare Pages -> Settings -> Functions -> KV namespace
-    // bindings). CỐ TÌNH để bắt buộc: thiếu nó thì endpoint vẫn chạy nhưng không còn gì chặn
-    // spam — hỏng đúng thứ đang cần bảo vệ mà nhìn từ ngoài lại tưởng mọi thứ bình thường.
-    'KV_BINDING',
-  ].filter((k) => !env[k]);
+  const missing = missingConfig(env);
 
   if (missing.length) {
     // Không nói tên biến nào thiếu cho khách — họ không sửa được, mà lộ cấu hình ra ngoài thì
@@ -294,8 +299,29 @@ export async function onRequestPost({ request, env }) {
   return json({ ok: true, code });
 }
 
-// Gọi nhầm bằng GET (mở thẳng URL trên trình duyệt) thì trả lời rõ ràng thay vì để Pages rơi
-// về trang 404 tĩnh của site — lúc đi dò lỗi cấu hình sẽ đỡ mất công đoán.
-export function onRequestGet() {
-  return json({ message: 'Endpoint này chỉ nhận POST từ trang /thiet-ke-rieng.' }, 405);
+/**
+ * Mở thẳng URL này trên trình duyệt để TỰ KIỂM TRA cấu hình của môi trường đang chạy.
+ *
+ * Chỉ trả về TÊN các khoá còn thiếu, KHÔNG bao giờ trả về giá trị. Tên khoá vốn đã nằm công
+ * khai trong README của repo nên không lộ thêm gì; đổi lại, lúc dò lỗi trên production bạn
+ * thấy ngay thiếu cái gì thay vì phải lục log của Pages.
+ *
+ * Lưu ý hay vấp: đổi biến môi trường hay thêm binding trong Pages CHỈ có hiệu lực với các bản
+ * deploy MỚI. Bản đang chạy vẫn giữ cấu hình lúc nó được tạo — sửa xong phải deploy lại.
+ */
+export function onRequestGet({ env }) {
+  const missing = missingConfig(env);
+  return json(
+    {
+      message: missing.length
+        ? 'Chưa chạy được: môi trường này còn thiếu cấu hình.'
+        : 'Cấu hình đủ. Endpoint chỉ nhận POST từ trang /thiet-ke-rieng.',
+      ready: missing.length === 0,
+      missing,
+      hint: missing.length
+        ? 'Đặt trong Cloudflare Pages > Settings (biến môi trường + KV namespace binding) cho ĐÚNG môi trường đang mở, rồi DEPLOY LẠI.'
+        : undefined,
+    },
+    missing.length ? 503 : 405
+  );
 }
