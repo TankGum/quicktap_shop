@@ -386,8 +386,13 @@ export default async function HomePage() {
             <p className="kicker">Thiết kế riêng</p>
             <h2>In theo logo &amp; màu thương hiệu của bạn giá không đổi</h2>
             <p className="section-sub">
-              Chỉ cần gửi logo, chúng tôi lên mẫu cho bạn duyệt trước khi in.
+              Tải logo lên là thấy ngay nó nằm trên bảng, kéo chỉnh cho vừa ý rồi gửi —
+              hoặc cứ gửi logo để chúng tôi lên mẫu cho bạn duyệt trước khi in.
             </p>
+            <Link className="btn btn-primary btn-lg section-head-cta" href="/thiet-ke-rieng">
+              Tự lên mẫu ngay
+              <ArrowRightIcon className="i" />
+            </Link>
           </Reveal>
 
         </div>
@@ -400,8 +405,8 @@ export default async function HomePage() {
 
         <div className="container">
           <Reveal as="p" className="products-note">
-            Có ý tưởng rồi?{' '}
-            <Link href="/lien-he">Liên hệ để trao đổi thiết kế</Link>.
+            Muốn trao đổi trước?{' '}
+            <Link href="/lien-he">Liên hệ để bàn về thiết kế</Link>.
           </Reveal>
         </div>
       </section>

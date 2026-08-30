@@ -10,6 +10,9 @@
 # cache dữ liệu Airtable/Cloudinary lúc dev/build — xem lib/airtable.js
 /.cache/
 
+# cache cục bộ của `wrangler pages dev` (chạy thử Pages Function, xem README)
+/.wrangler/
+
 # misc
 .DS_Store
 *.pem

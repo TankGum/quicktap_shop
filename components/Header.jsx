@@ -22,7 +22,7 @@ const FALLBACK_PRODUCT_LINKS = products.map((p) => ({ href: p.href, label: p.tit
 // trong chính trang con — không có, nên chẳng đi đâu cả. Có "/" thì về trang chủ rồi mới cuộn.
 const SECTION_LINKS = [
   { href: '/#cach-hoat-dong', label: 'Cách hoạt động' },
-  { href: '/#thiet-ke-rieng', label: 'Thiết kế riêng' },
+  { href: '/thiet-ke-rieng', label: 'Thiết kế riêng' },
   { href: '/#loi-ich', label: 'Lợi ích' },
   { href: '/#faq', label: 'Câu hỏi' },
 ];
@@ -92,7 +92,18 @@ export default function Header({ productLinks }) {
   }, [pathname]);
 
   // Mục neo tới khối: sáng khi đang xem đúng khối đó.
-  const isSectionActive = (href) => pathname === '/' && activeId === hashId(href);
+  //
+  // Phải loại trường hợp href KHÔNG phải dạng neo (hashId trả null): "Thiết kế riêng" giờ
+  // trỏ tới một TRANG thật (/thiet-ke-rieng), mà ở đầu trang chủ thì activeId cũng là null —
+  // thiếu chốt chặn này thì null === null và mục đó sáng lên ngay khi khách vừa mở trang chủ.
+  const isSectionActive = (href) => {
+    const id = hashId(href);
+    return id !== null && pathname === '/' && activeId === id;
+  };
+
+  // Một mục trong SECTION_LINKS có thể là neo tới khối trên trang chủ HOẶC là một trang
+  // riêng — gộp cả hai phép kiểm tra để chỗ nào cũng dùng chung một hàm.
+  const isNavActive = (href) => isActive(href) || isSectionActive(href);
 
   useEffect(() => {
     const onScroll = () => setStuck(window.scrollY > 8);
@@ -193,7 +204,7 @@ export default function Header({ productLinks }) {
             <Link
               key={l.href}
               href={l.href}
-              aria-current={isSectionActive(l.href) ? 'page' : undefined}
+              aria-current={isNavActive(l.href) ? 'page' : undefined}
             >
               {l.label}
             </Link>
@@ -305,7 +316,7 @@ export default function Header({ productLinks }) {
             <li key={l.href}>
               <Link
                 href={l.href}
-                aria-current={isSectionActive(l.href) ? 'page' : undefined}
+                aria-current={isNavActive(l.href) ? 'page' : undefined}
                 onClick={() => setMenuOpen(false)}
               >
                 {l.label}

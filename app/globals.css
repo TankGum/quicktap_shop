@@ -2163,3 +2163,335 @@ p { text-wrap: pretty; }
      không bị cắt cụt ở mép nét. */
   pointer-events: none;
 }
+
+/* ---------- Studio "Thiết kế riêng" (components/DesignStudio.jsx) ---------- */
+.studio {
+  display: grid;
+  gap: clamp(24px, 4vw, 44px);
+  align-items: start;
+  margin-top: clamp(26px, 4vw, 44px);
+}
+/* Từ tablet trở lên: mẫu bên trái, bảng điều khiển bên phải. Dưới ngưỡng đó xếp dọc và
+   mẫu nằm TRÊN — khách phải nhìn thấy thứ mình vừa đổi ngay, không phải cuộn ngược lên. */
+@media (min-width: 860px) {
+  .studio { grid-template-columns: minmax(0, 1fr) minmax(0, 380px); }
+}
+
+.studio-stage { display: grid; gap: 10px; }
+/* Dính theo màn hình khi cuộn qua phần điền thông tin dài bên phải. */
+@media (min-width: 860px) {
+  .studio-stage { position: sticky; top: 76px; }
+}
+
+.studio-canvas-wrap {
+  display: grid;
+  place-items: center;
+  padding: clamp(10px, 1.4vw, 16px);
+  border-radius: var(--radius-lg);
+  background: var(--bg-alt);
+}
+.section-alt .studio-canvas-wrap { background: var(--surface); }
+/* Ảnh mẫu chỉ tải khi khách chọn tới (xem loadMockup) — mờ đi trong lúc chờ để khung không
+   nhấp nháy trắng giữa hai mẫu. */
+.studio-canvas-wrap.is-loading { opacity: .55; }
+
+.studio-canvas {
+  width: 100%;
+  /* Chặn bề rộng theo TỈ LỆ của mẫu đang xem (--studio-aspect = rộng/cao, do DesignStudio
+     đặt) nên mẫu nào cũng cao tối đa 58vh: bảng vuông rộng 58vh, standee A6 chỉ rộng ~41vh.
+     Chặn bằng một con số chung thì standee dài lòi ra khỏi màn hình. */
+  max-width: min(100%, calc(58vh * var(--studio-aspect, 1)));
+  height: auto;
+  border-radius: var(--radius-sm);
+}
+.studio-stage-note {
+  font-size: .82rem;
+  color: var(--ink-3);
+  text-align: center;
+}
+
+/* ----- Bảng điều khiển ----- */
+.studio-panel { display: grid; gap: clamp(20px, 2.6vw, 26px); }
+.studio-field { position: relative; display: grid; gap: 10px; border: 0; padding: 0; margin: 0; }
+.studio-field legend {
+  padding: 0;
+  font-size: .95rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking-sub);
+  margin-bottom: 2px;
+}
+
+/* Thanh chọn mẫu kiểu "segmented control": 3 ô bằng nhau trong một khay bo tròn, ô đang chọn
+   nổi lên nền trắng. Nhãn 2 dòng (tên sản phẩm + tên mẫu) để ở bề ngang điện thoại vẫn đọc
+   được là standee hay bảng, thay vì một dòng dài bị vỡ chữ. */
+.studio-tabs {
+  display: grid;
+  /* 3 mẫu -> 3 cột vừa khít cả trên điện thoại lẫn trong cột phải rộng 380px của studio.
+     Thêm mẫu thứ 4 thì đổi sang repeat(2, 1fr): 4 ô một hàng ngang chỉ còn ~95px mỗi ô,
+     nhãn 2 dòng vỡ chữ ngay cả trên máy tính. */
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--bg-alt);
+}
+.section-alt .studio-tabs { background: var(--surface); }
+
+.studio-tab {
+  position: relative;
+  display: grid;
+  gap: 1px;
+  justify-items: center;
+  text-align: center;
+  padding: 9px 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+/* Nút radio thật vẫn nằm đó (bàn phím + trình đọc màn hình cần nó), chỉ ẩn khỏi mắt —
+   không dùng display:none vì như vậy là loại nó khỏi cả thứ tự tab. */
+.studio-tab input { position: absolute; opacity: 0; pointer-events: none; }
+.studio-tab b {
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking-caption);
+  color: var(--ink-2);
+  line-height: 1.25;
+}
+.studio-tab span { font-size: .74rem; color: var(--ink-3); line-height: 1.25; }
+.studio-tab:hover b { color: var(--ink); }
+.studio-tab.is-on {
+  background: var(--surface);
+  box-shadow: var(--shadow-sm), 0 0 0 1px var(--line-2);
+}
+.section-alt .studio-tab.is-on { background: var(--bg-alt); }
+.studio-tab.is-on b { color: var(--ink); }
+.studio-tab.is-on span { color: var(--ink-2); }
+.studio-tab:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.studio-file { position: absolute; opacity: 0; pointer-events: none; }
+.studio-file-btn { width: fit-content; cursor: pointer; }
+/* input[type=file] ẩn đi thì vòng focus của bàn phím cũng biến mất — trả lại cho cái nhãn
+   đang đóng vai nút bấm, nếu không người dùng bàn phím không biết mình đang ở đâu. */
+.studio-file:focus-visible + .studio-file-btn { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.studio-file-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .85rem;
+  color: var(--ink-2);
+  word-break: break-all;
+}
+.studio-file-name button {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px; height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg-alt);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.studio-file-name button svg { width: 12px; height: 12px; }
+.studio-file-name button:hover { background: var(--line-2); color: var(--ink); }
+
+.studio-hint { font-size: .82rem; color: var(--ink-3); line-height: 1.45; }
+
+.studio-specs {
+  display: grid;
+  gap: 5px;
+  font-size: .82rem;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+.studio-specs li { padding-left: 14px; position: relative; }
+.studio-specs li::before {
+  content: '·';
+  position: absolute;
+  left: 3px;
+  color: var(--line);
+}
+.studio-specs b { color: var(--ink-2); font-weight: 600; }
+.studio-specs code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .92em;
+  color: var(--ink-2);
+}
+
+.studio-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: .84rem;
+  line-height: 1.45;
+  color: var(--ink-2);
+  background: var(--bg-alt);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+}
+.studio-warn svg { flex: none; width: 16px; height: 16px; margin-top: 2px; color: var(--star); }
+
+.studio-input { display: grid; gap: 5px; font-size: .86rem; }
+.studio-input > span { color: var(--ink-2); }
+.studio-input b { color: var(--accent); font-weight: 500; }
+.studio-input input,
+.studio-input textarea {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  /* 16px: dưới mức này Safari trên iPhone tự phóng to cả trang khi con trỏ vào ô nhập. */
+  font-size: 16px;
+  letter-spacing: var(--tracking-body);
+  transition: border-color .2s var(--ease);
+}
+.studio-input textarea { resize: vertical; line-height: 1.5; }
+.studio-input input:focus,
+.studio-input textarea:focus { outline: none; border-color: var(--ink); }
+
+.studio-input-row { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 400px) {
+  .studio-input-row { grid-template-columns: 1fr 92px; }
+}
+
+.studio-submit { width: 100%; }
+.studio-submit:disabled { opacity: .6; cursor: progress; }
+.studio-submit-note { text-align: center; }
+.studio-submit-note a { color: var(--accent); text-decoration: none; }
+.studio-submit-note a:hover { text-decoration: underline; }
+
+/* ----- Màn hình sau khi gửi xong ----- */
+.studio-done {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+  max-width: 30rem;
+  margin: clamp(30px, 5vw, 56px) auto 0;
+  padding: clamp(28px, 4vw, 44px) clamp(20px, 3vw, 32px);
+  border-radius: var(--radius-lg);
+  background: var(--bg-alt);
+}
+.studio-done-mark {
+  display: grid;
+  place-items: center;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+}
+.studio-done-mark svg { width: 22px; height: 22px; }
+.studio-done h3 { font-size: 1.3rem; }
+.studio-done p { color: var(--ink-2); font-size: .95rem; }
+.studio-done-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 6px; }
+
+/* Nút gọi hành động đặt ngay trong đầu mục (.section-head) — mặc định các thẻ trong khối này
+   canh giữa nên nút cũng tự canh giữa theo. */
+.section-head-cta { margin-top: clamp(16px, 2.4vw, 24px); }
+.studio-cta { display: flex; justify-content: center; }
+
+/* Kéo/phóng logo trong ô chừa (xem components/DesignStudio.jsx) */
+.studio-canvas.is-draggable { cursor: grab; touch-action: none; }
+.studio-canvas.is-draggable:active { cursor: grabbing; }
+.studio-stage-tip { color: var(--ink-2); }
+
+/* Khối chỉnh cỡ được dựng một lần rồi đặt vào hai chỗ; CSS quyết định chỗ nào hiện.
+   display:none chứ không phải ẩn bằng opacity — bản không dùng phải biến mất khỏi cả thứ tự
+   tab lẫn trình đọc màn hình, nếu không khách bấm Tab sẽ gặp hai thanh trượt y hệt nhau. */
+.studio-adjust-at { display: block; }
+.studio-adjust-desktop { display: none; }
+@media (min-width: 860px) {
+  .studio-adjust-mobile { display: none; }
+  .studio-adjust-desktop { display: block; }
+}
+
+.studio-adjust { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
+.studio-zoom { flex: 1; display: grid; gap: 4px; font-size: .82rem; color: var(--ink-3); }
+.studio-zoom input { width: 100%; accent-color: var(--accent); }
+
+/* Kéo thả file logo vào công cụ (xem components/DesignStudio.jsx) */
+.studio { position: relative; }
+.studio-drop {
+  position: absolute;
+  /* Nhô ra ngoài mép một chút để khung nét đứt không đè lên nội dung sát viền. */
+  inset: -8px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius-lg);
+  /* Nền trong mờ chứ không đặc: phủ kín thì khách mất dấu công cụ bên dưới, không còn biết
+     mình đang thả vào chỗ nào. */
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  /* Lớp phủ chỉ để nhìn: bắt được con trỏ thì chính nó nuốt mất sự kiện thả của vùng bên dưới. */
+  pointer-events: none;
+}
+.studio-drop span {
+  padding: 12px 20px;
+  border-radius: 980px;
+  background: var(--accent);
+  color: #fff;
+  font-size: .95rem;
+  font-weight: 500;
+  box-shadow: var(--shadow);
+}
+
+.studio-file-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.studio-file-drophint { font-size: .82rem; color: var(--ink-3); }
+/* Máy cảm ứng không có thao tác kéo thả file — nhắc ở đó chỉ làm khách bối rối. */
+@media (hover: none) {
+  .studio-file-drophint { display: none; }
+}
+
+/* Chọn màu nền mặt sản phẩm (chỉ với mẫu in mực đen trên nền trắng) */
+.studio-swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.studio-swatch {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: transform .2s var(--ease), box-shadow .2s var(--ease);
+}
+.studio-swatch:hover { transform: translateY(-2px); }
+.studio-swatch.is-on { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ink); }
+/* Ô "trắng nguyên bản": gạch chéo mảnh để phân biệt với một ô màu trắng thật. */
+.studio-swatch.is-plain {
+  background:
+    linear-gradient(135deg, transparent 46%, var(--line) 46%, var(--line) 54%, transparent 54%),
+    var(--surface);
+}
+
+.studio-color {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 5px 12px 5px 5px;
+  border: 1px solid var(--line);
+  border-radius: 980px;
+  font-size: .84rem;
+  cursor: pointer;
+}
+.studio-color:hover { border-color: var(--ink-3); }
+.studio-color:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Ô màu gốc của trình duyệt có viền + đệm riêng mỗi hãng một kiểu; gọt hết để nó thành một
+   chấm màu tròn giống nhau ở mọi nơi. */
+.studio-color input {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.studio-color input::-webkit-color-swatch-wrapper { padding: 0; }
+.studio-color input::-webkit-color-swatch { border: 1px solid var(--line); border-radius: 50%; }
+.studio-color input::-moz-color-swatch { border: 1px solid var(--line); border-radius: 50%; }

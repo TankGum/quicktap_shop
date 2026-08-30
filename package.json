@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "npx serve out",
-    "lint": "next lint"
+    "lint": "next lint",
+    "preview": "next build && wrangler pages dev out --kv KV_BINDING"
   },
   "dependencies": {
     "next": "^15.5.4",

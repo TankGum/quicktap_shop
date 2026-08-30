@@ -4,7 +4,7 @@ import { getVariantsByProduct } from '@/lib/airtable';
 export const dynamic = 'force-static';
 
 export default async function sitemap() {
-  const staticRoutes = ['', '/san-pham/bang-nfc', '/san-pham/standee', '/lien-he'];
+  const staticRoutes = ['', '/san-pham/bang-nfc', '/san-pham/standee', '/thiet-ke-rieng', '/lien-he'];
 
   // Trước đây sitemap chỉ có 4 trang tĩnh — bỏ sót toàn bộ trang chi tiết từng mẫu
   // (/san-pham/bang-nfc/[slug], /san-pham/standee/[slug]), dù mỗi trang có ảnh + mô tả
