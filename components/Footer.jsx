@@ -8,9 +8,20 @@ import MetallicText, { inkMetal } from './MetallicText';
 // bên phải, đường kẻ, dòng bản quyền) + chữ thương hiệu khổng lồ phía dưới làm hoạ tiết.
 //
 // Bản tham khảo có thêm social icon + link Privacy/Terms/Cookies — site này không có mạng xã
-// hội và không có trang pháp lý nào, nên KHÔNG bịa ra để giống — chỉ giữ những gì trỏ tới
-// trang thật. 3 cột link ở đây dùng đúng nguồn dữ liệu đã có (data/products.js, các anchor
-// có thật trên trang chủ), không phải danh sách gõ tay có thể trôi khỏi thực tế.
+// hội nên phần social vẫn bỏ. Các link pháp lý thì nay đã có trang thật (xem app/phap-ly,
+// app/chinh-sach-bao-mat, app/dieu-khoan-su-dung, app/so-do-trang) nên được đặt ở hàng dưới
+// cùng cạnh dòng bản quyền — đúng chỗ người ta quen tìm, và không chiếm một cột ngang hàng
+// với Sản phẩm / Điều hướng trong khi nó không phải nội dung khách vào site để đọc.
+//
+// 3 cột link ở trên dùng đúng nguồn dữ liệu đã có (data/products.js, các anchor có thật trên
+// trang chủ), không phải danh sách gõ tay có thể trôi khỏi thực tế.
+const LEGAL_LINKS = [
+  { href: '/chinh-sach-bao-mat', label: 'Chính sách quyền riêng tư' },
+  { href: '/dieu-khoan-su-dung', label: 'Điều khoản sử dụng' },
+  { href: '/phap-ly', label: 'Thông tin pháp lý' },
+  { href: '/so-do-trang', label: 'Bản đồ trang web' },
+];
+
 const NAV_COLUMN = [
   { href: '/', label: 'Trang chủ' },
   { href: '/#cach-hoat-dong', label: 'Cách hoạt động' },
@@ -67,6 +78,11 @@ export default function Footer() {
 
         <div className="footer-bottom">
           <p className="copyright">© {year} {siteConfig.brandName}. All rights reserved.</p>
+          <nav className="footer-legal" aria-label="Trang pháp lý">
+            {LEGAL_LINKS.map((l) => (
+              <Link key={l.href} href={l.href}>{l.label}</Link>
+            ))}
+          </nav>
         </div>
       </div>
 

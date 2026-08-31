@@ -174,6 +174,26 @@ nặng tới 10MB — bắt khách tải lên một thứ rồi vứt đi là v�
 bản in, thêm cột `logo_url` vào `d1/schema.sql` rồi mở lại phần đã ghi chú trong
 `functions/api/thiet-ke-rieng.js` và `components/DesignStudio.jsx`.
 
+**Kiểm tra thông tin khách nhập.** Luật nằm ở [`lib/orderValidation.js`](lib/orderValidation.js)
+và được dùng **chung** cho cả form lẫn Function — một file để hai bên không bao giờ lệch nhau
+(lệch thì hoặc form hứa hẹn hợp lệ rồi server trả 400, hoặc khách bị chặn bằng lỗi mà form
+không giải thích được). Client kiểm tra trước để báo lỗi ngay dưới ô nhập, còn Function mới là
+chốt chặn thật: JS trong trình duyệt ai cũng sửa được, một cú `curl` là bỏ qua sạch.
+
+| Ô | Luật |
+| --- | --- |
+| Tên quán | bắt buộc, ≥ 2 ký tự, phải có ít nhất một chữ cái (toàn số = gõ nhầm ô) |
+| Số điện thoại | bắt buộc, số VN: di động `0[3\|5\|7\|8\|9]` + 8 số, hoặc cố định `02` + 8–9 số |
+| Số lượng | số nguyên 1–9999 |
+| Ghi chú | tối đa 2000 ký tự (đo sau khi gộp khoảng trắng) |
+
+Số điện thoại được **chuẩn hoá** trước khi ghi: `+84 388 102 842`, `(028) 3822 1234`,
+`0084…` đều về dạng `0388102842`. Nếu không thì cùng một quán nằm trong D1 dưới hai kiểu viết
+và lúc tra số gọi lại sẽ không khớp. Form gửi lên bản đã chuẩn hoá, Function chuẩn hoá lại lần
+nữa (không tin dữ liệu từ client).
+
+Sai thì Function trả **400** kèm `message` (lỗi đầu tiên) và `errors` (đủ cả, khoá theo tên ô).
+
 **2. Hai binding trong Pages** (Settings → Functions), nhớ làm cho **cả Production lẫn
 Preview** — bind thiếu một môi trường thì môi trường đó trả 503:
 

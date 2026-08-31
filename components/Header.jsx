@@ -287,7 +287,12 @@ export default function Header({ productLinks }) {
           {/* Danh sách mẫu luôn mở, không bung/thu — chỉ có 2 mẫu, giấu đi rồi bắt bấm thêm
               một nhịp nữa là thừa. Chỉ hiện TÊN mẫu, bỏ câu mô tả: cột sidebar rộng chừng
               240px nên mỗi câu tagline xuống 3 dòng, hai mục gộp lại thành một khối chữ lổn
-              nhổn — đó mới là thứ làm khối này xấu, không phải chuyện đóng hay mở. */}
+              nhổn — đó mới là thứ làm khối này xấu, không phải chuyện đóng hay mở.
+
+              Xếp thành 2 THẺ cạnh nhau chứ không phải danh sách dòng: kiểu dòng cũ để ảnh
+              44px bên trái, tên dài thì xuống 2 dòng còn tên ngắn 1 dòng nên hai hàng cao
+              thấp so le. Dạng thẻ cho ảnh vuông to gấp ba, hai ô luôn bằng nhau, và khách
+              chọn sản phẩm bằng cách NHÌN ảnh chứ không phải đọc tên. */}
           <li>
             <Link
               href={PRODUCTS_HREF}
@@ -306,13 +311,15 @@ export default function Header({ productLinks }) {
                   >
                     {p.image && (
                       <ProgressiveImg
-                        className="nav-thumb"
+                        className="mobile-nav-sub-img"
                         src={p.image}
                         alt=""
-                        sizes="44px"
+                        // Ô ảnh rộng ~125px trên màn hình 390px; 44px của bản danh sách cũ
+                        // giờ sẽ khiến trình duyệt tải bản quá nhỏ rồi kéo giãn ra vỡ nét.
+                        sizes="130px"
                       />
                     )}
-                    {p.label}
+                    <span className="mobile-nav-sub-title">{p.label}</span>
                   </Link>
                 </li>
               ))}

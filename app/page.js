@@ -21,7 +21,7 @@ import {
 
 const ART_BY_ID = { 'bang-nfc': NfcPlateArt, standee: StandeeArt };
 
-// "99.000đ" -> 99000. Chỉ dùng để SO SÁNH giá, không dùng để hiển thị — chuỗi gốc đã định
+// "99.000 VND" -> 99000. Chỉ dùng để SO SÁNH giá, không dùng để hiển thị — chuỗi gốc đã định
 // dạng sẵn trong Airtable nên cứ hiện nguyên chuỗi đó.
 function toNumber(price) {
   return Number(String(price).replace(/\D/g, '')) || 0;
@@ -107,7 +107,7 @@ export default async function HomePage() {
       image: variants.find((v) => v.image)?.image || null,
       Art: ART_BY_ID[p.id],
       // Giá thấp nhất của dòng, để hiện "Chỉ ..." ngay ngoài trang chủ. Giá trong Airtable
-      // là chuỗi đã định dạng ("99.000đ") nên phải rút số ra mới so sánh được.
+      // là chuỗi đã định dạng ("99.000 VND") nên phải rút số ra mới so sánh được.
       priceFrom: variants
         .map((v) => v.price)
         .filter(Boolean)
@@ -141,13 +141,34 @@ export default async function HomePage() {
             Khách chạm điện thoại hoặc quét mã là mở thẳng form đánh giá.
           </Reveal>
 
+          {/* Gradient tô nét icon của cặp nút kim loại bên dưới — nhúng một lần cho cả trang,
+              đặt NGOÀI .hero-actions vì svg rỗng vẫn tính là một flex item và ăn mất một
+              khoảng gap. Xem .btn-metal trong globals.css. */}
+          <svg className="metal-defs" width="0" height="0" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="qt-metal-ink" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#4c4d55" />
+                <stop offset="0.44" stopColor="#141518" />
+                <stop offset="0.53" stopColor="#9c9da5" />
+                <stop offset="0.63" stopColor="#3a3b42" />
+                <stop offset="1" stopColor="#26272c" />
+              </linearGradient>
+              <linearGradient id="qt-metal-soft" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#8a8b94" />
+                <stop offset="0.46" stopColor="#4a4b52" />
+                <stop offset="0.55" stopColor="#b4b5bc" />
+                <stop offset="1" stopColor="#5e5f67" />
+              </linearGradient>
+            </defs>
+          </svg>
+
           <Reveal as="div" className="hero-actions">
-            <Link className="btn btn-primary btn-lg" href="/lien-he">
+            <Link className="btn btn-lg btn-metal btn-aura" href="/lien-he">
               <PhoneIcon className="i" />
-              Liên hệ đặt hàng
+              <span className="btn-metal-label">Liên hệ đặt hàng</span>
             </Link>
-            <Link className="btn btn-ghost btn-lg" href="#san-pham">
-              Xem sản phẩm
+            <Link className="btn btn-lg btn-metal btn-metal-soft" href="#san-pham">
+              <span className="btn-metal-label">Xem sản phẩm</span>
               <ArrowRightIcon className="i" />
             </Link>
           </Reveal>
@@ -389,8 +410,10 @@ export default async function HomePage() {
               Tải logo lên là thấy ngay nó nằm trên bảng, kéo chỉnh cho vừa ý rồi gửi —
               hoặc cứ gửi logo để chúng tôi lên mẫu cho bạn duyệt trước khi in.
             </p>
-            <Link className="btn btn-primary btn-lg section-head-cta" href="/thiet-ke-rieng">
-              Tự lên mẫu ngay
+            {/* Cùng bộ kim loại với cặp nút ở hero (xem .btn-metal trong globals.css). Bộ
+                gradient tô nét icon nhúng một lần trên đầu trang, trong .hero-lead. */}
+            <Link className="btn btn-lg btn-metal btn-aura section-head-cta" href="/thiet-ke-rieng">
+              <span className="btn-metal-label">Tự lên mẫu ngay</span>
               <ArrowRightIcon className="i" />
             </Link>
           </Reveal>

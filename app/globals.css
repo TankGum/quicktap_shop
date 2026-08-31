@@ -42,6 +42,10 @@ button, input, textarea { font: inherit; }
   --line-2:    #ebebed;
 
   --star:      #f5a524;
+  /* Đỏ CHỈ dùng cho lỗi ô nhập (xem .studio-input-error). Bảng màu site cố tình trung tính,
+     nhưng lỗi mà tô bằng --accent thì lẫn với nút bấm, còn tô --ink-3 thì nhìn như chú thích
+     bình thường — không ai để ý mình vừa điền sai. */
+  --danger:    #d70015;
 
   /* nền tối cố định cho các khối "spotlight" (contact/CTA) — KHÔNG đổi theo dark mode,
      luôn giữ tương phản trắng-trên-tối dù trang đang ở theme nào */
@@ -224,6 +228,212 @@ p { text-wrap: pretty; }
 
 .btn-sm { padding: .5em 1.05em; font-size: .92rem; }
 .btn-lg { padding: .85em 1.7em; font-size: 1.06rem; }
+
+/* Cặp nút ở hero — dựng theo "AI Mode Button Animation" (Dribbble, Umang waghela): mặt nút là
+   kim loại sáng, viền là một sợi mảnh có điểm sáng tán sắc cầu vồng, chữ đánh bóng như chrome.
+
+   Chia làm hai lớp: .btn-metal lo phần chất liệu dùng chung cho CẢ HAI nút, rồi .btn-aura
+   (nút dẫn) thêm chuyển động, .btn-metal-soft (nút phụ) hạ tông xuống. Nhờ vậy hai nút đứng
+   cạnh nhau ra một bộ, không phải một nút kim loại kèm một ô xám lạc lõng.
+
+   Không nút nào dùng .btn-primary: nền xanh đè mất chất kim loại. Thứ bậc giữa hai nút giờ do
+   viền và chuyển động quyết định — nút dẫn có vành tán sắc chạy, nút phụ chỉ có mép tĩnh.
+   Máy bật "giảm chuyển động" thì khối @media ở đầu file đã tắt sẵn mọi animation. */
+@property --aura-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+:root {
+  /* Dải chrome dọc: tối ở thân chữ, sáng dần xuống chân như mặt kim loại hắt sáng từ dưới.
+     ĐÃ THỬ kiểu chrome kinh điển (một lằn trắng loé ngang giữa chữ) và bỏ: ở cỡ chữ nút, lằn
+     đó rơi đúng vào thân chữ thường, chữ nhìn rỗng ruột và dấu tiếng Việt bị nuốt. Chất kim
+     loại ở đây do ba thứ cộng lại — dải này, bóng dập chìm màu trắng, và vệt sáng chạy. */
+  --metal-ramp: linear-gradient(180deg,
+    #44454d 0%, #17181b 34%, #1c1d21 58%, #3c3d44 82%, #63646d 100%);
+  --metal-ramp-soft: linear-gradient(180deg,
+    #5e5f68 0%, #303138 34%, #35363c 58%, #4d4e56 82%, #76777f 100%);
+}
+
+/* ---- Chất liệu dùng chung ---- */
+.btn-metal {
+  position: relative;
+  isolation: isolate;   /* giữ mix-blend-mode của tia loé ở trong lòng nút */
+  color: #1d1d1f;
+  /* Dải sáng-tối-sáng theo chiều dọc: đó là thứ khiến mắt đọc ra "tấm kim loại" chứ không
+     phải "ô trắng". */
+  background: linear-gradient(178deg, #ffffff 0%, #f7f7f9 40%, #ececee 56%, #fafafb 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .95),
+    inset 0 -1px 1px rgba(0, 0, 0, .05),
+    0 1px 2px rgba(0, 0, 0, .05),
+    0 12px 26px -16px rgba(0, 0, 0, .45);
+  transition: box-shadow .35s var(--ease), transform .35s var(--ease);
+}
+.btn-metal:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -1px 1px rgba(0, 0, 0, .05),
+    0 1px 2px rgba(0, 0, 0, .05),
+    0 18px 32px -16px rgba(0, 0, 0, .5);
+}
+.btn-metal:active { transform: translateY(0); }
+
+/* Vành viền. Cùng một cách dựng cho cả hai nút: mask phủ toàn bộ TRỪ ĐI lớp content-box đã bị
+   padding khoét ruột, còn lại đúng sợi 1.6px ngoài rìa. Khác nhau chỉ ở phần background. */
+.btn-metal::before {
+  content: "";
+  position: absolute;
+  inset: -1.6px;
+  border-radius: inherit;
+  padding: 1.6px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Icon và chữ nằm TRÊN tia loé (::after) — để tia lướt trên mặt kim loại thôi, quét qua chữ
+   thì chữ bị làm nhạt, khó đọc. Nét icon tô bằng gradient SVG (defs đặt trong app/page.js);
+   có màu dự phòng phía sau phòng khi thiếu defs, nếu không icon sẽ mất nét hẳn. */
+.btn-metal .i,
+.btn-metal .btn-metal-label { position: relative; z-index: 1; }
+.btn-metal .i {
+  stroke: url(#qt-metal-ink) #1d1d1f;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .95));
+}
+/* Mũi tên đứng CUỐI nút thì nhích sang phải khi rê chuột. Chọn theo :last-child chứ không
+   phải theo class: nút nào có icon dẫn đầu (điện thoại ở "Liên hệ đặt hàng") thì icon đó
+   không được nhúc nhích — mũi tên nhích thì ra "đi tiếp", cái ống nghe nhích thì chỉ thấy lỏng. */
+.btn-metal .i:last-child { transition: transform .3s var(--ease); }
+.btn-metal:hover .i:last-child { transform: translateX(3px); }
+
+/* Chữ chrome. Phải bọc trong <span> vì background-clip: text cần một phần tử riêng, và phải
+   bọc trong @supports vì color: transparent mà trình duyệt không cắt được nền thì chữ biến
+   mất hẳn. */
+/* Vệt trắng ngay dưới nét chữ: chữ trông như dập chìm vào tấm kim loại — chính nó mới làm
+   chất kim loại đọc ra ở cỡ chữ nút, dải chrome một mình là chưa đủ.
+
+   Phải là filter: drop-shadow chứ KHÔNG được dùng text-shadow. background-clip: text vẽ ở
+   pha NỀN, tức là trước text-shadow, nên bóng trắng sẽ phủ đè lên chính phần chữ vừa tô và
+   chữ nhìn rỗng ruột như viền rỗng. drop-shadow thì lấy hình của cả phần đã tô rồi hắt bóng
+   ra sau, nên không đè gì cả. */
+.btn-metal-label {
+  color: #1d1d1f;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .9));
+}
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .btn-metal-label {
+    background-image: var(--metal-ramp);
+    -webkit-background-clip: text;
+            background-clip: text;
+    color: transparent;
+  }
+}
+
+/* ---- Nút dẫn: "Liên hệ đặt hàng" ---- */
+/* Vành tán sắc: nền conic quay quanh tâm nút. Hai chỗ trắng loá kèm cam/lam hai bên chính là
+   chỗ tán sắc — nét nhận dạng của bản gốc. */
+.btn-aura::before {
+  background: conic-gradient(from var(--aura-angle),
+    #2b2c31 0deg,
+    #3c3d44 38deg,
+    rgba(255, 122, 78, .95) 60deg,
+    #ffffff 72deg,
+    rgba(112, 214, 255, .95) 84deg,
+    rgba(142, 128, 255, .75) 95deg,
+    #b9bac2 116deg,
+    #cdced4 148deg,   /* cung sáng nhất vẫn phải thấy được: nhạt hơn nữa thì có lúc mép trên
+                         của nút biến mất hẳn vào nền trắng của trang */
+    #96979f 196deg,
+    rgba(255, 186, 88, .9) 230deg,
+    #ffffff 242deg,
+    rgba(104, 202, 255, .9) 254deg,
+    #4c4d55 288deg,
+    #2b2c31 360deg);
+  animation: aura-spin 5.2s linear infinite;
+}
+
+/* Tia loé lướt qua mặt nút — trắng ở lõi, xám nhạt hai bên để ra vệt phản chiếu trên kim loại
+   chứ không phải một mảng trắng. Dải sáng nằm giữa một ảnh nền rộng gấp 3 bề ngang nút nên ở
+   mốc 0% và 45% nó đều đã ra ngoài khung: chỗ đứng yên cuối chu kỳ và cú nhảy khi lặp lại đều
+   không nhìn thấy. */
+.btn-aura::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(100deg,
+    transparent 38%,
+    rgba(150, 153, 163, .22) 45%,
+    rgba(255, 255, 255, .92) 50%,
+    rgba(150, 153, 163, .18) 55%,
+    transparent 62%);
+  background-size: 300% 100%;
+  background-repeat: no-repeat;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  animation: aura-sheen 5.2s linear infinite;
+}
+
+/* Chữ của nút dẫn có thêm một vệt sáng chạy ngang, cùng nhịp với tia loé trên mặt nút. */
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .btn-aura .btn-metal-label {
+    background-image:
+      linear-gradient(100deg,
+        transparent 40%,
+        rgba(120, 122, 132, .35) 46%,
+        rgba(255, 255, 255, .78) 50%,
+        rgba(120, 122, 132, .3) 54%,
+        transparent 60%),
+      var(--metal-ramp);
+    background-size: 320% 100%, 100% 100%;
+    background-repeat: no-repeat;
+    animation: aura-text-shine 5.2s linear infinite;
+  }
+}
+
+/* ---- Nút phụ: "Xem sản phẩm" ---- */
+/* Cùng chất liệu nhưng xám hơn, mép tĩnh, không chuyển động — nhường hẳn vai chính. */
+.btn-metal-soft {
+  background: linear-gradient(178deg, #fbfbfc 0%, #f2f2f4 40%, #e6e6e9 56%, #f4f4f6 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .9),
+    inset 0 -1px 1px rgba(0, 0, 0, .04),
+    0 1px 2px rgba(0, 0, 0, .04),
+    0 8px 18px -14px rgba(0, 0, 0, .38);
+}
+.btn-metal-soft:hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .95),
+    inset 0 -1px 1px rgba(0, 0, 0, .04),
+    0 1px 2px rgba(0, 0, 0, .04),
+    0 14px 24px -14px rgba(0, 0, 0, .42);
+}
+.btn-metal-soft::before {
+  background: linear-gradient(178deg, #ffffff 0%, #dcdce1 42%, #b9bac1 58%, #d5d6db 100%);
+}
+.btn-metal-soft .i { stroke: url(#qt-metal-soft) #55565e; }
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .btn-metal-soft .btn-metal-label { background-image: var(--metal-ramp-soft); }
+}
+
+/* Bộ gradient tô nét icon, nhúng một lần trong hero (app/page.js). Không chiếm chỗ trong dòng
+   nút nên phải bỏ hẳn ra khỏi luồng, nếu không nó ăn mất một khoảng gap của flex. */
+.metal-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+@keyframes aura-spin { to { --aura-angle: 360deg; } }
+@keyframes aura-sheen {
+  0%        { background-position: 100% 0; }
+  45%, 100% { background-position: 0% 0; }
+}
+@keyframes aura-text-shine {
+  0%        { background-position: 100% 0, 0 0; }
+  45%, 100% { background-position: 0% 0, 0 0; }
+}
 
 /* ---------- Header ---------- */
 /* Thanh điều hướng mảnh, mờ nền — giống thanh nav của apple.com. */
@@ -426,49 +636,63 @@ p { text-wrap: pretty; }
 .mobile-nav-list > li:has(> .mobile-nav-sub) > a { border-bottom: 0; padding-bottom: 8px; }
 .mobile-nav-list a:active { color: var(--accent); }
 
-/* Danh sách mẫu: một khối liền có nền, các dòng ngăn nhau bằng kẻ mảnh — đọc như một nhóm con
-   thuộc về mục phía trên, thay vì mấy dòng chữ xám trôi nổi. */
+/* Danh sách mẫu: 2 THẺ cạnh nhau, mỗi thẻ là ảnh vuông + tên. Bản trước là danh sách dòng
+   (ảnh 44px bên trái, tên bên phải) — tên dài xuống 2 dòng còn tên ngắn 1 dòng nên hai hàng
+   cao thấp so le, và ảnh bé tới mức không nhận ra sản phẩm nào với sản phẩm nào. Ở menu bán
+   hàng thì ẢNH mới là thứ khách quét mắt, nên cho nó chỗ đứng đàng hoàng. */
 .mobile-nav-sub {
   display: grid;
-  margin: 0 0 6px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin: 2px 0 10px;
+}
+/* Ô cao bằng nhau: hàng grid lấy theo thẻ cao nhất, li giãn theo hàng, còn thẻ giãn theo li. */
+.mobile-nav-sub li { display: flex; }
+.mobile-nav-sub a {
+  flex: 1;
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--line-2);
   border-radius: var(--radius-sm);
-  background: var(--bg-alt);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color .2s var(--ease), background .2s var(--ease);
+}
+.mobile-nav-sub a:active { border-color: var(--line); background: var(--bg-alt); }
+
+.mobile-nav-sub-img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 9px;
+  /* Nền chờ trong lúc ảnh tải: ô trống trắng giữa thẻ trắng trông như thẻ bị lỗi. */
+  background: var(--art-halo);
+}
+.mobile-nav-sub-title {
+  font-size: .82rem;
+  font-weight: 500;
+  /* Bỏ letter-spacing của tiêu đề (kế thừa từ .mobile-nav-list): cỡ chữ này mà giãn chữ thì
+     tên vốn đã dài lại càng dễ tràn sang dòng thứ ba. */
+  letter-spacing: 0;
+  line-height: 1.35;
+  /* Chừa sẵn 2 dòng để hai thẻ cao bằng nhau dù tên dài ngắn khác nhau, nhưng cho phép tràn
+     tới dòng thứ 3 rồi mới cắt bằng "…": trên máy hẹp 320px, khung thẻ chỉ còn ~103px nên
+     chốt cứng 2 dòng là tên bị cụt ngay ("Bảng 10x10 dán tường …"). Thẻ vẫn bằng nhau vì
+     `li { display: flex }` + `a { flex: 1 }` ở trên đã kéo thẻ thấp lên bằng thẻ cao. */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  min-height: calc(2 * 1.35em);
   overflow: hidden;
 }
-/* --line chứ không phải --line-2: --line-2 (#ebebed) đặt trên nền --bg-alt (#f5f5f7) gần như
-   không nhìn ra. */
-.mobile-nav-sub li + li { border-top: 1px solid var(--line); }
-.mobile-nav-sub a {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  font-size: .97rem;
-  font-weight: 500;
-  line-height: 1.3;
-  color: var(--ink-2);
-  text-decoration: none;
-}
-/* Mũi tên ">" vẽ bằng CSS, đẩy sang sát mép phải — dấu hiệu "bấm để đi tiếp". */
-.mobile-nav-sub a::after {
-  content: "";
-  flex: none;
-  margin-left: auto;
-  width: 7px;
-  height: 7px;
-  border-top: 1.8px solid var(--ink-3);
-  border-right: 1.8px solid var(--ink-3);
-  transform: rotate(45deg);
-}
 .mobile-nav-sub a[aria-current="page"] {
-  color: var(--accent);
+  border-color: var(--accent);
   background: var(--accent-soft);
+  color: var(--accent);
 }
-.mobile-nav-sub a[aria-current="page"]::after { border-color: var(--accent); }
-/* Vạch dọc của mục cấp 1 (xem .mobile-nav-list a[aria-current] ở cuối file) định vị
-   left:-14px, để nguyên thì nó rơi ra ngoài khối nền thành một gạch lơ lửng. */
-.mobile-nav-sub a[aria-current="page"]::before { content: none; }
-
 .mobile-nav-cta { width: 100%; }
 .mobile-nav-note {
   margin-top: .7rem;
@@ -604,16 +828,81 @@ p { text-wrap: pretty; }
   aspect-ratio: 4 / 5;
   margin-top: calc(var(--card-w) * -5 / 4 / 2); /* kéo lên nửa chiều cao để tâm thẻ nằm đúng tâm vòng */
   border-radius: var(--radius);
-  overflow: hidden;
-  background: var(--art-halo);
-  box-shadow: var(--shadow-lg);
+  /* Nền và bóng đổ phải TỰ mờ theo góc quay. Trước đây chúng mờ ké theo opacity đặt trên
+     chính thẻ; giờ thẻ không còn opacity (nếu có thì mất không gian 3D) nên:
+       - nền --art-halo chuyển hẳn xuống .hero-ring-media, nơi có opacity;
+       - bóng đổ nhân alpha với --facing ngay tại đây.
+     Bỏ qua bước này thì thẻ quay ra sau lưng vẫn hiện nguyên một mảng xám đặc kèm bóng đen. */
+  box-shadow: 0 20px 60px -24px rgba(0, 0, 0, calc(.22 * var(--facing)));
   /* Xoay thẻ thứ i ra đúng vị trí của nó trên vòng tròn rồi đẩy ra xa tâm đúng 1 bán kính. */
   transform: rotateY(calc(var(--i) * var(--step))) translateZ(var(--ring-r, 320px));
   transition: box-shadow .3s var(--ease);
-}
-.hero-ring-item:hover { box-shadow: 0 30px 70px -20px rgba(0, 0, 0, .34); }
 
-.hero-ring-media { display: block; width: 100%; height: 100%; }
+  /* Thẻ có BỀ DÀY thật: mặt sau (::before) lùi lại vài px theo trục z, nên thẻ quay nghiêng
+     bao nhiêu là lộ ra bấy nhiêu thành bên — và lộ đúng bên đang quay đi, tự nó, không phải
+     mẹo đổ bóng cố định một hướng.
+
+     Muốn vậy thì thẻ BẮT BUỘC phải giữ được không gian 3D, mà ba thứ sau đều làm bẹt nó
+     (transform-style bị ép về flat):
+       - overflow khác visible  -> đã chuyển xuống .hero-ring-media
+       - filter                 -> đã chuyển xuống .hero-ring-media/::before/::after
+       - opacity < 1            -> nt.
+     Vì thế HeroCarousel3D.jsx giờ chỉ gán --facing lên thẻ, còn mờ/tối do CSS dưới đây tính. */
+  transform-style: preserve-3d;
+  --facing: 1;
+}
+.hero-ring-item:hover { box-shadow: 0 30px 70px -20px rgba(0, 0, 0, calc(.34 * var(--facing))); }
+
+/* Mặt sau + thành bên. Độ dày ăn theo bề rộng thẻ (~4,5%) chứ không phải hằng số px: thẻ co
+   từ 236px xuống 132px trên máy nhỏ, để nguyên 10px thì tấm bảng trông dày như viên gạch. */
+.hero-ring-item::before {
+  content: "";
+  position: absolute;
+  inset: 0;   /* ĐÚNG BẰNG mặt trước: nhô ra dù chỉ 1px thì thẻ quay thẳng mặt cũng viền sáng */
+  border-radius: inherit;
+  transform: translateZ(calc(var(--card-w) * -0.03));
+  /* Tối hơn mặt ảnh: dải lộ ra bên hông phải đọc thành CẠNH của tấm bảng. Để nó sáng (thử
+     rồi) thì trông như có một tấm trắng thứ hai nằm sau, không ra bề dày. */
+  background: linear-gradient(96deg,
+    #45464d 0%, #6d6e76 20%, #9b9ca3 44%, #6a6b73 64%, #3e3f46 100%);
+}
+
+/* Viền + vát cạnh trên mặt trước. Phải là ::after chứ không phải inset box-shadow đặt trên
+   .hero-ring-media: bóng inset vẽ trên NỀN nhưng dưới NỘI DUNG, mà nội dung ở đây là tấm ảnh
+   phủ kín ô — viền sẽ bị ảnh che sạch. */
+.hero-ring-item::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .4), rgba(255, 255, 255, 0) 18%),
+    linear-gradient(0deg, rgba(0, 0, 0, .18), rgba(0, 0, 0, 0) 16%);
+  box-shadow:
+    inset 0 0 0 1.5px rgba(20, 21, 24, .3),
+    inset 0 3px 0 -1.5px rgba(255, 255, 255, .65),
+    inset 0 -3px 0 -1.5px rgba(0, 0, 0, .2);
+}
+
+/* Mờ dần + tối dần theo góc quay. Trước đây hai giá trị này do JS gán thẳng vào style của
+   thẻ; giờ JS chỉ gán --facing (1 = ngay trước mặt, 0 = sau lưng) còn công thức nằm ở đây,
+   để bản thân thẻ không dính filter/opacity mà mất không gian 3D. */
+.hero-ring-media,
+.hero-ring-item::before,
+.hero-ring-item::after {
+  opacity: calc(.12 + .88 * var(--facing) * var(--facing));
+  filter: brightness(calc(.62 + .38 * var(--facing)));
+}
+
+.hero-ring-media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  overflow: hidden;                /* chuyển xuống từ .hero-ring-item — xem ghi chú ở trên */
+  background: var(--art-halo);     /* nt. */
+}
 .hero-ring-media img {
   width: 100%;
   height: 100%;
@@ -656,14 +945,36 @@ p { text-wrap: pretty; }
      không còn ra dáng nhãn tên gắn dưới sản phẩm. */
   max-width: min(92vw, 460px);
   border-radius: 980px;
-  /* Không còn nằm trên ảnh nên bỏ kính mờ: nền đặc, viền --line (không phải --line-2 quá
-     nhạt) mới thấy được khung pill trên nền trắng của hero. */
-  background: var(--surface);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow-sm);
+  /* Cùng chất liệu với cặp nút hero (xem .btn-metal): mặt kim loại sáng, mép là một vành
+     gradient thay cho viền --line phẳng. Giữ border trong suốt để khung không đổi kích thước
+     — vành nằm đè lên đúng chỗ 1px viền cũ. Vành ĐỨNG YÊN, không có tia loé chạy như nút:
+     vòng xoay ngay bên trên đã động rồi, thêm một thứ nhấp nháy nữa là hero rối. */
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(178deg, #ffffff 0%, #f8f8fa 40%, #eeeef1 56%, #fbfbfc 100%);
+  border: 1px solid transparent;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .95),
+    inset 0 -1px 1px rgba(0, 0, 0, .04),
+    0 1px 2px rgba(0, 0, 0, .05),
+    0 10px 22px -16px rgba(0, 0, 0, .4);
   text-align: center;
   pointer-events: none;
 }
+.hero-stage-caption::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.2px;
+  background: linear-gradient(178deg, #ffffff 0%, #dcdce1 42%, #bcbdc4 58%, #d8d9de 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
 .hero-stage-name {
   /* Thiếu min-width:0 thì flex item không chịu co dưới bề rộng nội dung, text-overflow không
      bao giờ chạy — chữ cứ tràn ra rồi bị cắt phăng giữa nét, không có dấu "…". */
@@ -674,18 +985,50 @@ p { text-wrap: pretty; }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* Chữ chrome + vệt trắng dập chìm, giống nhãn trên nút. Phải là filter chứ không phải
+     text-shadow — xem ghi chú ở .btn-metal-label. */
+  color: #1d1d1f;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .9));
 }
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .hero-stage-name {
+    background-image: var(--metal-ramp);
+    -webkit-background-clip: text;
+            background-clip: text;
+    color: transparent;
+  }
+}
+
 /* Giá làm thành một viên chip riêng: trước đây tên và giá đều đậm, chỉ khác màu và cách nhau
-   một khoảng hở — đọc lướt thành một cụm chữ dính liền, không ra "tên + giá". */
+   một khoảng hở — đọc lướt thành một cụm chữ dính liền, không ra "tên + giá".
+
+   Chip giờ là một tấm thép tối dập chìm vào mặt nhãn (viền trong sáng ở đỉnh, tối ở đáy, một
+   vệt trắng ngay dưới đáy chip). Bỏ nền xanh --accent-soft: giá không phải một hành động, mà
+   sau khi cặp nút hero bỏ nền xanh thì đây là mảng xanh duy nhất còn sót lại trong hero, nhìn
+   như một cái nút bấm được. */
 .hero-stage-price {
   flex: none;
-  padding: .2em .7em;
+  padding: .22em .72em;
   border-radius: 980px;
-  background: var(--accent-soft);
-  color: var(--accent-ink);
+  background: linear-gradient(180deg, #45464e 0%, #2a2b30 55%, #1d1e22 100%);
+  color: #f4f4f6;
   font-size: .84rem;
   font-weight: 600;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .22),
+    inset 0 -1px 0 rgba(0, 0, 0, .4),
+    0 1px 0 rgba(255, 255, 255, .9);
 }
+
+/* Đổi mẫu thì tên và giá trồi lên mờ dần, không thay chữ đánh cụp một cái. Chạy được là nhờ
+   key={current.id} trong HeroCarousel3D.jsx: React tháo span cũ dựng span mới nên animation
+   phát lại từ đầu mỗi lần đổi mẫu. */
+@keyframes hero-caption-in {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: none; }
+}
+.hero-stage-name,
+.hero-stage-price { animation: hero-caption-in .34s var(--ease) both; }
 
 /* Dòng gợi ý xếp dưới cùng, sau nhãn tên — cùng lý do với nhãn: mọi chữ đều nằm NGOÀI sân
    khấu để không che thẻ sản phẩm. */
@@ -1891,8 +2234,34 @@ p { text-wrap: pretty; }
 .footer-bottom {
   padding-block: 18px;
   border-top: 1px solid var(--line-2);
+  /* Điện thoại: bản quyền một dòng, link pháp lý xuống dòng dưới. Từ 700px thì hai bên dạt về
+     hai mép — hàng này chỉ có 5 mẩu chữ nhỏ, để giữa màn rộng sẽ thành một cụm lửng lơ. */
+  display: grid;
+  gap: 10px;
+}
+@media (min-width: 700px) {
+  .footer-bottom {
+    grid-template-columns: auto auto;
+    align-items: center;
+    justify-content: space-between;
+  }
 }
 .copyright { color: var(--ink-3); font-size: .78rem; }
+
+.footer-legal {
+  display: flex;
+  flex-wrap: wrap;
+  /* column-gap lớn hơn row-gap: khi xuống dòng, các link cần tách hàng rõ hơn là tách cột. */
+  column-gap: 18px;
+  row-gap: 6px;
+}
+.footer-legal a {
+  font-size: .78rem;
+  color: var(--ink-3);
+  text-decoration: none;
+  transition: color .2s var(--ease);
+}
+.footer-legal a:hover { color: var(--accent); }
 
 /* Tên thương hiệu khổng lồ — vừa là hoạ tiết vừa là link về trang chủ. Cỡ chữ theo vw để
    bám chiều ngang khung, chặn trên bằng clamp cho màn rộng (khung tối đa 1120px).
@@ -2029,11 +2398,16 @@ p { text-wrap: pretty; }
 /* Trong dropdown thì nền xám của mục đang xem lẫn với nền xám lúc rê chuột — dùng màu nhấn. */
 .nav-dropdown a[aria-current="page"] .nav-dropdown-title { color: var(--accent); }
 /* Sidebar mobile: chữ màu nhấn + vạch dọc bên trái. */
-.mobile-nav-list a[aria-current="page"] {
+/* `> li >` chứ không phải bộ chọn hậu duệ: để trống thì luật này trúng cả link SẢN PHẨM nằm
+   trong .mobile-nav-sub, và vạch dọc (định vị left:-14px) rơi ra thành một gạch xanh lơ lửng
+   giữa hai thẻ. Trước đây có một luật `content: none` để chữa, nhưng nó nằm TRÊN luật này
+   trong file mà specificity thì bằng nhau — thứ tự nguồn thắng, nên nó chưa bao giờ có tác
+   dụng. Chặn ngay từ bộ chọn thì không cần luật chữa nữa. */
+.mobile-nav-list > li > a[aria-current="page"] {
   color: var(--accent);
   position: relative;
 }
-.mobile-nav-list a[aria-current="page"]::before {
+.mobile-nav-list > li > a[aria-current="page"]::before {
   content: "";
   position: absolute;
   left: -14px; top: 50%;
@@ -2042,6 +2416,100 @@ p { text-wrap: pretty; }
   border-radius: 3px;
   background: var(--accent);
 }
+
+/* ---------- Trang văn bản pháp lý ---------- */
+/* Dùng chung cho /chinh-sach-bao-mat, /dieu-khoan-su-dung, /phap-ly. Cột hẹp ~46rem chứ không
+   trải hết khung 1120px: văn bản dài mà dòng quá rộng thì mắt đọc xong dòng này khó bắt được
+   đầu dòng sau. Đây là mấy trang duy nhất trên site có nhiều chữ liền mạch nên luật chữ để
+   riêng ở đây, không đụng tới phần còn lại. */
+.legal-doc {
+  max-width: 46rem;
+  color: var(--ink-2);
+  font-size: .96rem;
+  line-height: 1.7;
+}
+.legal-doc h2 {
+  margin-top: 2.2em;
+  margin-bottom: .6em;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: var(--tracking-title);
+}
+.legal-doc h2:first-of-type { margin-top: 1.4em; }
+.legal-doc p + p { margin-top: .9em; }
+.legal-doc b { color: var(--ink); font-weight: 600; }
+.legal-doc a { color: var(--accent); text-decoration: none; }
+.legal-doc a:hover { text-decoration: underline; }
+.legal-doc code {
+  padding: .1em .4em;
+  border-radius: 6px;
+  background: var(--bg-alt);
+  font-size: .9em;
+}
+.legal-doc ul {
+  display: grid;
+  gap: .5em;
+  margin: .9em 0 0;
+  padding-left: 1.15em;
+  list-style: disc;
+}
+.legal-doc li::marker { color: var(--ink-3); }
+
+.legal-updated {
+  font-size: .82rem;
+  color: var(--ink-3);
+}
+.legal-links { margin-top: 2.2em; font-size: .9rem; }
+
+/* Bảng thông tin đơn vị ở /phap-ly. <dl> chứ không phải <table>: đây là các cặp nhãn–giá trị,
+   không phải dữ liệu nhiều chiều — và <dl> thì tự xuống hàng gọn trên điện thoại. */
+.legal-facts {
+  display: grid;
+  gap: 10px;
+  margin-top: 1.2em;
+  padding: 18px 20px;
+  border-radius: var(--radius);
+  background: var(--bg-alt);
+}
+.legal-facts > div { display: grid; gap: 2px; }
+@media (min-width: 560px) {
+  .legal-facts > div { grid-template-columns: 12rem 1fr; gap: 12px; align-items: baseline; }
+}
+.legal-facts dt { font-size: .84rem; color: var(--ink-3); }
+.legal-facts dd { color: var(--ink); }
+
+/* ---------- Bản đồ trang web ---------- */
+.sitemap-grid {
+  display: grid;
+  gap: 28px;
+}
+@media (min-width: 640px)  { .sitemap-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1000px) { .sitemap-grid { grid-template-columns: repeat(3, 1fr); } }
+.sitemap-group h2 {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line-2);
+  font-size: 1rem;
+  font-weight: 600;
+}
+.sitemap-group ul { display: grid; gap: 2px; }
+.sitemap-group a {
+  display: block;
+  padding: 5px 0;
+  font-size: .92rem;
+  color: var(--ink-2);
+  text-decoration: none;
+  transition: color .2s var(--ease);
+}
+.sitemap-group a:hover { color: var(--accent); }
+.sitemap-note {
+  margin-top: 32px;
+  font-size: .84rem;
+  color: var(--ink-3);
+}
+.sitemap-note a { color: var(--accent); text-decoration: none; }
+.sitemap-note a:hover { text-decoration: underline; }
 
 /* ---------- Route loading (chuyển trang) ---------- */
 .route-loading {
@@ -2379,6 +2847,18 @@ p { text-wrap: pretty; }
 .studio-input input:focus,
 .studio-input textarea:focus { outline: none; border-color: var(--ink); }
 
+/* Ô đang sai: viền đỏ + dòng chữ đỏ ngay dưới. Hai dấu hiệu chứ không riêng màu viền — mù màu
+   đỏ-lục là loại phổ biến nhất, chỉ đổi màu viền thì với họ ô sai trông y hệt ô đúng. */
+.studio-input input[aria-invalid],
+.studio-input textarea[aria-invalid] { border-color: var(--danger); }
+.studio-input input[aria-invalid]:focus,
+.studio-input textarea[aria-invalid]:focus { border-color: var(--danger); }
+.studio-input-error {
+  font-size: .8rem;
+  line-height: 1.4;
+  color: var(--danger);
+}
+
 .studio-input-row { display: grid; grid-template-columns: 1fr; gap: 12px; }
 @media (min-width: 400px) {
   .studio-input-row { grid-template-columns: 1fr 92px; }
@@ -2389,6 +2869,40 @@ p { text-wrap: pretty; }
 .studio-submit-note { text-align: center; }
 .studio-submit-note a { color: var(--accent); text-decoration: none; }
 .studio-submit-note a:hover { text-decoration: underline; }
+
+/* Lớp phủ lúc đang gửi mẫu — xem components/DesignStudio.jsx. `fixed` phủ cả màn hình chứ
+   không chỉ khung công cụ: nút gửi nằm cuối form nên một lớp phủ bó trong .studio rất dễ nằm
+   ngoài tầm nhìn đúng lúc khách đang chờ. z-index 300 = trên tất cả (header 100, lightbox
+   200) — lúc này không còn thao tác nào hợp lệ nên không có gì đáng để lộ ra phía trên nó. */
+.studio-sending {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  /* Nền mờ chứ không đặc: khách vẫn thấy mẫu mình vừa chốt lấp ló phía sau, biết là trang
+     chưa đi đâu cả, chỉ đang bận. */
+  background: color-mix(in srgb, var(--bg) 76%, transparent);
+  backdrop-filter: blur(6px);
+  animation: studio-sending-fade .2s var(--ease);
+}
+@keyframes studio-sending-fade { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .studio-sending { animation: none; } }
+
+.studio-sending-card {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  max-width: 320px;
+  padding: 28px 32px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+.studio-sending-title { font-weight: 600; color: var(--ink); }
+.studio-sending-note { font-size: .88rem; line-height: 1.5; color: var(--ink-2); }
 
 /* ----- Màn hình sau khi gửi xong ----- */
 .studio-done {

@@ -19,6 +19,8 @@ import {
   DEFAULT_VIEW, MIN_ZOOM, MAX_ZOOM, MIN_LOGO_EDGE, MIN_BG_LUMINANCE,
 } from '@/lib/designPreview';
 import { siteConfig } from '@/lib/siteConfig';
+// Luật kiểm tra dùng chung với Pages Function nhận đơn — xem lib/orderValidation.js.
+import { validateOrder, LIMITS } from '@/lib/orderValidation';
 import { CheckIcon, WarningIcon, PhoneIcon, CloseIcon } from './icons';
 
 // Logo gốc được gửi NGUYÊN BẢN, không nén lại: file này dùng để lên bản in thật, hạ chất
@@ -27,6 +29,14 @@ const MAX_LOGO_BYTES = 10 * 1024 * 1024;
 const ACCEPTED = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
 
 const EMPTY_FORM = { shop: '', phone: '', quantity: '1', note: '' };
+
+// Dòng lỗi dưới một ô nhập. role="alert" để trình đọc màn hình đọc lên ngay khi nó xuất hiện
+// (lỗi chỉ hiện lúc bấm gửi, tức là ngay sau một hành động của khách — không phải tự nhiên la
+// lên giữa lúc họ đang gõ).
+function FieldError({ id, message }) {
+  if (!message) return null;
+  return <p className="studio-input-error" id={id} role="alert">{message}</p>;
+}
 
 export default function DesignStudio() {
   const [templateId, setTemplateId] = useState(designTemplates[0].id);
@@ -52,6 +62,9 @@ export default function DesignStudio() {
   const dragDepth = useRef(0);
 
   const [form, setForm] = useState(EMPTY_FORM);
+  // Lỗi theo từng ô, khoá trùng tên ô trong `form`. Chỉ hiện SAU khi khách bấm gửi: bắt lỗi
+  // ngay lúc đang gõ dở là mắng người ta giữa chừng câu.
+  const [fieldErrors, setFieldErrors] = useState({});
   const [status, setStatus] = useState({ state: 'idle' }); // idle | sending | done | error
 
   const canvasRef = useRef(null);
@@ -303,15 +316,30 @@ export default function DesignStudio() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
+  // Gõ lại vào ô đang báo lỗi thì xoá lỗi của RIÊNG ô đó. Không kiểm tra lại ngay từng phím:
+  // đang gõ dở "091" mà bị báo "số chưa đúng" thì chỉ gây bực; lỗi sẽ tính lại lúc bấm gửi.
+  function updateField(name, value) {
+    setForm((f) => ({ ...f, [name]: value }));
+    setFieldErrors((prev) => (prev[name] ? { ...prev, [name]: undefined } : prev));
+  }
+
   // ----- Gửi đơn -----
   async function onSubmit(e) {
     e.preventDefault();
     if (status.state === 'sending') return;
 
-    if (!form.shop.trim() || !form.phone.trim()) {
-      setStatus({ state: 'error', message: 'Bạn điền giúp mình tên quán và số điện thoại nhé.' });
+    // Kiểm tra TRƯỚC khi dựng ảnh: dựng canvas ra PNG mất cả giây trên máy yếu, sai số điện
+    // thoại mà vẫn bắt khách chờ chừng đó rồi mới báo lỗi là vô duyên.
+    const check = validateOrder(form);
+    if (!check.ok) {
+      setFieldErrors(check.errors);
+      // Đưa con trỏ về ô sai đầu tiên: trên điện thoại ô đó có thể đang nằm ngoài màn hình,
+      // không tự cuộn tới thì khách chỉ thấy nút bấm mà không có gì xảy ra.
+      const firstInvalid = ['shop', 'phone', 'quantity', 'note'].find((k) => check.errors[k]);
+      document.getElementById(`studio-${firstInvalid}`)?.focus();
       return;
     }
+    setFieldErrors({});
 
     setStatus({ state: 'sending' });
 
@@ -325,11 +353,13 @@ export default function DesignStudio() {
         fontFamily: fontRef.current,
       });
 
+      // Gửi bản ĐÃ chuẩn hoá (số điện thoại về dạng 0912345678, chữ đã gộp khoảng trắng) chứ
+      // không phải chuỗi thô trong ô nhập.
       const body = new FormData();
-      body.append('shop', form.shop.trim());
-      body.append('phone', form.phone.trim());
-      body.append('quantity', form.quantity);
-      body.append('note', form.note.trim());
+      body.append('shop', check.value.shop);
+      body.append('phone', check.value.phone);
+      body.append('quantity', String(check.value.quantity));
+      body.append('note', check.value.note);
       // Chỉ gửi ảnh mẫu đã dựng xong. File logo gốc KHÔNG gửi: bảng đơn không có chỗ chứa
       // nó, mà logo có thể nặng tới 10MB — bắt khách tải lên một thứ rồi vứt đi là vô lý.
       if (preview) body.append('preview', preview, `mau-${template.id}.png`);
@@ -395,7 +425,7 @@ export default function DesignStudio() {
           <button
             type="button"
             className="btn btn-ghost"
-            onClick={() => { setStatus({ state: 'idle' }); setForm(EMPTY_FORM); }}
+            onClick={() => { setStatus({ state: 'idle' }); setForm(EMPTY_FORM); setFieldErrors({}); }}
           >
             Gửi thêm mẫu khác
           </button>
@@ -412,6 +442,23 @@ export default function DesignStudio() {
       onDragLeave={onDragLeave}
       onDrop={onDrop}
     >
+      {/* Lớp phủ lúc đang gửi. Dựng ảnh mẫu (canvas -> PNG) rồi upload mất vài giây trên máy
+          yếu hoặc mạng 3G, mà mỗi chữ "Đang gửi…" trên nút thì không đủ: nút nằm cuối form,
+          trên điện thoại nó thường đã trôi khỏi tầm nhìn lúc khách ngẩng lên chờ.
+          Phủ kín cũng là cố ý chặn thao tác — ảnh đã dựng xong TRƯỚC khi gửi, nên khách chỉnh
+          tiếp lúc này chỉ tạo cảm giác sai là bản chỉnh đó có trong đơn. */}
+      {status.state === 'sending' && (
+        <div className="studio-sending" role="status" aria-live="polite">
+          <div className="studio-sending-card">
+            {/* Dùng lại .route-spinner của phần chuyển trang: cùng một ý "đang chờ" thì nên
+                nhìn giống nhau, và nó đã có sẵn luật prefers-reduced-motion. */}
+            <span className="route-spinner" aria-hidden="true" />
+            <p className="studio-sending-title">Đang gửi mẫu của bạn…</p>
+            <p className="studio-sending-note">Ảnh mẫu đang được tải lên, chờ mình vài giây nhé.</p>
+          </div>
+        </div>
+      )}
+
       {/* Cả vùng công cụ đều nhận file, không phải mỗi cái nút nhỏ: người ta rê file tới đâu
           thả tới đó, bắt nhắm trúng một ô bé chỉ tổ trượt tay. pointer-events:none để lớp phủ
           không cướp mất sự kiện drop của vùng bên dưới. */}
@@ -459,7 +506,10 @@ export default function DesignStudio() {
       </div>
 
       {/* ----- Cột phải: điều khiển ----- */}
-      <form className="studio-panel" onSubmit={onSubmit}>
+      {/* noValidate: tắt bong bóng "Please fill out this field" của trình duyệt để chỉ còn MỘT
+          kiểu báo lỗi (dòng chữ dưới ô, tiếng Việt, cùng luật với server). Thuộc tính
+          `required` vẫn giữ vì trình đọc màn hình dựa vào nó để đọc "bắt buộc". */}
+      <form className="studio-panel" onSubmit={onSubmit} noValidate>
         <fieldset className="studio-field">
           <legend>1. Chọn sản phẩm</legend>
           {/* Nhìn như thanh tab nhưng bên trong vẫn là nhóm radio thật: giữ được điều hướng
@@ -603,46 +653,66 @@ export default function DesignStudio() {
           <label className="studio-input">
             <span>Tên quán <b aria-hidden="true">*</b></span>
             <input
+              id="studio-shop"
               type="text"
               required
+              maxLength={LIMITS.shop}
               autoComplete="organization"
               value={form.shop}
-              onChange={(e) => setForm((f) => ({ ...f, shop: e.target.value }))}
+              onChange={(e) => updateField('shop', e.target.value)}
+              aria-invalid={fieldErrors.shop ? true : undefined}
+              aria-describedby={fieldErrors.shop ? 'studio-shop-error' : undefined}
             />
+            <FieldError id="studio-shop-error" message={fieldErrors.shop} />
           </label>
 
           <div className="studio-input-row">
             <label className="studio-input">
               <span>Số điện thoại <b aria-hidden="true">*</b></span>
               <input
+                id="studio-phone"
                 type="tel"
                 required
                 inputMode="tel"
+                maxLength={LIMITS.phone}
                 autoComplete="tel"
                 value={form.phone}
-                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                onChange={(e) => updateField('phone', e.target.value)}
+                aria-invalid={fieldErrors.phone ? true : undefined}
+                aria-describedby={fieldErrors.phone ? 'studio-phone-error' : undefined}
               />
+              <FieldError id="studio-phone-error" message={fieldErrors.phone} />
             </label>
             <label className="studio-input studio-input-qty">
               <span>Số lượng</span>
               <input
+                id="studio-quantity"
                 type="number"
                 min="1"
+                max={LIMITS.quantity}
                 inputMode="numeric"
                 value={form.quantity}
-                onChange={(e) => setForm((f) => ({ ...f, quantity: e.target.value }))}
+                onChange={(e) => updateField('quantity', e.target.value)}
+                aria-invalid={fieldErrors.quantity ? true : undefined}
+                aria-describedby={fieldErrors.quantity ? 'studio-quantity-error' : undefined}
               />
+              <FieldError id="studio-quantity-error" message={fieldErrors.quantity} />
             </label>
           </div>
 
           <label className="studio-input">
             <span>Ghi chú</span>
             <textarea
+              id="studio-note"
               rows={3}
+              maxLength={LIMITS.note}
               placeholder="Link đánh giá của quán, yêu cầu riêng về mẫu…"
               value={form.note}
-              onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
+              onChange={(e) => updateField('note', e.target.value)}
+              aria-invalid={fieldErrors.note ? true : undefined}
+              aria-describedby={fieldErrors.note ? 'studio-note-error' : undefined}
             />
+            <FieldError id="studio-note-error" message={fieldErrors.note} />
           </label>
         </fieldset>
 

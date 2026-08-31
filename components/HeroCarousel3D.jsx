@@ -100,8 +100,11 @@ export default function HeroCarousel3D({ items }) {
         // Góc hiệu dụng của thẻ so với hướng nhìn, đưa về khoảng [-180, 180].
         const angle = ((i * step + spinRef.current + 180) % 360 + 360) % 360 - 180;
         const facing = (Math.cos((angle * Math.PI) / 180) + 1) / 2; // 1 = ngay trước mặt, 0 = sau lưng
-        el.style.opacity = (0.12 + 0.88 * facing * facing).toFixed(3);
-        el.style.filter = `brightness(${(0.62 + 0.38 * facing).toFixed(3)})`;
+        // Chỉ đẩy ra một con số, công thức mờ/tối nằm trong globals.css. KHÔNG được gán
+        // opacity/filter thẳng vào thẻ nữa: cả hai đều ép transform-style về flat, mà thẻ
+        // cần giữ không gian 3D thì mặt sau (::before) mới lùi ra sau được — xem
+        // .hero-ring-item trong globals.css.
+        el.style.setProperty('--facing', facing.toFixed(3));
 
         const delta = Math.abs(angle);
         if (delta < nearestDelta) {
@@ -236,9 +239,14 @@ export default function HeroCarousel3D({ items }) {
       {/* Tên + giá của mẫu đang quay ra trước. KHÔNG đặt aria-live: vòng tự xoay vài giây một
           mẫu, trình đọc màn hình sẽ đọc chen tên mẫu mới không ngớt. Tên từng mẫu đã có sẵn
           trong alt của ảnh trong chính thẻ link, đủ để đọc đúng khi tab tới. */}
+      {/* key theo mẫu: đổi mẫu là React tháo span cũ dựng span mới, animation trồi-lên-mờ-dần
+          trong globals.css nhờ vậy phát lại từ đầu. Không có key thì React chỉ đổi chữ trong
+          span cũ, animation đã chạy xong một lần rồi thì thôi. */}
       <div className="hero-stage-caption" aria-hidden="true">
-        <span className="hero-stage-name">{current.name}</span>
-        {current.price && <span className="hero-stage-price">{current.price}</span>}
+        <span className="hero-stage-name" key={`n-${current.id}`}>{current.name}</span>
+        {current.price && (
+          <span className="hero-stage-price" key={`p-${current.id}`}>{current.price}</span>
+        )}
       </div>
 
       <p className={`hero-stage-hint${hinted ? ' is-hidden' : ''}`} aria-hidden="true">

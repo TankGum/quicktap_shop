@@ -22,15 +22,16 @@
 // Biến môi trường + binding cần đặt trong Cloudflare Pages (Settings), KHÔNG phải chỉ trong
 // .env.local — xem README mục "Nhận đơn Thiết kế riêng".
 
+// Luật kiểm tra tên quán / số điện thoại / số lượng / ghi chú dùng CHUNG với client — xem
+// lib/orderValidation.js. Ở đây mới là chốt chặn thật: phần kiểm tra trong trình duyệt ai
+// cũng sửa được, một cú curl là bỏ qua sạch.
+import { validateOrder } from '../../lib/orderValidation.js';
+
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 // Chặn ngay từ Content-Length, trước cả khi đọc body: ảnh mẫu là PNG cỡ vài MB, vượt xa mức
 // này thì không cần đọc làm gì.
 const MAX_BODY_BYTES = 12 * 1024 * 1024;
 const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
-
-// Chặn trên cho các ô chữ. Không phải để "làm sạch dữ liệu" mà để một request cố tình nhồi
-// vài MB chữ không biến thành một dòng D1 khổng lồ.
-const MAX_TEXT = { shop: 120, phone: 40, note: 2000 };
 
 // Hạn mức theo IP. Hai cửa sổ chồng nhau: cửa ngắn chặn kiểu bấm gửi liên tục, cửa dài chặn
 // kiểu rải đều cả ngày. Quán thật đi đặt hàng thì 3 mẫu / 10 phút đã rất thoải mái.
@@ -57,10 +58,6 @@ function orderCode() {
   const ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
   const bytes = crypto.getRandomValues(new Uint8Array(4));
   return `TK-${[...bytes].map((b) => ALPHABET[b % ALPHABET.length]).join('')}`;
-}
-
-function cleanText(value, max) {
-  return String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
 }
 
 async function sha1Hex(text) {
@@ -287,15 +284,23 @@ export async function onRequestPost({ request, env, waitUntil }) {
     return json({ message: 'Không xác minh được yêu cầu. Bạn thử tải lại trang giúp mình nhé.' }, 403);
   }
 
-  const shop = cleanText(form.get('shop'), MAX_TEXT.shop);
-  const phone = cleanText(form.get('phone'), MAX_TEXT.phone);
-  if (!shop || !phone) {
-    return json({ message: 'Thiếu tên quán hoặc số điện thoại.' }, 400);
+  const check = validateOrder({
+    shop: form.get('shop'),
+    phone: form.get('phone'),
+    quantity: form.get('quantity'),
+    note: form.get('note'),
+  });
+  if (!check.ok) {
+    // `message` là lỗi đầu tiên để hiện ngay cho khách; `errors` gửi kèm đủ cả để form gắn lỗi
+    // đúng từng ô — client tự kiểm tra trước rồi, tới được đây nghĩa là request không đi qua
+    // form của mình (hoặc luật hai bên đã lệch), nên cứ nói rõ.
+    const [message] = Object.values(check.errors);
+    return json({ message, errors: check.errors }, 400);
   }
 
-  const note = cleanText(form.get('note'), MAX_TEXT.note);
-  // Số lượng do khách gõ tay nên có thể là chuỗi rỗng, số âm, hoặc chữ.
-  const quantity = Math.max(1, Math.min(9999, parseInt(form.get('quantity'), 10) || 1));
+  // Dùng bản đã chuẩn hoá, KHÔNG dùng lại dữ liệu thô: số điện thoại về một dạng duy nhất
+  // (0912345678) để trong D1 cùng một quán không nằm dưới hai kiểu viết khác nhau.
+  const { shop, phone, quantity, note } = check.value;
 
   // CHỈ nhận ảnh mẫu đã dựng xong, không nhận file logo gốc: bảng đơn có đúng một cột link
   // (`cloudinary_link`), mà tải thêm một file không có chỗ chứa thì chỉ tốn băng thông của
