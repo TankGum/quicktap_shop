@@ -124,48 +124,67 @@ Trang `/thiet-ke-rieng` cho khách tự lên mẫu rồi gửi về. Phần nh�
 Pages Function** ở `functions/api/thiet-ke-rieng.js` — Pages tự nhận thư mục `functions/` và
 phục vụ nó tại `/api/thiet-ke-rieng`, cùng tên miền với site.
 
-Vì sao phải có nó: site là static export nên không có API route của Next; mà ghi Airtable thì
-cần token có quyền đọc/ghi TOÀN BỘ base. Gọi Airtable thẳng từ trình duyệt là công khai token
-đó cho bất kỳ ai mở DevTools.
+Vì sao phải có nó: site là static export nên không có API route của Next; mà ghi kho dữ liệu
+thì cần khoá bí mật (Cloudinary), gọi thẳng từ trình duyệt là công khai khoá đó cho bất kỳ ai
+mở DevTools.
 
-**1. Bảng đơn trong Airtable.** Bảng đang dùng là `tblanHEK8kMKXqNMU` (đặt trong biến
-`AIRTABLE_DESIGN_ORDERS_TABLE_ID`). Function ghi theo ĐÚNG tên cột dưới đây — sai một tên là
-Airtable trả 422 và rớt nguyên cả đơn, không phải chỉ thiếu một ô:
+Đơn **từng lưu ở Airtable, nay lưu ở D1** — cùng nhà với Pages, nên không còn token có quyền
+đọc/ghi TOÀN BỘ base Airtable nằm trong môi trường chạy, và lúc khách bấm gửi không còn phụ
+thuộc một dịch vụ ngoài. Airtable vẫn giữ nguyên vai trò cũ ở chỗ khác: nguồn dữ liệu sản
+phẩm/ảnh đọc **lúc build** (`lib/airtable.js`) — phần đó không đổi gì.
+
+**1. D1 database.** Đang dùng database `quicktap-orders`
+(`e6ed458c-b10b-467e-a983-7036a5be91e2`), bảng `design_orders`. Schema là
+[`d1/schema.sql`](d1/schema.sql) — chạy lại lúc nào cũng an toàn (`IF NOT EXISTS`):
+
+```bash
+npm run d1:schema         # tạo/cập nhật bảng trên D1 THẬT
+npm run d1:schema:local   # bản D1 ở máy, dùng cho `npm run preview`
+```
 
 | Cột | Kiểu | Nội dung |
 | --- | --- | --- |
-| `Customer Name` | Single line text | Tên quán |
-| `Phone Number` | Phone / text | Số điện thoại |
-| `Quantity` | Number | Số lượng |
-| `Notes` | Long text | Ghi chú của khách |
-| `Order Date` | Date (bật cả giờ) | Ngày giờ đặt, ghi theo chuẩn ISO |
-| `Cloudinary Link` | URL | Link tới ảnh mẫu khách đã chốt |
+| `id` | INTEGER PK | tự tăng |
+| `code` | TEXT UNIQUE | mã đơn (`TK-8F3K`) — hiện cho khách, cũng là tên file trên Cloudinary |
+| `customer_name` | TEXT | tên quán |
+| `phone` | TEXT | số điện thoại |
+| `quantity` | INTEGER | số lượng |
+| `notes` | TEXT | ghi chú của khách, có thể rỗng |
+| `cloudinary_link` | TEXT | link ảnh mẫu khách đã chốt |
+| `order_date` | TEXT | ISO 8601 (UTC), vd `2026-08-31T02:47:05.777Z` |
 
-Ảnh lưu bằng LINK chứ không đính kèm vào Airtable: file chỉ nằm đúng một chỗ (Cloudinary),
-không ăn dung lượng đính kèm của Airtable, và link Cloudinary thì vĩnh viễn. Muốn nhìn thấy ảnh
-thu nhỏ ngay trong lưới Airtable thì đổi cột sang kiểu Attachment và sửa
-`'Cloudinary Link': designUrl` thành `'Cloudinary Link': [{ url: designUrl }]` trong Function.
+Đúng những thông tin bảng Airtable cũ có, chỉ đổi tên sang snake_case, thêm cột `code` (thời
+Airtable mã đơn chỉ nằm trong tên file Cloudinary; ở SQL nó là khoá tự nhiên để tra đơn khi
+khách gọi điện đọc mã).
+
+Xem đơn (D1 không có giao diện lưới như Airtable — dùng lệnh, hoặc Cloudflare Dashboard →
+Storage & Databases → D1 → `quicktap-orders` → Console):
+
+```bash
+npm run d1:orders   # 20 đơn mới nhất
+```
+
+Ảnh lưu bằng LINK chứ không nhét vào database: file chỉ nằm đúng một chỗ (Cloudinary), không
+bơm phồng D1, và link Cloudinary thì vĩnh viễn.
 
 KHÔNG lưu mã màu nền, tên mẫu hay loại sản phẩm — cả ba đều nhìn thấy ngay trong ảnh mẫu.
-Mã đơn (`TK-8F3K`) cũng không thành cột riêng: nó nằm sẵn trong tên file trên Cloudinary
-(`.../TK-8F3K-mau.png`) và được hiện cho khách ngay sau khi gửi.
 
 **Chỉ ảnh mẫu được tải lên, không có file logo gốc.** Bảng có đúng một cột link, mà logo có thể
 nặng tới 10MB — bắt khách tải lên một thứ rồi vứt đi là vô lý. Nếu sau này cần logo gốc để lên
-bản in, thêm cột `Logo URL` vào bảng rồi mở lại phần đã ghi chú trong
+bản in, thêm cột `logo_url` vào `d1/schema.sql` rồi mở lại phần đã ghi chú trong
 `functions/api/thiet-ke-rieng.js` và `components/DesignStudio.jsx`.
 
-**2. Token Airtable phải có quyền GHI** (`data.records:write`) trên base này. Token chỉ dùng để
-đọc lúc build sẽ làm mọi đơn rớt ở bước cuối với lỗi 403.
+**2. Hai binding trong Pages** (Settings → Functions), nhớ làm cho **cả Production lẫn
+Preview** — bind thiếu một môi trường thì môi trường đó trả 503:
 
-**3. KV namespace để chặn spam.** Tạo ở Cloudflare → Workers & Pages → KV, rồi vào project
-Pages → Settings → Functions → **KV namespace bindings**, đặt tên biến là **`KV_BINDING`** và
-trỏ tới namespace đó. Nhớ làm cho **cả Production lẫn Preview** — bind thiếu một môi trường thì
-môi trường đó trả 503.
+| Binding | Loại | Trỏ tới |
+| --- | --- | --- |
+| `DB` | D1 database binding | `quicktap-orders` |
+| `KV_BINDING` | KV namespace binding | namespace bất kỳ, dùng để đếm hạn mức |
 
-Binding này là **bắt buộc**: thiếu nó thì endpoint vẫn chạy nhưng không còn gì chặn spam, tức
-là hỏng đúng thứ đang cần bảo vệ mà nhìn từ ngoài lại tưởng bình thường. Nên Function trả 503
-luôn nếu chưa có.
+KV là **bắt buộc**: thiếu nó thì endpoint vẫn chạy nhưng không còn gì chặn spam, tức là hỏng
+đúng thứ đang cần bảo vệ mà nhìn từ ngoài lại tưởng bình thường. Nên Function trả 503 luôn nếu
+chưa có.
 
 Hạn mức đang đặt (sửa ở đầu `functions/api/thiet-ke-rieng.js`):
 
@@ -176,29 +195,46 @@ Hạn mức đang đặt (sửa ở đầu `functions/api/thiet-ke-rieng.js`):
 | Toàn bộ endpoint | 200 đơn / ngày |
 
 Trần tổng là cái van cuối: IP thì đổi được (VPN, botnet), nên cần một mức chặn không phụ thuộc
-IP để không ai đốt được hoá đơn Cloudinary/Airtable trong một đêm. Khách bị chặn nhận thông báo
-kèm số phút phải chờ và lời mời gọi điện đặt trực tiếp, không phải một lỗi cụt.
+IP để không ai đốt được hoá đơn Cloudinary (hay bơm đầy D1) trong một đêm. Khách bị chặn nhận
+thông báo kèm số phút phải chờ và lời mời gọi điện đặt trực tiếp, không phải một lỗi cụt.
 
 Bộ đếm dùng cửa sổ cố định trên KV — rẻ (1 đọc + 1 ghi mỗi lượt) nhưng KV chỉ "cuối cùng cũng
 nhất quán", nên vài request bắn cùng lúc qua các máy chủ biên khác nhau có thể lọt thêm một
 hai lượt. Ở quy mô một form đặt hàng thì không đáng đổi lấy Durable Object để đếm chính xác.
 
-**4. Đặt biến môi trường trong Cloudflare Pages** (Settings → Environment variables). Lưu ý:
-đây là biến cho *Function lúc chạy*, không phải chỉ cho lúc build, nên phải có mặt ở cả hai
-môi trường Production và Preview:
+**3. Biến môi trường trong Pages** (Settings → Environment variables). Đây là biến cho
+*Function lúc chạy*, nên phải có mặt ở cả Production lẫn Preview:
 
 ```
-AIRTABLE_TOKEN
-AIRTABLE_BASE_ID
-AIRTABLE_DESIGN_ORDERS_TABLE_ID   # bảng vừa tạo ở bước 1
 CLOUDINARY_CLOUD_NAME
 CLOUDINARY_API_KEY
 CLOUDINARY_API_SECRET
-TURNSTILE_SECRET_KEY              # tuỳ chọn, xem bên dưới
+TELEGRAM_BOT_TOKEN                # tuỳ chọn, xem bước 4
+TELEGRAM_CHAT_ID                  # tuỳ chọn, xem bước 4
+TURNSTILE_SECRET_KEY              # tuỳ chọn, xem bước 5
 ```
 
-Thiếu bất kỳ biến bắt buộc nào (hoặc thiếu binding `KV_BINDING`) thì endpoint trả 503 kèm
-thông báo lịch sự cho khách, và ghi tên thứ còn thiếu vào log của Pages (không lộ ra ngoài).
+Thiếu bất kỳ biến **bắt buộc** nào (hoặc thiếu binding `DB` / `KV_BINDING`) thì endpoint trả
+503 kèm thông báo lịch sự cho khách, và ghi tên thứ còn thiếu vào log của Pages (không lộ ra
+ngoài). Ba biến `AIRTABLE_*` cũ dùng cho bảng đơn thì **xoá được** khỏi Pages — Function không
+đọc chúng nữa; `AIRTABLE_TOKEN`/`AIRTABLE_BASE_ID` vẫn cần cho *bước build*.
+
+**4. Báo đơn mới qua Telegram.** Có đơn là bot nhắn cho bạn: mã đơn, tên quán, số điện thoại,
+số lượng, ghi chú, giờ Việt Nam, và link ảnh mẫu ở dòng cuối (Telegram tự dựng ảnh xem trước,
+nên mở thông báo là thấy luôn mẫu khách chốt).
+
+1. Nhắn [@BotFather](https://t.me/BotFather) → `/newbot` → đặt tên → nhận **token**.
+2. Nhắn một tin bất kỳ cho chính con bot vừa tạo (bot không nhắn trước được cho người lạ).
+3. Mở `https://api.telegram.org/bot<TOKEN>/getUpdates`, lấy số ở `message.chat.id` → đó là
+   **chat id**. Muốn báo vào một nhóm thì thêm bot vào nhóm, nhắn một tin trong nhóm rồi lấy
+   `chat.id` của nhóm (số âm).
+4. Đặt `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` ở bước 3, deploy lại.
+
+Chưa đặt hai biến này thì Function bỏ qua bước báo và **vẫn nhận đơn bình thường** (ghi một
+dòng cảnh báo vào log). Báo Telegram cũng không bao giờ làm rớt đơn: tới lúc đó đơn đã nằm
+trong D1 rồi, Telegram lỗi thì chỉ ghi log — báo trượt mà trả "gửi thất bại" cho khách để họ
+gửi lại là hỏng cái phụ kéo theo cái chính. Tin nhắn chạy trong `waitUntil` nên khách không
+phải đợi thêm một vòng gọi mạng.
 
 **5. Chống bot (tuỳ chọn).** Chưa đặt `TURNSTILE_SECRET_KEY` thì Function bỏ qua bước xác minh
 và vẫn chạy bình thường; đặt vào là bật. Đây là lớp bổ sung cho hạn mức ở trên chứ không thay
@@ -206,11 +242,15 @@ thế: Turnstile chặn máy, hạn mức chặn cả người thật cố tình
 gắn — khi bạn tạo widget Turnstile trên Cloudflare thì báo mình gắn nốt.
 
 Luồng xử lý: **chặn spam** → đọc multipart → kiểm tra định dạng/kích thước (tối đa 10MB mỗi
-file) → upload ảnh mẫu + logo gốc lên Cloudinary (ký SHA-1) → tạo record Airtable kèm link.
+file) → upload ảnh mẫu lên Cloudinary (ký SHA-1) → ghi một dòng vào D1 kèm link → báo Telegram.
 
-Thứ tự đó là cố ý: mọi bước tốn tài nguyên (đọc body, upload ảnh, gọi Airtable) đều nằm SAU
-bước chặn spam, nên một kẻ bấm gửi liên tục chỉ tốn của mình đúng vài phép đọc KV. Kích thước
-body còn bị chặn từ `Content-Length` trước cả khi đọc.
+Thứ tự đó là cố ý: mọi bước tốn tài nguyên (đọc body, upload ảnh, ghi D1) đều nằm SAU bước
+chặn spam, nên một kẻ bấm gửi liên tục chỉ tốn của mình đúng vài phép đọc KV. Kích thước body
+còn bị chặn từ `Content-Length` trước cả khi đọc.
+
+> `d1/wrangler.jsonc` cố ý nằm trong `d1/` chứ không phải gốc repo: Pages đọc `wrangler.jsonc`
+> **ở gốc** và khi có file đó thì bỏ qua toàn bộ biến môi trường + binding đã đặt trong
+> Dashboard — đặt ở gốc là âm thầm gỡ mất `KV_BINDING` và khoá Cloudinary của bản deploy thật.
 
 ### Ảnh mẫu sản phẩm
 
@@ -245,8 +285,21 @@ Bảng màu gợi ý (`bgPresets`) cố tình chỉ có tông sáng: mã QR và 
 nền tối sẽ làm QR không quét được. Khách vẫn tự chọn màu bất kỳ, chỉ là có cảnh báo khi quá tối
 (ngưỡng `MIN_BG_LUMINANCE`).
 
-Nếu Airtable lỗi (vd sai tên cột lúc mới cấu hình), ảnh đã nằm sẵn trên Cloudinary và link
-được ghi vào log kèm mã đơn + số điện thoại, nên đơn không mất trắng.
+**Tự lấy màu nền theo logo.** Tải logo lên là nền tự đổi theo tông chủ đạo của logo đó
+(`dominantTint()` trong `lib/designPreview.js`). KHÔNG lấy thẳng màu logo làm nền — logo xanh
+navy hay đỏ đô sẽ cho ra nền tối và hỏng mực in đen — mà chỉ mượn *tông màu*, còn độ sáng thì
+ép về mức của `bgPresets` (`TINT_LIGHTNESS`).
+
+Cách tìm màu: bỏ pixel trong suốt, gần trắng, gần đen và pixel xám (logo thường là chữ đen cộng
+một màu thương hiệu — cần cái màu đó, không phải đám mực đen chiếm nhiều diện tích hơn), rồi gom
+theo từng khoảng hue và chọn khoảng nặng nhất. Gom khoảng chứ không lấy trung bình toàn ảnh, vì
+logo hai màu mà lấy trung bình sẽ ra một màu xám không có trong logo.
+
+Quy tắc ghi đè: logo mới có màu thì lấy màu mới; logo đen trắng thì trả nền về trắng NẾU màu
+đang dùng là màu máy tự lấy từ logo trước, còn màu do khách tự chọn thì không đụng vào.
+
+Nếu D1 lỗi (vd chưa chạy `d1/schema.sql` nên chưa có bảng), ảnh đã nằm sẵn trên Cloudinary và
+link được ghi vào log kèm mã đơn + số điện thoại, nên đơn không mất trắng.
 
 ### Chạy thử & dò lỗi
 
@@ -258,25 +311,32 @@ Muốn chạy thử có cả Function (nhớ tắt `npm run dev` trước — ha
 nên chạy song song sẽ giẫm lên nhau):
 
 ```bash
-npm run preview     # = next build && wrangler pages dev out --kv KV_BINDING
+npm run d1:schema:local   # 1 lần: tạo bảng trong bản D1 ở máy (.wrangler/state)
+npm run preview           # = next build && wrangler pages dev out --kv KV_BINDING --d1 DB=<id>
 ```
 
-Wrangler tự nạp `.env.local`, nên đơn gửi ở máy sẽ ghi THẬT vào Airtable và Cloudinary.
+Wrangler tự nạp `.env.local`. D1 lúc này là **bản ở máy** (`.wrangler/state`) nên đơn thử
+không lẫn vào D1 thật — nhưng ảnh thì vẫn upload THẬT lên Cloudinary, và Telegram cũng nhắn
+thật nếu bạn đã điền token trong `.env.local`.
 
 **Dò lỗi cấu hình:** mở thẳng `/api/thiet-ke-rieng` bằng trình duyệt (GET). Nó trả về đúng danh
 sách khoá còn thiếu của môi trường đang chạy — chỉ TÊN khoá, không bao giờ trả giá trị:
 
 ```json
-{ "ready": false, "missing": ["KV_BINDING"] }
+{ "ready": false, "missing": ["DB"], "off": ["TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"] }
 ```
+
+`missing` là thứ **bắt buộc** còn thiếu (endpoint đang 503). `off` là tính năng tuỳ chọn đang
+tắt — không phải lỗi, nhưng thiếu `TELEGRAM_*` thì đơn về mà điện thoại im lặng, đúng kiểu
+hỏng không ai nhận ra cho tới lúc mất một đơn.
 
 **Bị 503 trên production?** Gần như luôn là một trong bốn nguyên nhân này:
 
 1. Đổi biến/thêm binding xong nhưng **chưa deploy lại**. Cấu hình chỉ áp cho bản deploy MỚI;
    bản đang chạy vẫn giữ nguyên cấu hình lúc nó được tạo.
 2. Chỉ đặt cho **Preview** mà không đặt cho **Production** (hoặc ngược lại).
-3. Tạo KV namespace rồi nhưng **chưa bind** vào project ở Settings → Functions → KV namespace
-   bindings với đúng tên `KV_BINDING`.
+3. Tạo KV namespace / D1 database rồi nhưng **chưa bind** vào project ở Settings → Functions,
+   với đúng tên `KV_BINDING` và `DB`.
 4. Gõ sai tên biến.
 
 ### Host tĩnh khác

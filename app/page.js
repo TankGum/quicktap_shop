@@ -165,13 +165,13 @@ export default async function HomePage() {
           làm hero rối. */}
       <section className="section section-tight" id="diem-manh">
         <div className="container">
-          {/* Mỗi ý là một THẺ riêng (nền xám nhạt, bo góc) thay vì các dòng ngăn nhau bằng kẻ
-              mảnh như trước: 4 ý ngắn xếp thành dải kẻ ngang trông như phần chú thích rơi rớt
-              lại của hero chứ không ra "điểm mạnh".
+          {/* Theo khuôn hàng dịch vụ của apple.com: mỗi ý là một CỘT CHỮ canh giữa, không thẻ
+              không nền không viền — ngăn nhau bằng khoảng trống. Xem .highlight-strip trong
+              globals.css để biết vì sao bỏ thẻ.
 
-              Thẻ chỉ có chữ, KHÔNG icon và KHÔNG số thứ tự: nội dung mỗi thẻ vỏn vẹn 3-5 chữ
-              nên thêm một hình nhỏ ở đầu chỉ làm loãng, mà số thì không mang nghĩa thứ tự.
-              Vì vậy <ul> chứ không phải <ol>. */}
+              Chỉ có chữ, KHÔNG icon và KHÔNG số thứ tự: mỗi ý vỏn vẹn 3-5 chữ nên thêm một
+              hình nhỏ ở đầu chỉ làm loãng, mà số thì không mang nghĩa thứ tự — vì vậy <ul>
+              chứ không phải <ol>. */}
           <Reveal as="ul" className="highlight-strip">
             {highlights.map(({ title, body }) => (
               <li className="highlight-item" key={title}>

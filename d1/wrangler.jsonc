@@ -1,0 +1,15 @@
+// Config CHỈ dùng cho các lệnh wrangler d1 ở máy (npm run d1:schema:local) và cho
+// `wrangler pages dev`. CỐ Ý nằm trong d1/ chứ không phải gốc repo: Cloudflare Pages đọc
+// wrangler.jsonc Ở GỐC và khi có file đó thì BỎ QUA toàn bộ biến môi trường + binding đã đặt
+// trong Dashboard — tức là đặt file này ở gốc sẽ âm thầm gỡ mất KV_BINDING, khoá Cloudinary
+// và token Telegram của bản deploy thật.
+{
+  "name": "quicktap-orders",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "quicktap-orders",
+      "database_id": "e6ed458c-b10b-467e-a983-7036a5be91e2"
+    }
+  ]
+}

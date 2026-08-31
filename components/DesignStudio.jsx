@@ -6,9 +6,9 @@
 // Toàn bộ phần vẽ nằm ở lib/designPreview.js, hình học nằm ở data/designTemplates.js —
 // component này chỉ lo tương tác và gửi đơn.
 //
-// Đơn gửi tới /api/thiet-ke-rieng (Cloudflare Pages Function, xem functions/api/). KHÔNG gọi
-// thẳng Airtable từ đây: làm vậy thì token Airtable phải nằm trong JS của trình duyệt, tức là
-// ai mở DevTools cũng đọc/ghi được toàn bộ base — cả bảng sản phẩm lẫn ảnh.
+// Đơn gửi tới /api/thiet-ke-rieng (Cloudflare Pages Function, xem functions/api/), rồi từ đó
+// mới vào D1 + Cloudinary. KHÔNG ghi thẳng kho dữ liệu từ đây: làm vậy thì khoá bí mật phải
+// nằm trong JS của trình duyệt, ai mở DevTools cũng dùng được.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -31,7 +31,9 @@ const EMPTY_FORM = { shop: '', phone: '', quantity: '1', note: '' };
 export default function DesignStudio() {
   const [templateId, setTemplateId] = useState(designTemplates[0].id);
   const [logo, setLogo] = useState(null); // { image, url, file, info }
-  // Ảnh chụp sản phẩm của mẫu đang chọn; null khi chưa tải xong.
+  // Ảnh chụp sản phẩm, KÈM src của chính nó: { src, img }. Phải mang theo src vì lúc đổi mẫu
+  // có một nhịp mà `template` đã là mẫu mới trong khi state này vẫn giữ ảnh của mẫu cũ —
+  // ghép nhầm hai thứ đó lại chính là con bug "ảnh bị bóp méo khi chuyển tab" (xem mockupImg).
   const [mockup, setMockup] = useState(null);
   // null = giữ nguyên nền trắng của ảnh gốc. Chỉ có tác dụng với mẫu in mực đen trên nền
   // trắng (mẫu nào có `face` trong data/designTemplates.js).
@@ -71,6 +73,13 @@ export default function DesignStudio() {
 
   // Mẫu không đổi màu được thì bỏ qua lựa chọn màu, nhưng VẪN GIỮ giá trị trong state để
   // khách quay lại mẫu đổi được thì màu cũ còn nguyên.
+  // CHỐT CHẶN của con bug nói trên: hàm vẽ chạy TRƯỚC hàm nạp ảnh (effect vẽ khai báo trước
+  // effect nạp), nên có đúng một nhịp `template` là mẫu mới còn `mockup` vẫn là ảnh mẫu cũ.
+  // Vẽ nhịp đó ra thì ảnh cũ bị kéo méo theo tỉ lệ của mẫu mới — và tệ hơn, tintMockup() nhớ
+  // luôn kết quả sai vào cache nên ảnh hỏng vĩnh viễn. Không tô màu thì không có cache nên
+  // tự khỏi, vì vậy trước đây lỗi chỉ lộ ra sau khi khách chọn màu nền.
+  const mockupImg = mockup?.src === template.image ? mockup.img : null;
+
   const canTint = Boolean(template.face);
   const activeBg = canTint ? bgColor : null;
   const bgTooDark = Boolean(activeBg) && relativeLuminance(activeBg) < MIN_BG_LUMINANCE;
@@ -97,14 +106,14 @@ export default function DesignStudio() {
 
     drawDesign(ctx, {
       template,
-      mockup,
+      mockup: mockupImg,
       bgColor: activeBg,
       tintWidth: canvas.width,
       logo: logo?.image || null,
       view,
       fontFamily: fontRef.current,
     });
-  }, [template, mockup, activeBg, logo, view]);
+  }, [template, mockupImg, activeBg, logo, view]);
 
   useEffect(() => {
     fontRef.current = getComputedStyle(document.body).fontFamily || 'sans-serif';
@@ -138,7 +147,9 @@ export default function DesignStudio() {
   useEffect(() => {
     let cancelled = false;
     setMockup(null);
-    loadMockup(template.image).then((img) => { if (!cancelled) setMockup(img); });
+    loadMockup(template.image).then((img) => {
+      if (!cancelled) setMockup({ src: template.image, img });
+    });
     return () => { cancelled = true; };
   }, [template]);
 
@@ -273,7 +284,17 @@ export default function DesignStudio() {
       setLogoError(error);
       return;
     }
-    setLogo({ image, url, file, info: inspectLogo(image) });
+    const info = inspectLogo(image);
+    // Màu đang dùng có phải do MÁY tự lấy từ logo cũ không (khác với màu khách tự chọn tay).
+    const prevAuto = logo?.info?.tint;
+    setLogo({ image, url, file, info });
+
+    // Tự lấy màu nền theo tông chủ đạo của logo mới.
+    if (info.tint) setBgColor(info.tint);
+    // Logo mới không có màu nào đáng kể (logo đen trắng): trả nền về trắng NẾU màu đang dùng
+    // là màu máy tự lấy từ logo trước — giữ lại thì khách nhìn thấy màu của một cái logo
+    // không còn ở đó nữa. Còn màu do khách tự chọn thì tuyệt đối không đụng vào.
+    else if (bgColor && bgColor === prevAuto) setBgColor(null);
   }
 
   function clearLogo() {
@@ -297,7 +318,7 @@ export default function DesignStudio() {
     try {
       const preview = await renderToBlob({
         template,
-        mockup,
+        mockup: mockupImg,
         bgColor: activeBg,
         logo: logo?.image || null,
         view,
@@ -405,7 +426,7 @@ export default function DesignStudio() {
             standee A6 cao gần gấp rưỡi bảng vuông, chặn theo bề rộng như nhau thì mẫu standee
             dài quá tầm nhìn, mà cột này lại dính theo màn hình khi cuộn. */}
         <div
-          className={`studio-canvas-wrap${mockup ? '' : ' is-loading'}`}
+          className={`studio-canvas-wrap${mockupImg ? '' : ' is-loading'}`}
           style={{ '--studio-aspect': template.size.w / template.size.h }}
         >
           {/* Canvas là hình trang trí do khách tự dựng — nội dung của nó đã được mô tả bằng
@@ -523,6 +544,19 @@ export default function DesignStudio() {
             <legend>3. Màu nền</legend>
 
             <div className="studio-swatches">
+              {/* Ô lấy từ logo đứng đầu hàng và chỉ hiện khi đoán được màu — để khách đổi sang
+                  màu khác rồi vẫn quay lại được màu tự động mà không phải tải lại logo. */}
+              {logo?.info?.tint && (
+                <button
+                  type="button"
+                  className={`studio-swatch${logo.info.tint === bgColor ? ' is-on' : ''}`}
+                  style={{ background: logo.info.tint }}
+                  onClick={() => setBgColor(logo.info.tint)}
+                  title="Theo màu logo của bạn"
+                >
+                  <span className="sr-only">Theo màu logo của bạn</span>
+                </button>
+              )}
               {bgPresets.map((p) => (
                 <button
                   key={p.label}
@@ -556,7 +590,9 @@ export default function DesignStudio() {
               </p>
             )}
             <p className="studio-hint">
-              Chỉ đổi màu nền; chữ, mã QR và logo Google in sẵn vẫn giữ nguyên.
+              {logo?.info?.tint
+                ? 'Màu nền đã lấy theo tông logo của bạn — đổi sang màu khác bất cứ lúc nào. Chữ, mã QR và logo Google in sẵn luôn giữ nguyên.'
+                : 'Chỉ đổi màu nền; chữ, mã QR và logo Google in sẵn vẫn giữ nguyên.'}
             </p>
           </fieldset>
         )}

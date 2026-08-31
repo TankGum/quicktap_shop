@@ -22,7 +22,8 @@ const FALLBACK_PRODUCT_LINKS = products.map((p) => ({ href: p.href, label: p.tit
 // trong chính trang con — không có, nên chẳng đi đâu cả. Có "/" thì về trang chủ rồi mới cuộn.
 const SECTION_LINKS = [
   { href: '/#cach-hoat-dong', label: 'Cách hoạt động' },
-  // `hot` = mục được làm nổi trong nav (nền xanh nhạt + chip "Mới"). Để ở dữ liệu chứ không
+  // `hot` = mục được làm nổi trong nav: chữ đậm hơn một nấc + nhãn "New" nhỏ màu nhấn nhô lên
+  // như chỉ số trên (xem .nav-hot/.nav-badge trong globals.css). Để ở dữ liệu chứ không
   // hardcode trong JSX, để sau này chuyển sang mục khác chỉ cần dời một chữ.
   { href: '/thiet-ke-rieng', label: 'Thiết kế riêng', hot: true },
   { href: '/#loi-ich', label: 'Lợi ích' },
@@ -327,7 +328,7 @@ export default function Header({ productLinks }) {
                 onClick={() => setMenuOpen(false)}
               >
                 {l.label}
-                {l.hot && <span className="nav-badge">Mới</span>}
+                {l.hot && <span className="nav-badge">New</span>}
               </Link>
             </li>
           ))}

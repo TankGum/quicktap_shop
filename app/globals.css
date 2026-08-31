@@ -730,45 +730,54 @@ p { text-wrap: pretty; }
 }
 
 /* ---------- Dải điểm mạnh ngay dưới hero ---------- */
-/* Dải "điểm mạnh" ngay dưới hero: 4 THẺ khối, mỗi thẻ một icon + tiêu đề + một dòng mô tả.
-   Trước đây là 4 dòng ngăn nhau bằng kẻ mảnh — với nội dung ngắn cỡ này trông như phần chú
-   thích còn sót của hero chứ không ra "điểm mạnh".
+/* Dải "điểm mạnh" ngay dưới hero — theo khuôn hàng dịch vụ của apple.com: KHÔNG thẻ, không
+   nền, không viền. Mỗi ý là một cột chữ canh giữa, tiêu đề to rõ, mô tả nhạt hơn ngay dưới,
+   ngăn cách nhau bằng khoảng trống chứ không bằng hộp.
 
-   Dùng lại ngôn ngữ thẻ sẵn có của trang (.card: nền xám nhạt, bo góc) nhưng gọn hơn một nấc
-   — thẻ ở đây chỉ chứa một dòng mô tả nên đệm và cỡ chữ phải nhỏ hơn thẻ thường, nếu không
-   nó át cả khối "Lợi ích" thật sự bên dưới. Thẻ CHỈ CÓ CHỮ: nội dung mỗi thẻ vỏn vẹn vài chữ,
-   thêm icon vào chỉ làm loãng. */
+   Vì sao bỏ thẻ: bốn thẻ xám đặt ngay dưới hero tạo thành một dải hộp nặng, cắt ngang mạch
+   đọc từ tiêu đề lớn xuống. Để chữ đứng trần trên nền trang thì phần này đọc như đuôi của
+   hero — đúng vai của nó — mà vẫn tách bạch nhờ khoảng thở.
+
+   Khoảng hở DỌC rộng hơn hở ngang hẳn một bậc: không có đường kẻ hay khung nào phân định
+   nữa, nên khoảng trống chính là thứ duy nhất nói cho mắt biết đâu là hết một ý. */
 .highlight-strip {
   display: grid;
-  /* Chỉ máy hẹp nhất (< 360px, cỡ iPhone SE) mới 1 cột: ở đó ép 2 cột thì "Đổi link bất cứ
-     lúc nào" vỡ thành 3-4 dòng. Từ 360px trở lên — tức gần như mọi điện thoại đang dùng —
-     xếp 2 cột, vì mỗi thẻ chỉ vài chữ, để 1 cột thì 4 thẻ kéo thành một dải dọc dài lê thê
-     ngay dưới hero. */
+  /* Điện thoại: MỘT cột. Hồi còn là thẻ có nền thì 2 cột hợp lý, nhưng chữ trần thì 2 cột ở
+     390px chỉ còn 164px mỗi bên — đo được đúng con số đó — nên câu mô tả chạm sát mép cột,
+     mất hết khoảng thở vốn là thứ làm nên kiểu bố cục này. Một cột thì mỗi ý được trọn bề
+     ngang, chữ vẫn bị chặn ở 14rem rồi canh giữa nên hai bên còn lề rộng rãi.
+     Chữ trần xếp dọc cũng gọn hơn thẻ nhiều, không còn cảnh "dài lê thê" như bản thẻ cũ. */
   grid-template-columns: 1fr;
-  gap: 10px;
+  gap: clamp(30px, 5vw, 40px) clamp(18px, 3vw, 34px);
+  margin-top: clamp(8px, 2vw, 20px);
 }
-@media (min-width: 360px) { .highlight-strip { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
-@media (min-width: 900px) {
-  .highlight-strip { grid-template-columns: repeat(4, 1fr); gap: 16px; }
-}
+@media (min-width: 560px) { .highlight-strip { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 900px) { .highlight-strip { grid-template-columns: repeat(4, 1fr); } }
 
 .highlight-item {
   display: grid;
-  gap: 8px;
-  /* Nội dung dồn lên đầu thẻ: các thẻ cùng hàng bị kéo cao bằng nhau theo thẻ có tiêu đề dài
-     nhất, không có dòng này thì chữ trong thẻ thấp bị dàn giãn ra cho đầy. */
+  gap: 6px;
+  text-align: center;
+  /* Dồn lên đầu cột: cột nào có tiêu đề vắt 2 dòng sẽ kéo cả hàng cao lên, không có dòng này
+     thì chữ ở các cột thấp bị dàn giãn ra cho đầy chiều cao. */
   align-content: start;
-  padding: clamp(16px, 2.4vw, 22px);
-  border-radius: var(--radius);
-  background: var(--bg-alt);
-  transition: background-color .3s var(--ease), transform .25s var(--ease);
 }
-/* Trên nền đã xám thì thẻ đổi sang trắng để vẫn tách lớp — cùng quy ước với .card. */
-.section-alt .highlight-item { background: var(--surface); }
-.highlight-item:hover { transform: translateY(-3px); }
 
-.highlight-item h3 { font-size: .97rem; letter-spacing: var(--tracking-sub); }
-.highlight-item p { color: var(--ink-2); font-size: .87rem; line-height: 1.4; }
+.highlight-item h3 {
+  font-size: clamp(1.08rem, 1.55vw, 1.35rem);
+  font-weight: 600;
+  letter-spacing: var(--tracking-sub);
+  line-height: 1.25;
+}
+.highlight-item p {
+  color: var(--ink-2);
+  font-size: clamp(.9rem, 1.05vw, 1rem);
+  line-height: 1.5;
+  /* Chặn bề ngang rồi canh giữa: cột rộng thì câu ngắn nằm thành một dòng dài lơ lửng, ngắt
+     sớm hơn một chút cho khối chữ thành hình chữ nhật gọn giống bản tham khảo. */
+  max-width: 14rem;
+  margin-inline: auto;
+}
 
 /* ---------- Spotlight: lưới ảnh chụp thật tại quán ---------- */
 .spotlight-grid {
@@ -898,6 +907,9 @@ p { text-wrap: pretty; }
   border-top: 1px solid var(--line-2);
   display: grid;
   gap: 14px;
+  /* Canh giữa theo các cột "điểm mạnh" ngay phía trên — để lệch trái thì hai khối trong cùng
+     một section nhìn như hai mảnh rời nhau. */
+  justify-items: center;
 }
 .platform-label {
   font-size: .9rem;
@@ -907,6 +919,7 @@ p { text-wrap: pretty; }
 .platform-list {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: 8px 10px;
 }
 .platform-list li {
@@ -931,9 +944,10 @@ p { text-wrap: pretty; }
   /* Không có logo nên bù lại padding trái để chữ không lệch so với các pill có icon. */
   padding-left: .95em;
 }
-@media (min-width: 760px) {
-  .platform-strip { grid-template-columns: auto 1fr; align-items: center; gap: 24px; }
-}
+/* Trước đây từ 760px trở lên dải này tách 2 cột (nhãn bên trái | pill bên phải). Bỏ đi khi
+   khối "điểm mạnh" phía trên chuyển sang canh giữa: giữ 2 cột thì nhãn dính mép trái trong
+   khi mọi thứ khác canh giữa, mà canh giữa nội dung trong cột phải lại hở một mảng trống giữa
+   nhãn và pill đầu tiên. Một cột canh giữa là cách duy nhất hợp với composition mới. */
 
 /* ---------- Sections ---------- */
 /* Khoảng thở rộng giữa các khối — yếu tố tạo cảm giác "cao cấp". */
@@ -1058,33 +1072,45 @@ p { text-wrap: pretty; }
   color: var(--ink-2);
 }
 
-/* Nút gạt Trước/Sau — xem components/HowtoToggle.jsx. Segmented control kiểu iOS: 2 nút
-   trong 1 khung nền xám bo tròn, nút đang chọn nổi lên bằng nền trắng + đổ bóng nhẹ. Bấm để
-   đổi nội dung TẠI CHỖ (dùng `hidden`, không dựng/gỡ lại DOM) — khác hẳn kiểu so sánh 2 cột
-   song song trước đây. */
-.howto-toggle-switch {
-  display: inline-flex;
-  gap: 2px;
-  padding: 4px;
-  border-radius: 980px;
-  background: var(--bg-alt);
-}
-.howto-toggle-btn {
-  padding: .5em 1.3em;
-  border: 0;
-  border-radius: 980px;
-  background: none;
+/* Nút gạt Trước/Sau — xem components/HowtoToggle.jsx. Công tắc kiểu iOS: rãnh bo tròn +
+   núm trắng trượt, 2 nhãn "Trước"/"Sau" đứng 2 bên, nhãn đang chọn đậm/đen lên. Trước đây
+   là segmented control 2 nút; đổi sang công tắc vì đây là 2 trạng thái đối nghịch của cùng
+   một việc chứ không phải 2 mục ngang hàng. Bấm để đổi nội dung TẠI CHỖ (dùng `hidden`,
+   không dựng/gỡ lại DOM). */
+.howto-switch-row { display: inline-flex; align-items: center; gap: 12px; }
+.howto-switch-label {
   font-size: .92rem;
   font-weight: 500;
   color: var(--ink-3);
+  user-select: none;
+  transition: color .2s var(--ease);
+}
+.howto-switch-label.is-on { color: var(--ink); font-weight: 600; }
+
+/* Rãnh: --line (không phải --line-2) vì khối .howto nền trắng — --line-2 gần như tàng hình
+   trên nền này. */
+.howto-switch {
+  position: relative;
+  flex: none;
+  width: 52px; height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 980px;
+  background: var(--line);
   cursor: pointer;
-  transition: background .2s var(--ease), color .2s var(--ease), box-shadow .2s var(--ease);
+  transition: background .2s var(--ease);
 }
-.howto-toggle-btn.is-active {
-  background: var(--surface);
-  color: var(--ink);
+.howto-switch[aria-checked="true"] { background: var(--accent); }
+.howto-switch-thumb {
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: #fff;
   box-shadow: var(--shadow-sm);
+  transition: transform .2s var(--ease);
 }
+.howto-switch[aria-checked="true"] .howto-switch-thumb { transform: translateX(22px); }
 
 /* Khung chứa chuỗi bước — nền tint riêng để có "chất" thay vì chữ trơ nổi giữa khoảng trắng
    (bản đầu bị chê xấu chính vì thiếu khung này). */
@@ -2497,42 +2523,34 @@ p { text-wrap: pretty; }
 .studio-color input::-moz-color-swatch { border: 1px solid var(--line); border-radius: 50%; }
 
 /* ---------- Mục nav được làm nổi (hiện đang là "Thiết kế riêng") ----------
-   Đặt SAU khối "Nav đang ở trang này" ở trên: hai bên cùng độ đặc hiệu nên luật sau thắng,
-   nhờ vậy mục nổi giữ được màu nhấn kể cả khi đang đứng ở chính trang đó. */
+   Theo cách Apple/Samsung đánh dấu mục mới: KHÔNG viên nền màu, không chip đặc — nav giữ
+   nguyên là một hàng chữ đều nhau, điểm nhấn đến từ một nhãn nhỏ màu nhấn nhô lên như chỉ số
+   trên. Bản trước tô nền xanh + chip đặc: đứng cạnh nút CTA xanh thành hai khối màu cãi nhau,
+   và lạc hẳn khỏi tông tối giản của site (accent vốn chỉ dùng cho hành động). */
 .site-nav > a.nav-hot {
-  /* Nền xanh RẤT nhạt + chữ màu nhấn: nổi hẳn giữa mấy link chữ xám, nhưng không đọc thành
-     "nút bấm thứ hai" cạnh nút CTA xanh đặc ngay bên phải. */
-  background: var(--accent-soft);
-  color: var(--accent-ink);
+  /* Đậm hơn anh em một nấc (ink thay vì ink-2, 500 thay vì 400) — mắt bắt được ngay nhưng vẫn
+     đọc ra "một mục trong hàng", không phải "cái nút thứ hai". Cố ý KHÔNG đặt background để
+     nền xám của trạng thái đang-ở-trang-này vẫn hiện bình thường. */
+  color: var(--ink);
   font-weight: 500;
-  padding-right: .45em;
-  transition: background-color .2s var(--ease), color .2s var(--ease);
 }
-.site-nav > a.nav-hot:hover {
-  background: color-mix(in srgb, var(--accent-soft) 78%, var(--accent));
-  color: var(--accent-ink);
-}
-.site-nav > a.nav-hot[aria-current="page"] {
-  background: color-mix(in srgb, var(--accent-soft) 70%, var(--accent));
-  color: var(--accent-ink);
-  font-weight: 600;
-}
+.site-nav > a.nav-hot:hover { color: var(--ink); }
 
 .nav-badge {
-  display: inline-block;
-  margin-left: .5em;
-  padding: .12em .5em;
-  border-radius: 980px;
-  background: var(--accent);
-  color: #fff;
-  font-size: .68rem;
+  margin-left: .34em;
+  font-size: .6rem;
   font-weight: 600;
   /* Chip nhỏ nên bỏ phần siết chữ của toàn trang, nếu không 3 ký tự dính vào nhau. */
   letter-spacing: 0;
-  line-height: 1.5;
-  vertical-align: middle;
+  color: var(--accent);
+  /* Nhô lên kiểu chỉ số trên. Hai thuộc tính cho hai ngữ cảnh khác nhau: nav desktop là
+     inline-flex (chỉ align-self có tác dụng), sidebar mobile là khối chữ thường (chỉ
+     vertical-align có tác dụng). Đặt cả hai thì chỗ nào cũng đúng. */
+  align-self: flex-start;
+  vertical-align: super;
+  line-height: 1;
 }
 
-/* Sidebar mobile: chữ đã to sẵn nên chỉ cần đổi màu + chip, không cần thêm nền. */
-.mobile-nav-list > li > a.nav-hot { color: var(--accent-ink); }
-.mobile-nav-list > li > a.nav-hot .nav-badge { font-size: .6rem; margin-left: .6em; }
+/* Sidebar mobile: chữ đã to và đậm sẵn, chỉ cần thêm nhãn — đổi màu cả dòng sẽ đụng với
+   trạng thái đang-ở-trang-này (vốn cũng dùng màu nhấn + vạch dọc bên trái). */
+.mobile-nav-list > li > a.nav-hot .nav-badge { font-size: .68rem; margin-left: .45em; }
