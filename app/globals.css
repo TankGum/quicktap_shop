@@ -3068,3 +3068,252 @@ p { text-wrap: pretty; }
 /* Sidebar mobile: chữ đã to và đậm sẵn, chỉ cần thêm nhãn — đổi màu cả dòng sẽ đụng với
    trạng thái đang-ở-trang-này (vốn cũng dùng màu nhấn + vạch dọc bên trái). */
 .mobile-nav-list > li > a.nav-hot .nav-badge { font-size: .68rem; margin-left: .45em; }
+
+/* ==========================================================================
+   Standee 3D ở trang chủ (components/Standee3D.jsx)
+   Khối 3D thật dựng bằng CSS transform: hai tấm A6 gấp chụm ở đỉnh + một tấm đáy
+   trong suốt nối hai chân. Mỗi tấm là một hộp 6 mặt nên xoay tới cạnh nào cũng
+   thấy bề dày 2mm của giấy.
+   ========================================================================== */
+/* Trong hero: chừa khoảng thở với cặp nút phía trên, và hạ bớt chiều cao sân khấu để cả
+   tiêu đề + nút + mô hình cùng lọt một màn hình. */
+.hero-model { margin-top: clamp(26px, 4vw, 44px); }
+.hero-model .std3d-stage { min-height: clamp(380px, 56vh, 560px); }
+/* Desktop: nới CHIỀU CAO KHUNG cho thoáng. Mô hình không to theo — nó bị chặn bởi MAX_FIT
+   trong Standee3D.jsx, phần dôi ra thành khoảng thở trên/dưới sản phẩm. */
+@media (min-width: 900px) {
+  .hero-model .std3d-stage { min-height: clamp(560px, 76vh, 780px); }
+}
+/* Desktop có chỗ nên cho khung cao hẳn lên — standee dáng dọc, khung thấp là nó bị bó.
+   Màn nhỏ giữ nguyên: cao thêm nữa thì đẩy cặp nút CTA xuống quá sâu dưới màn hình. */
+@media (min-width: 900px) {
+  .hero-model .std3d-stage { min-height: clamp(560px, 74vh, 760px); }
+}
+
+.std3d {
+  display: grid;
+  gap: clamp(14px, 2vw, 20px);
+  /* Bó cả khối vào một cột hẹp hơn container: khung càng rộng thì standee (vốn dáng dọc)
+     càng lọt thỏm giữa hai mảng tối trống hai bên. */
+  max-width: 920px;
+  margin-inline: auto;
+}
+
+/* ----- Sân khấu ----- */
+.std3d-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: clamp(420px, 68vh, 680px);
+  border-radius: var(--radius-lg);
+  /* Standee toàn màu sáng, đặt trên nền trắng của trang thì chìm. Cho vào một hộp tối
+     kiểu phòng chụp studio: một vệt sáng hắt sau lưng sản phẩm, còn lại tối dần ra rìa. */
+  background:
+    radial-gradient(52% 42% at 50% 40%, rgba(255,255,255,.13), transparent 72%),
+    radial-gradient(130% 105% at 50% 12%, #35353b, #1b1b1f 58%, #101012);
+  overflow: hidden;
+  /* Kéo bằng ngón tay là để xoay mô hình, không phải cuộn trang. */
+  touch-action: none;
+  cursor: grab;
+  outline: none;
+}
+.std3d-stage:active { cursor: grabbing; }
+.std3d-stage:focus-visible { box-shadow: inset 0 0 0 2px var(--accent); }
+
+.std3d-hint {
+  position: absolute;
+  /* Hai chú thích nằm hai góc dưới, chừa trống chính giữa cho sản phẩm. */
+  inset: auto clamp(14px, 2.2vw, 20px) clamp(12px, 2vw, 16px) auto;
+  font-size: .62rem;
+  letter-spacing: var(--tracking-caption);
+  color: rgba(255,255,255,.62);
+  pointer-events: none;
+  transition: opacity .4s var(--ease);
+}
+.std3d-hint.is-off { opacity: 0; }
+
+.std3d-holder { perspective: 1700px; perspective-origin: 50% 44%; display: grid; place-items: center; }
+
+/* ----- Khối 3D -----
+   Hình học chỉ có một bậc tự do: --sin/--cos của góc gấp do JS truyền vào, mọi kích
+   thước còn lại suy ra từ đó nên hai chân luôn chạm đúng mép đáy. */
+.std3d-stand {
+  --mm: 2.6px;                              /* px mỗi mm ở tỉ lệ gốc, khớp hằng số trong JS */
+  --pw: calc(105 * var(--mm));
+  --ph: calc(148 * var(--mm));
+  --th: calc(2 * var(--mm));
+  --depth: calc(2 * var(--ph) * var(--sin));
+  --feet: calc(var(--ph) * var(--cos));
+  --pull: 0px;                              /* độ trượt của tấm đáy khi bấm "Xem mặt đáy" */
+  --rise: 0px;
+  --peek-k: 1;
+  position: relative;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--rx, -15deg)) rotateY(var(--ry, -32deg)) scale(calc(var(--scale, 1) * var(--peek-k)));
+  will-change: transform;
+}
+.std3d.is-peek .std3d-stand {
+  --pull: calc(84 * var(--mm));
+  --rise: calc(58 * var(--mm));
+  --peek-k: .78;
+}
+
+.std3d-node { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-style: preserve-3d; }
+.std3d-rig { transform: translateY(calc(var(--feet) / -2 - var(--rise))); }
+.std3d-n-front { transform: rotateX(var(--fold)) translateY(calc(var(--ph) / 2)); }
+.std3d-n-back { transform: rotateX(calc(-1 * var(--fold))) rotateY(180deg) translateY(calc(var(--ph) / 2)); }
+/* Nhích đáy lên 0.6mm để nó ăn lấn vào chân hai tấm — bằng đúng mặt phẳng chân thì hở một
+   khe sáng ở gầm. */
+.std3d-n-base {
+  transform: translateZ(var(--pull))
+             translateY(calc(var(--feet) + var(--th) / 2 - .6 * var(--mm)))
+             rotateX(-90deg);
+}
+.std3d-n-shadow { transform: translateY(calc(var(--feet) + var(--th) + 2 * var(--mm))) rotateX(90deg); }
+.std3d-n-base, .std3d-rig { transition: transform .55s var(--ease); }
+
+/* ----- Một tấm = hộp 6 mặt ----- */
+.std3d-slab {
+  position: absolute;
+  transform-style: preserve-3d;
+  left: calc(var(--w) / -2);
+  top: calc(var(--h) / -2);
+  width: var(--w);
+  height: var(--h);
+}
+.std3d-panel { --w: var(--pw); --h: var(--ph); }
+.std3d-base { --w: var(--pw); --h: var(--depth); }
+
+.std3d-slab > .std3d-f {
+  position: absolute;
+  backface-visibility: hidden;
+  overflow: hidden;
+  background: #f4f6f5;
+}
+.std3d-out { inset: 0; transform: translateZ(calc(var(--th) / 2)); }
+.std3d-in { inset: 0; background: #e9eceA; transform: rotateY(180deg) translateZ(calc(var(--th) / 2)); }
+.std3d-sl, .std3d-sr {
+  top: 0; height: 100%; width: var(--th); left: calc(50% - var(--th) / 2);
+  background: linear-gradient(90deg, #fff, var(--line));
+}
+.std3d-sl { transform: rotateY(-90deg) translateZ(calc(var(--w) / 2)); }
+.std3d-sr { transform: rotateY(90deg) translateZ(calc(var(--w) / 2)); }
+.std3d-st, .std3d-sb {
+  left: 0; width: 100%; height: var(--th); top: calc(50% - var(--th) / 2);
+  background: linear-gradient(180deg, #fff, var(--line));
+}
+.std3d-st { transform: rotateX(90deg) translateZ(calc(var(--h) / 2)); }
+.std3d-sb { transform: rotateX(-90deg) translateZ(calc(var(--h) / 2)); }
+
+/* Hoạ tiết in — ảnh xuất thẳng từ file PDF, đúng tỉ lệ A6 nên phủ kín 100% mặt tấm.
+   Chọn lớp tô bằng class 2 tên (.std3d-f.std3d-art-front) để thắng .std3d-slab > .std3d-f. */
+.std3d-f.std3d-art-front { background: #fff var(--front) center/100% 100% no-repeat; }
+.std3d-f.std3d-art-back { background: #fff var(--back) center/100% 100% no-repeat; }
+/* Mặt sau quay vào bóng của chính standee nên tối hơn mặt trước một chút. */
+.std3d-f.std3d-art-back::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,.06); }
+
+/* ----- Mặt đáy: tấm trong, hai cánh gấp gặp nhau bằng đường khớp giữa ----- */
+.std3d-base > .std3d-f {
+  background: linear-gradient(150deg, rgba(255,255,255,.58), rgba(255,255,255,.42) 46%, rgba(255,255,255,.56));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.42);
+}
+.std3d-base > .std3d-out, .std3d-base > .std3d-in {
+  background:
+    var(--base) center/100% 100% no-repeat,
+    linear-gradient(to bottom,
+      transparent calc(50% - .45 * var(--mm)),
+      rgba(0,0,0,.28) calc(50% - .45 * var(--mm)),
+      rgba(0,0,0,.28) 50%,
+      rgba(255,255,255,.62) 50%,
+      rgba(255,255,255,.62) calc(50% + .45 * var(--mm)),
+      transparent calc(50% + .45 * var(--mm))),
+    linear-gradient(150deg, rgba(255,255,255,.62), rgba(255,255,255,.46) 46%, rgba(255,255,255,.60));
+}
+/* Mặt này đã lật 180° quanh trục Y, cộng với rotateX(-90deg) của node thành ra nội dung bị
+   xoay ngược; bù lại 180° trong mặt phẳng thì chữ mới đọc xuôi khi nhìn từ trên. */
+.std3d-base > .std3d-in {
+  transform: rotateY(180deg) translateZ(calc(var(--th) / 2)) rotate(180deg);
+}
+.std3d-base > .std3d-sl, .std3d-base > .std3d-sr,
+.std3d-base > .std3d-st, .std3d-base > .std3d-sb { background: rgba(255,255,255,.40); }
+
+.std3d-shadow {
+  position: absolute;
+  left: calc(var(--pw) * -.85);
+  top: calc(var(--depth) * -1.35);
+  width: calc(var(--pw) * 1.7);
+  height: calc(var(--depth) * 2.7);
+  background: radial-gradient(ellipse at center, rgba(0,0,0,.55) 0%, transparent 66%);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+/* ----- Thanh dưới ----- */
+.std3d-ctrl { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
+.std3d-btn {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: .84rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking-caption);
+  padding: 9px 17px;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease);
+}
+.std3d-btn:hover { color: var(--ink); border-color: var(--ink-3); }
+.std3d-btn.is-on { background: var(--ink); border-color: var(--ink); color: #fff; }
+.std3d-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ----- Tên mẫu, nút chuyển mẫu, thông số: đều nằm trong khung tối ----- */
+.std3d-name {
+  position: absolute;
+  inset: clamp(12px, 2vw, 18px) 0 auto;
+  display: grid;
+  gap: 1px;
+  justify-items: left;
+  margin-left: clamp(14px, 2.2vw, 20px);
+  text-align: center;
+  pointer-events: none;
+}
+.std3d-name b { font-size: .95rem; font-weight: 600; color: #fff; letter-spacing: var(--tracking-sub); }
+.std3d-name span { font-size: .76rem; color: rgba(255,255,255,.55); }
+
+.std3d-nav {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color .2s var(--ease), border-color .2s var(--ease);
+}
+.std3d-nav:hover { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.3); }
+.std3d-nav:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.std3d-nav svg { width: 18px; height: 18px; }
+.std3d-prev { left: clamp(10px, 1.6vw, 18px); }
+.std3d-prev svg { transform: scaleX(-1); }
+.std3d-next { right: clamp(10px, 1.6vw, 18px); }
+
+.std3d-spec {
+  position: absolute;
+  inset: auto auto clamp(12px, 2vw, 16px) clamp(14px, 2.2vw, 20px);
+  font-size: .62rem;
+  color: rgba(255,255,255,.42);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+/* Điện thoại: hai dòng chú thích dưới đáy khung đâm vào nhau, bỏ thông số cho thoáng. */
+@media (max-width: 560px) { .std3d-spec { display: none; } }

@@ -27,7 +27,7 @@ export const products = [
   {
     id: 'standee',
     href: '/san-pham/standee',
-    kicker: 'Dạng 2',
+    kicker: 'Kiểu 2',
     title: 'Standee để bàn A6',
     artLabel: 'Minh hoạ standee để bàn',
     tagline: 'Đặt trên quầy thu ngân hay từng bàn, khách thấy ngay khi ngồi xuống.',

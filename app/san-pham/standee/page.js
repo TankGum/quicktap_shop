@@ -52,7 +52,7 @@ export default async function StandeePage() {
       <section className="page-hero">
         <div className="hero-glow" aria-hidden="true" />
         <div className="container">
-          <Reveal as="p" className="kicker">Sản phẩm · Dạng 2</Reveal>
+          <Reveal as="p" className="kicker">Sản phẩm · Kiểu 2</Reveal>
           <Reveal as="h1">Standee để bàn A6</Reveal>
           <Reveal as="p" className="page-hero-sub">
             Đặt trên quầy thu ngân hay từng bàn. Khách quét mã QR hoặc chạm NFC — đều mở thẳng

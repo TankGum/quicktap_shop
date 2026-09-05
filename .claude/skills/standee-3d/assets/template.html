@@ -1,0 +1,318 @@
+<title>__TITLE__</title>
+<style>
+:root{
+  --ground:#EFF2F0; --ground-2:#E4E9E6;
+  --ink:#131C18; --ink-2:#5E6E67; --hairline:#DCE3DF;
+  --btn-ink:#131C18; --btn-face:#FFFFFF;
+  --focus:#0A7A55; --accent:#34E0A1;
+  --shade:rgba(12,26,20,.34);
+
+  /* màu sản phẩm — cố định, standee là thế giới riêng của nó */
+  --td-green:#34E0A1; --td-black:#000; --td-white:#fff; --td-star:#FFC72C;
+  --paper:#F4F6F5; --paper-2:#E4E8E6; --inner:#E9ECEA;
+
+  --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --grot:"Helvetica Neue",Helvetica,Arial,"Liberation Sans",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0D1311; --ground-2:#050908;
+    --ink:#E9EFEB; --ink-2:#93A29B; --hairline:#27322D;
+    --btn-ink:#E9EFEB; --btn-face:#1E2823;
+    --focus:#34E0A1; --shade:rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0D1311; --ground-2:#050908;
+  --ink:#E9EFEB; --ink-2:#93A29B; --hairline:#27322D;
+  --btn-ink:#E9EFEB; --btn-face:#1E2823;
+  --focus:#34E0A1; --shade:rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--ground);color:var(--ink);
+  font-family:var(--sans);-webkit-font-smoothing:antialiased;display:flex;flex-direction:column}
+
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;padding:20px clamp(16px,4vw,40px) 12px}
+.eyebrow{flex-basis:100%;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);font-weight:600}
+h1{margin:0;font-size:clamp(19px,3vw,26px);font-weight:650;letter-spacing:-.02em;text-wrap:balance}
+.spec{margin:0;color:var(--ink-2);font-size:13px;font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+.stage{position:relative;flex:1;min-height:54vh;display:grid;place-items:center;overflow:hidden;
+  touch-action:none;cursor:grab;outline:none;border-block:1px solid var(--hairline);
+  background:radial-gradient(120% 92% at 50% 30%, var(--ground) 0%, var(--ground-2) 100%)}
+.stage:active{cursor:grabbing}
+.stage:focus-visible{box-shadow:inset 0 0 0 2px var(--focus)}
+
+.holder{perspective:1700px;perspective-origin:50% 44%;display:grid;place-items:center}
+
+/* ---------- khối 3D ---------- */
+.stand{
+  --mm:2.6px;
+  --pw:calc(__PW__ * var(--mm));
+  --ph:calc(__PH__ * var(--mm));
+  --th:calc(__TH__ * var(--mm));
+  --ang:__ANG__deg; --sin:__SIN__; --cos:__COS__;
+  --pull:0px; --rise:0px;
+  --bw:var(--pw);
+  --depth:calc(2 * var(--ph) * var(--sin));   /* đáy nối đúng hai chân */
+  --feet:calc(var(--ph) * var(--cos));
+  position:relative;width:0;height:0;
+  transform-style:preserve-3d;
+  transform:rotateX(var(--rx)) rotateY(var(--ry)) scale(var(--zoom));
+  will-change:transform;
+}
+.node{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d}
+.rig{transform:translateY(calc(var(--feet) / -2 - var(--rise)))}
+.n-front{transform:rotateX(var(--ang)) translateY(calc(var(--ph) / 2))}
+.n-back{transform:rotateX(calc(-1 * var(--ang))) rotateY(180deg) translateY(calc(var(--ph) / 2))}
+@media (prefers-reduced-motion:no-preference){
+  .n-base,.rig{transition:transform .55s cubic-bezier(.4,0,.2,1)}
+}
+.n-base{transform:translateZ(var(--pull)) translateY(calc(var(--feet) + var(--th) / 2 - .6 * var(--mm))) rotateX(-90deg)}
+.n-shadow{transform:translateY(calc(var(--feet) + var(--th) + 2 * var(--mm))) rotateX(90deg)}
+
+.slab{position:absolute;transform-style:preserve-3d;
+  left:calc(var(--w) / -2);top:calc(var(--h) / -2);width:var(--w);height:var(--h)}
+.slab > .f{position:absolute;backface-visibility:hidden;overflow:hidden;background:var(--paper)}
+.f.out{inset:0;transform:translateZ(calc(var(--th) / 2))}
+.f.in{inset:0;background:var(--inner);transform:rotateY(180deg) translateZ(calc(var(--th) / 2))}
+.f.sl,.f.sr{top:0;height:100%;width:var(--th);left:calc(50% - var(--th) / 2);
+  background:linear-gradient(90deg,var(--paper),var(--paper-2))}
+.f.sl{transform:rotateY(-90deg) translateZ(calc(var(--w) / 2))}
+.f.sr{transform:rotateY(90deg) translateZ(calc(var(--w) / 2))}
+.f.st,.f.sb{left:0;width:100%;height:var(--th);top:calc(50% - var(--th) / 2);
+  background:linear-gradient(180deg,var(--paper),var(--paper-2))}
+.f.st{transform:rotateX(90deg) translateZ(calc(var(--h) / 2))}
+.f.sb{transform:rotateX(-90deg) translateZ(calc(var(--h) / 2))}
+
+/* ánh sáng giả: mặt sau tối hơn mặt trước, lòng standee tối nhất */
+.tint{position:absolute;inset:0;pointer-events:none}
+.tint.lit{background:linear-gradient(to bottom,rgba(255,255,255,.16),transparent 42%)}
+.tint.dim{background:rgba(0,0,0,.06)}
+
+.groundshadow{position:absolute;
+  left:calc(var(--pw) * -.85);top:calc(var(--depth) * -1.35);
+  width:calc(var(--pw) * 1.7);height:calc(var(--depth) * 2.7);
+  background:radial-gradient(ellipse at center,var(--shade) 0%,transparent 66%);
+  filter:blur(10px);pointer-events:none}
+
+/* ---------- hoạ tiết in ---------- */
+.f.art-front{background:#fff url(__IMG1__) center/100% 100% no-repeat}
+.f.art-back{background:#fff url(__IMG2__) center/100% 100% no-repeat}
+/* mặt đáy: tấm trong như kính, hai cánh gấp gặp nhau bằng đường khớp giữa */
+.slab.base > .f{
+  background:linear-gradient(150deg,rgba(255,255,255,.58),rgba(255,255,255,.42) 46%,rgba(255,255,255,.56));
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.42)}
+.slab.base > .f.out,.slab.base > .f.in{
+  background:
+    url(__IMG3__) center/100% 100% no-repeat,
+    linear-gradient(to bottom,
+      transparent calc(50% - .45 * var(--mm)),
+      rgba(0,0,0,.30) calc(50% - .45 * var(--mm)),
+      rgba(0,0,0,.30) 50%,
+      rgba(255,255,255,.62) 50%,
+      rgba(255,255,255,.62) calc(50% + .45 * var(--mm)),
+      transparent calc(50% + .45 * var(--mm))),
+    linear-gradient(150deg,rgba(255,255,255,.62),rgba(255,255,255,.46) 46%,rgba(255,255,255,.60))}
+.slab.base > .f.in{
+  /* mặt này lật 180° quanh trục Y nên nội dung in bị xoay ngược; xoay lại cho đọc được */
+  transform:rotateY(180deg) translateZ(calc(var(--th) / 2)) rotate(180deg)}
+.slab.base > .f.sl,.slab.base > .f.sr,.slab.base > .f.st,.slab.base > .f.sb{
+  background:rgba(255,255,255,.40)}
+
+/* ---------- điều khiển ---------- */
+.bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:14px clamp(16px,4vw,40px) 4px}
+.seg{display:flex;background:var(--btn-face);border:1px solid var(--hairline);border-radius:999px;padding:3px;gap:3px}
+.seg button{border:0;background:transparent;color:var(--ink-2);font:inherit;font-size:13px;font-weight:600;
+  padding:7px 14px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#08150F}
+button.act{border:1px solid var(--hairline);background:var(--btn-face);color:var(--btn-ink);
+  font:inherit;font-size:13px;font-weight:600;padding:9px 16px;border-radius:999px;cursor:pointer}
+button.act[aria-pressed="true"]{box-shadow:inset 0 0 0 1px var(--accent)}
+button:focus-visible,.seg button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+.hint{padding:8px clamp(16px,4vw,40px) 10px;color:var(--ink-2);font-size:12.5px}
+kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--hairline);border-radius:4px;padding:1px 5px;color:var(--ink)}
+footer{padding:12px clamp(16px,4vw,40px) 26px;border-top:1px solid var(--hairline);
+  color:var(--ink-2);font-size:12.5px;line-height:1.65;max-width:74ch}
+</style>
+
+<header>
+  <span class="eyebrow">QuickTap Review · bản dựng hình</span>
+  <h1>__HEADING__</h1>
+  <p class="spec" id="spec"></p>
+</header>
+
+<div class="stage" id="stage" tabindex="0" role="application" aria-label="Mô hình standee 3D, dùng phím mũi tên để xoay">
+  <div class="holder">
+    <div class="stand" id="stand">
+      <div class="node rig">
+
+        <!-- mặt trước (page 1) -->
+        <div class="node n-front">
+          <div class="slab" style="--w:var(--pw);--h:var(--ph)">
+            <div class="f out art-front"><i class="tint lit"></i></div>
+            <div class="f in"></div>
+            <i class="f sl"></i><i class="f sr"></i><i class="f st"></i><i class="f sb"></i>
+          </div>
+        </div>
+
+        <!-- mặt sau (page 2) -->
+        <div class="node n-back">
+          <div class="slab" style="--w:var(--pw);--h:var(--ph)">
+            <div class="f out art-back"><i class="tint dim"></i></div>
+            <div class="f in"></div>
+            <i class="f sl"></i><i class="f sr"></i><i class="f st"></i><i class="f sb"></i>
+          </div>
+        </div>
+
+        <!-- mặt đáy (page 3) -->
+        <div class="node n-base">
+          <div class="slab base" style="--w:var(--bw);--h:var(--depth)">
+            <div class="f out"></div>
+            <div class="f in"></div>
+            <i class="f sl"></i><i class="f sr"></i><i class="f st"></i><i class="f sb"></i>
+          </div>
+        </div>
+
+        <div class="node n-shadow"><i class="groundshadow"></i></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Góc nhìn">
+    <button data-view="front" aria-pressed="false">Trước</button>
+    <button data-view="back" aria-pressed="false">Sau</button>
+    <button data-view="three" aria-pressed="true">Nghiêng</button>
+  </div>
+  <button class="act" id="btn-peek" aria-pressed="false">Xem mặt đáy</button>
+  <button class="act" id="btn-auto" aria-pressed="true">Tự xoay</button>
+</div>
+<p class="hint">Kéo để xoay · “Xem mặt đáy” kéo tấm đáy trong ra khỏi thân · <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> xoay · <kbd>R</kbd> đặt lại</p>
+
+<footer>
+  Mặt trước và mặt sau lấy thẳng từ file in <code>__PDFNAME__</code> nên khớp bản in thật, kể cả mã QR quét được.
+  Mặt đáy là tấm trong suốt, đường kẻ chạy dọc chính giữa là chỗ hai cánh gấp gặp nhau; bấm “Xem mặt đáy” để kéo ra xem.
+  Đáy sâu __DEPTH__ mm; góc gấp __ANGVN__° suy ra từ số đó nên hai chân chạm đúng mép đáy.
+</footer>
+
+<script>
+(function(){
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var stage=document.getElementById('stage'), stand=document.getElementById('stand'),
+      spec=document.getElementById('spec'),
+      btnAuto=document.getElementById('btn-auto');
+
+  var PW=__PW__, PH=__PH__, TH=__TH__, MM=2.6;           /* mm thật của A6 */
+  var views={front:[-8,0],back:[-8,180],three:[-15,-32],peek:[-42,0]};
+  var rx=-15, ry=-32, view=1, base=1, vx=0, vy=0, drag=false, auto=!reduce, lx=0, ly=0, tween=null;
+  var depth=__DEPTH__, activeId=null;
+  var peeking=false, btnPeek=document.getElementById('btn-peek');
+
+  function geom(){
+    var t=Math.asin(depth/(2*PH));
+    return {ang:t*180/Math.PI, depth:depth, height:PH*Math.cos(t)+TH, sin:Math.sin(t), cos:Math.cos(t)};
+  }
+  function setDepth(v){
+    depth=v; var g=geom();
+    stand.style.setProperty('--ang',g.ang.toFixed(3)+'deg');
+    stand.style.setProperty('--sin',g.sin.toFixed(5));
+    stand.style.setProperty('--cos',g.cos.toFixed(5));
+    spec.textContent='__SIZELABEL__ '+PW+'×'+PH+' mm · dày '+TH+' mm · đáy '+PW+'×'+g.depth.toFixed(0)
+      +' mm · cao '+g.height.toFixed(0)+' mm · gấp '+g.ang.toFixed(1)+'°';
+    fit();
+  }
+  function fit(){
+    var r=stage.getBoundingClientRect(), g=geom();
+    var w=PW*MM, h=(PH*g.cos+TH)*MM;
+    base=Math.max(.3,Math.min((r.width*.6)/w,(r.height*.78)/h));
+    apply();
+  }
+  function apply(){
+    stand.style.setProperty('--rx',rx.toFixed(2)+'deg');
+    stand.style.setProperty('--ry',ry.toFixed(2)+'deg');
+    stand.style.setProperty('--zoom',(base*view).toFixed(3));
+  }
+  function clampRX(v){ return Math.max(-82,Math.min(40,v)) }
+  function stopAuto(){ auto=false; btnAuto.setAttribute('aria-pressed','false') }
+
+  var last=performance.now();
+  function loop(now){
+    var dt=Math.min(64,now-last); last=now;
+    if(tween){
+      var p=Math.min(1,(now-tween.t0)/tween.d);
+      var e=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2;
+      rx=tween.rx0+(tween.rx1-tween.rx0)*e;
+      ry=tween.ry0+(tween.ry1-tween.ry0)*e;
+      if(p>=1) tween=null;
+      apply();
+    } else if(!drag && (Math.abs(vx)>.01||Math.abs(vy)>.01)){
+      ry+=vx*dt/16; rx=clampRX(rx+vy*dt/16); vx*=.93; vy*=.93; apply();
+    } else if(!drag && auto){
+      ry+=.2*dt/16; apply();
+    }
+    requestAnimationFrame(loop);
+  }
+
+  stage.addEventListener('pointerdown',function(e){
+    if(activeId!==null) return;
+    activeId=e.pointerId; stage.setPointerCapture(e.pointerId);
+    drag=true; stopAuto(); tween=null; vx=vy=0; lx=e.clientX; ly=e.clientY;
+  });
+  stage.addEventListener('pointermove',function(e){
+    if(e.pointerId!==activeId||!drag) return;
+    var dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
+    ry+=dx*.38; rx=clampRX(rx-dy*.30);
+    vx=dx*.38; vy=-dy*.30; apply();
+  });
+  function up(e){ if(e.pointerId===activeId){ activeId=null; drag=false } }
+  stage.addEventListener('pointerup',up);
+  stage.addEventListener('pointercancel',up);
+
+  stage.addEventListener('keydown',function(e){
+    var k=e.key;
+    if(k==='ArrowLeft'){ry-=6;stopAuto();apply()}
+    else if(k==='ArrowRight'){ry+=6;stopAuto();apply()}
+    else if(k==='ArrowUp'){rx=clampRX(rx-5);stopAuto();apply()}
+    else if(k==='ArrowDown'){rx=clampRX(rx+5);stopAuto();apply()}
+    else if(k==='r'||k==='R'){go('three')}
+    else return;
+    e.preventDefault();
+  });
+
+  function go(name){
+    var v=views[name]; if(!v) return;
+    stopAuto(); vx=vy=0; view=(name==='peek')?.78:1;
+    var d=((v[1]-ry+180)%360+360)%360-180;
+    if(reduce){ rx=v[0]; ry=ry+d; apply(); }
+    else tween={rx0:rx,rx1:v[0],ry0:ry,ry1:ry+d,t0:performance.now(),d:700};
+    document.querySelectorAll('[data-view]').forEach(function(b){
+      b.setAttribute('aria-pressed',String(b.dataset.view===name));
+    });
+    if(name!=='peek' && peeking){
+      peeking=false; btnPeek.setAttribute('aria-pressed','false');
+      stand.style.setProperty('--pull','0px'); stand.style.setProperty('--rise','0px');
+    }
+  }
+  document.querySelectorAll('[data-view]').forEach(function(b){
+    b.addEventListener('click',function(){ go(b.dataset.view) });
+  });
+  btnPeek.addEventListener('click',function(){
+    peeking=!peeking;
+    this.setAttribute('aria-pressed',String(peeking));
+    stand.style.setProperty('--pull', peeking ? 'calc(84 * var(--mm))' : '0px');
+    stand.style.setProperty('--rise', peeking ? 'calc(58 * var(--mm))' : '0px');
+    go(peeking ? 'peek' : 'three');
+  });
+  btnAuto.addEventListener('click',function(){ auto=!auto; this.setAttribute('aria-pressed',String(auto)) });
+  addEventListener('resize',fit);
+
+  setDepth(__DEPTH__);
+  requestAnimationFrame(loop);
+})();
+</script>

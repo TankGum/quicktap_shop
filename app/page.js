@@ -7,10 +7,12 @@ import HeroVideo from '@/components/HeroVideo';
 import HeroCarousel3D from '@/components/HeroCarousel3D';
 import CustomDesignsGallery from '@/components/CustomDesignsGallery';
 import HowtoToggle from '@/components/HowtoToggle';
+import Standee3D from '@/components/Standee3D';
 import { NfcPlateArt, StandeeArt } from '@/components/illustrations';
 import { siteConfig } from '@/lib/siteConfig';
 import { products } from '@/data/products';
 import { platforms } from '@/data/platforms';
+import { standeeModels } from '@/data/standee3d';
 import { industries as industryData } from '@/data/industries';
 import { getVariantsByProduct, getCustomDesigns, getSiteMedia } from '@/lib/airtable';
 import {
@@ -162,6 +164,17 @@ export default async function HomePage() {
             </defs>
           </svg>
 
+        </div>
+
+        {/* Nhân vật chính của hero: mô hình 3D của chính sản phẩm, xoay được ngay tại đây —
+            xem components/Standee3D.jsx. KHÔNG bọc Reveal: khối này là thứ khách nhìn thấy
+            đầu tiên, để nó mờ rồi mới hiện là mất luôn cảm giác "chạm được vào hàng". */}
+        <div className="container hero-model">
+          <Standee3D models={standeeModels} />
+        </div>
+
+        {/* Cặp nút đặt SAU mô hình: khách xem hàng xong mới tới lúc gọi hành động. */}
+        <div className="container hero-cta">
           <Reveal as="div" className="hero-actions">
             <Link className="btn btn-lg btn-metal btn-aura" href="/lien-he">
               <PhoneIcon className="i" />
@@ -173,12 +186,17 @@ export default async function HomePage() {
             </Link>
           </Reveal>
         </div>
-
-        {/* Vòng xoay 3D chiếm trọn bề ngang, đặt NGOÀI .container để tràn hết hai mép màn hình —
-            xem components/HeroCarousel3D.jsx. Airtable chưa có mẫu nào kèm ảnh thì component
-            trả về null: hero rút gọn còn phần chữ, vẫn đọc được bình thường. */}
-        <HeroCarousel3D items={heroItems} />
       </section>
+
+      {/* ============ VÒNG XOAY MẪU ============ */}
+      {/* <section className="section section-tight" id="vong-xoay">
+        <div className="container">
+          <Reveal as="header" className="section-head">
+            <h2>Lướt qua toàn bộ mẫu</h2>
+          </Reveal>
+        </div>
+        <HeroCarousel3D items={heroItems} />
+      </section> */}
 
       {/* ============ DẢI ĐIỂM MẠNH ============ */}
       {/* Khuôn "top features" của Samsung: ngay dưới hero là một dải ngắn các ý bán hàng, mỗi ý
