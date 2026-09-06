@@ -21,6 +21,10 @@ const DEPTH = 47;    // chiều sâu mặt đáy (mm) — phải khớp DEPTH_MM
 const FOLD = Math.asin(DEPTH / (2 * PH));           // góc gấp so với phương thẳng đứng
 const HEIGHT = PH * Math.cos(FOLD) + TH;            // chiều cao thật khi dựng lên
 
+// Bảng vuông: tấm phẳng 100×100mm, bo góc 8mm, dày 2mm.
+const CARD = 100;
+const CARD_R = 8;
+
 // [ngẩng, xoay] tính bằng độ. rotateX ÂM là nhìn từ trên xuống.
 // `idle` là góc 3/4 lúc mới vào — đẹp hơn nhìn thẳng, và cho thấy ngay đây là khối 3D.
 const VIEWS = {
@@ -29,15 +33,18 @@ const VIEWS = {
   back: [-10, -180],
   base: [-42, 0],
 };
+// `only` = chỉ hiện với loại hình khối đó. Bảng vuông không có mặt đáy.
 const POSES = [
   { id: 'front', label: 'Mặt trước' },
   { id: 'back', label: 'Mặt sau' },
-  { id: 'base', label: 'Mặt đáy' },
+  { id: 'base', label: 'Mặt đáy', only: 'standee' },
 ];
 
-// Chặn trên cho hệ số thu phóng: khung có cao thêm thì phần dôi ra là khoảng thở quanh
-// sản phẩm, chứ standee không nở to mãi theo khung.
-const MAX_FIT = 1.35;
+// Kích thước bao (mm) để tính hệ số thu phóng cho vừa khung.
+const BOX = {
+  standee: [PW, HEIGHT],
+  card: [CARD, CARD],
+};
 
 const DRAG_X = 0.38;     // 1px kéo ngang = bao nhiêu độ xoay quanh trục đứng
 const DRAG_Y = 0.30;
@@ -61,6 +68,12 @@ export default function Standee3D({ models }) {
   const tweenRef = useRef(null);
 
   const model = models[active];
+  const isCard = model.type === 'card';
+  const poses = POSES.filter((p) => !p.only || p.only === model.type);
+
+  // fit() nằm trong effect chạy một lần nên không thấy `model` mới; đọc loại qua ref.
+  const typeRef = useRef(model.type);
+  const refit = useRef(() => {});
 
   // ----- đặt lại transform lên DOM -----
   useEffect(() => {
@@ -77,19 +90,25 @@ export default function Standee3D({ models }) {
 
     // Khung hình luôn vừa khít khung nhìn: tính hệ số thu phóng từ bề rộng/chiều cao thật
     // của standee (mm) so với ô chứa nó.
+    //
+    // Khoảng đệm dọc là SỐ PX CỐ ĐỊNH (không phải % chiều cao khung) — chủ đích của việc
+    // nới chiều cao khung ở desktop là có khoảng thở quanh sản phẩm, dùng % thì khung càng
+    // cao mô hình càng phóng theo, thở vẫn tỉ lệ y hệt như khung thấp.
     const fit = () => {
       const r = stage.getBoundingClientRect();
       if (!r.width) return;
       const mm = 2.6; // px mỗi mm ở tỉ lệ gốc, khớp --mm trong CSS
-      // Màn hẹp: hạ bớt độ lấp đầy theo chiều cao, nếu không standee cao chạm hai mép và
-      // đè lên tên mẫu ở góc trên lẫn dòng "Kéo để xoay" ở góc dưới.
-      const fillY = r.width < 620 ? 0.78 : 0.9;
+      // Màn hẹp: chú thích ở góc chiếm chỗ hơn nên đệm ít lại, nếu không standee bị bó quá.
+      const padY = r.width < 620 ? 28 : 64;
+      const availH = Math.max(0, r.height - padY * 2);
+      const [boxW, boxH] = BOX[typeRef.current] || BOX.standee;
       view.current.fit = Math.max(
         0.3,
-        Math.min((r.width * 0.72) / (PW * mm), (r.height * fillY) / (HEIGHT * mm), MAX_FIT),
+        Math.min((r.width * 0.72) / (boxW * mm), availH / (boxH * mm)),
       );
       apply();
     };
+    refit.current = fit;
 
     fit();
     const ro = new ResizeObserver(fit);
@@ -154,6 +173,22 @@ export default function Standee3D({ models }) {
       if (io) io.disconnect();
     };
   }, []);
+
+  // Đổi mẫu có thể đổi luôn hình khối (standee <-> bảng vuông): tính lại cỡ cho vừa khung,
+  // và bỏ tư thế "mặt đáy" nếu mẫu mới không có mặt đó.
+  useEffect(() => {
+    typeRef.current = model.type;
+    refit.current();
+    if (model.type === 'card' && pose === 'base') {
+      setPose(null);
+      tweenRef.current = {
+        rx0: view.current.rx, rx1: VIEWS.idle[0],
+        ry0: view.current.ry, ry1: VIEWS.idle[1],
+        t0: performance.now(), ms: 500,
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [model.type]);
 
   // ----- kéo để xoay -----
   const onPointerDown = (e) => {
@@ -235,7 +270,7 @@ export default function Standee3D({ models }) {
   const stopBubble = (e) => e.stopPropagation();
 
   return (
-    <div className={`std3d${pose === 'base' ? ' is-peek' : ''}`}>
+    <div className={`std3d${pose === 'base' && !isCard ? ' is-peek' : ''}`}>
       <div
         ref={stageRef}
         className="std3d-stage"
@@ -261,6 +296,28 @@ export default function Standee3D({ models }) {
               '--cos': Math.cos(FOLD).toFixed(5),
             }}
           >
+            {isCard ? (
+              <div className="std3d-node">
+                <div className="std3d-slab std3d-cardslab">
+                  <i className="std3d-f std3d-out std3d-art-front" />
+                  <i className="std3d-f std3d-in" />
+                  {/* Viền quanh tấm: 4 cạnh thẳng, cộng 4 mặt vát ở góc thay cho cung bo.
+                      Một mặt phẳng cho mỗi cung 1/4 là đủ ở độ dày 2mm — sai lệch so với
+                      cung thật nhỏ hơn bề dày tấm nên mắt không bắt được. */}
+                  <i className="std3d-f std3d-ce std3d-ce-r" />
+                  <i className="std3d-f std3d-ce std3d-ce-l" />
+                  <i className="std3d-f std3d-ce std3d-ce-t" />
+                  <i className="std3d-f std3d-ce std3d-ce-b" />
+                  <i className="std3d-f std3d-cc std3d-cc-1" />
+                  <i className="std3d-f std3d-cc std3d-cc-2" />
+                  <i className="std3d-f std3d-cc std3d-cc-3" />
+                  <i className="std3d-f std3d-cc std3d-cc-4" />
+                </div>
+                <div className="std3d-node std3d-n-cardshadow">
+                  <i className="std3d-shadow" />
+                </div>
+              </div>
+            ) : (
             <div className="std3d-node std3d-rig">
               <div className="std3d-node std3d-n-front">
                 <div className="std3d-slab std3d-panel">
@@ -299,6 +356,7 @@ export default function Standee3D({ models }) {
                 <i className="std3d-shadow" />
               </div>
             </div>
+            )}
           </div>
         </div>
 
@@ -328,8 +386,13 @@ export default function Standee3D({ models }) {
           <Chevron />
         </button>
 
+        <p className="std3d-count" aria-hidden="true">
+          {active + 1}/{models.length}
+        </p>
         <p className="std3d-spec">
-          A6 {PW}×{PH} mm · dày {TH} mm · đáy {PW}×{DEPTH} mm · cao {Math.round(HEIGHT)} mm
+          {isCard
+            ? `${CARD}×${CARD} mm · dày ${TH} mm · bo góc ${CARD_R} mm`
+            : `A6 ${PW}×${PH} mm · dày ${TH} mm · đáy ${PW}×${DEPTH} mm · cao ${Math.round(HEIGHT)} mm`}
         </p>
         <p className={`std3d-hint${hinted ? ' is-off' : ''}`} aria-hidden="true">
           Kéo để xoay
@@ -339,7 +402,7 @@ export default function Standee3D({ models }) {
       {/* Cụm nút để NGOÀI sân khấu: nổi đè lên thì che mất chân standee, mà chân lại là
           chỗ thấy rõ nhất bề dày giấy với tấm đáy trong. */}
       <div className="std3d-ctrl">
-        {POSES.map((p) => (
+        {poses.map((p) => (
           <button
             key={p.id}
             type="button"

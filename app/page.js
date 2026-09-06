@@ -169,7 +169,7 @@ export default async function HomePage() {
         {/* Nhân vật chính của hero: mô hình 3D của chính sản phẩm, xoay được ngay tại đây —
             xem components/Standee3D.jsx. KHÔNG bọc Reveal: khối này là thứ khách nhìn thấy
             đầu tiên, để nó mờ rồi mới hiện là mất luôn cảm giác "chạm được vào hàng". */}
-        <div className="container hero-model">
+        <div className="hero-model">
           <Standee3D models={standeeModels} />
         </div>
 

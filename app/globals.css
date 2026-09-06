@@ -141,10 +141,21 @@ h1 { font-size: clamp(2.5rem, 6.4vw, 4.6rem); line-height: var(--leading-hero); 
 h2 { font-size: clamp(1.9rem, 4.4vw, 3.1rem); }
 h3 { font-size: 1.2rem; letter-spacing: var(--tracking-sub); }
 
-/* <em> trong tiêu đề: không gradient, chỉ chuyển sang màu phụ để tạo nhịp đọc. */
+/* <em> trong tiêu đề = vế được nhấn, tô gradient xanh thương hiệu.
+   Màu xám ở rule dưới là DỰ PHÒNG: trình duyệt nào không cắt được nền theo chữ sẽ dừng ở
+   đó — nếu đặt thẳng color:transparent mà nền không hiện thì mất trắng cả cụm chữ. */
 h1 em, h2 em, h3 em {
   font-style: normal;
   color: var(--ink-3);
+}
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  h1 em, h2 em, h3 em {
+    background-image: linear-gradient(96deg, var(--accent-2) 0%, var(--accent) 52%, var(--accent-ink) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
 }
 
 p { text-wrap: pretty; }
@@ -735,6 +746,7 @@ p { text-wrap: pretty; }
   margin-bottom: clamp(26px, 4vw, 46px);
 }
 .hero-lead h1 { font-size: clamp(2.2rem, 5.6vw, 3.9rem); line-height: 1.05; }
+
 .hero-lead .lede { margin-inline: auto; }
 
 /* Nhãn trên tiêu đề hero: chỉ là dòng chữ màu nhấn, bỏ viền và nền pill. */
@@ -1120,6 +1132,31 @@ p { text-wrap: pretty; }
      sớm hơn một chút cho khối chữ thành hình chữ nhật gọn giống bản tham khảo. */
   max-width: 14rem;
   margin-inline: auto;
+}
+
+/* Từ 560px trở lên có nhiều cột: ngăn nhau bằng một nét mảnh thay vì để chữ trôi lơ lửng
+   cạnh nhau. Vẫn không đóng khung — chỉ là đường phân cột.
+   Hai khoảng đứt riêng vì ở 2 cột chỉ ô CHẴN mới có nét bên trái (ô lẻ nằm đầu hàng),
+   còn ở 4 cột thì mọi ô trừ ô đầu. */
+@media (min-width: 560px) {
+  .highlight-item { padding-inline: clamp(8px, 1.6vw, 20px); }
+}
+@media (min-width: 560px) and (max-width: 899px) {
+  .highlight-item:nth-child(even) { border-left: 1px solid var(--line-2); }
+}
+@media (min-width: 900px) {
+  .highlight-item + .highlight-item { border-left: 1px solid var(--line-2); }
+}
+
+/* Điện thoại: một cột, chữ canh giữa như cũ, nhưng ngăn nhau bằng nét ngang mảnh — cùng
+   một ngôn ngữ với nét dọc giữa các cột ở desktop. Bốn ý trôi lơ lửng không có gì phân
+   cách thì nhìn rời rạc, có nét thì thành một khối gọn.
+   (Từng thử bố cục so le trái-phải: chữ Việt có dấu vốn dài, thụt lề xong là tiêu đề tràn
+   mép màn, mà nhìn cũng lộn xộn — bỏ.) */
+@media (max-width: 559px) {
+  .highlight-strip { gap: 0; }
+  .highlight-item { padding-block: clamp(15px, 4.2vw, 22px); }
+  .highlight-item + .highlight-item { border-top: 1px solid var(--line-2); }
 }
 
 /* ---------- Spotlight: lưới ảnh chụp thật tại quán ---------- */
@@ -3077,14 +3114,18 @@ p { text-wrap: pretty; }
    ========================================================================== */
 /* Trong hero: chừa khoảng thở với cặp nút phía trên, và hạ bớt chiều cao sân khấu để cả
    tiêu đề + nút + mô hình cùng lọt một màn hình. */
-.hero-model { margin-top: clamp(26px, 4vw, 44px); }
-.hero-model .std3d-stage { min-height: clamp(380px, 56vh, 560px); }
-/* Desktop: nới CHIỀU CAO KHUNG cho thoáng. Mô hình không to theo — nó bị chặn bởi MAX_FIT
-   trong Standee3D.jsx, phần dôi ra thành khoảng thở trên/dưới sản phẩm. */
-@media (min-width: 900px) {
-  .hero-model .std3d-stage { min-height: clamp(560px, 76vh, 780px); }
+/* Khung 3D KHÔNG nằm trong .container: nó tràn gần hết bề ngang màn hình, chỉ chừa một
+   lề mỏng hai bên. Chặn trên 1720px để màn siêu rộng không thành một dải tối dài ngoẵng
+   với sản phẩm bé tí ở giữa. */
+.hero-model {
+  margin-top: clamp(26px, 4vw, 44px);
+  padding-inline: clamp(12px, 2vw, 32px);
 }
+.hero-model .std3d { max-width: min(1720px, 100%); }
+.hero-model .std3d-stage { min-height: clamp(380px, 56vh, 560px); }
 /* Desktop có chỗ nên cho khung cao hẳn lên — standee dáng dọc, khung thấp là nó bị bó.
+   Mô hình không phóng to theo khung: khoảng đệm dọc trong Standee3D.jsx là số px cố định,
+   nên khung càng cao thì phần dôi ra thành khoảng thở, không phải sản phẩm to thêm.
    Màn nhỏ giữ nguyên: cao thêm nữa thì đẩy cặp nút CTA xuống quá sâu dưới màn hình. */
 @media (min-width: 900px) {
   .hero-model .std3d-stage { min-height: clamp(560px, 74vh, 760px); }
@@ -3146,6 +3187,15 @@ p { text-wrap: pretty; }
   --feet: calc(var(--ph) * var(--cos));
   --pull: 0px;                              /* độ trượt của tấm đáy khi bấm "Xem mặt đáy" */
   --rise: 0px;
+  /* Bảng vuông 100×100mm bo góc 8mm. Mặt vát ở góc nằm trên DÂY CUNG của cung bo 1/4
+     (không phải tiếp tuyến — tiếp tuyến dài bằng dây cung sẽ thò ra ngoài thành cái gai),
+     nên nó nối đúng hai đầu của hai cạnh thẳng kề bên.
+     --ccd: khoảng cách từ tâm tấm tới dây cung đó · --cch: bề dài dây cung (r·√2). */
+  --cs: calc(100 * var(--mm));
+  --cr: calc(8 * var(--mm));
+  --cedge: calc(var(--cs) - 2 * var(--cr));
+  --ccd: calc((var(--cs) / 2 - var(--cr)) * 1.41421 + var(--cr) * 0.70711);
+  --cch: calc(var(--cr) * 1.41421);
   --peek-k: 1;
   position: relative;
   width: 0;
@@ -3213,6 +3263,57 @@ p { text-wrap: pretty; }
 .std3d-f.std3d-art-back { background: #fff var(--back) center/100% 100% no-repeat; }
 /* Mặt sau quay vào bóng của chính standee nên tối hơn mặt trước một chút. */
 .std3d-f.std3d-art-back::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,.06); }
+
+/* ----- Bảng vuông: tấm phẳng bo góc, dày 2mm ----- */
+.std3d-cardslab { --w: var(--cs); --h: var(--cs); }
+.std3d-cardslab > .std3d-out,
+.std3d-cardslab > .std3d-in { border-radius: var(--cr); }
+/* Mặt sau để trắng trơn (bản in chỉ có một mặt). */
+.std3d-cardslab > .std3d-in { background: #fff; }
+
+/* 4 cạnh thẳng — ngắn đi 2 lần bán kính bo để không thò ra ngoài đường cong ở góc. */
+.std3d-cardslab > .std3d-ce-r, .std3d-cardslab > .std3d-ce-l {
+  top: calc(50% - var(--cedge) / 2);
+  height: var(--cedge);
+  width: var(--th);
+  left: calc(50% - var(--th) / 2);
+  background: linear-gradient(90deg, #fff, var(--line));
+}
+.std3d-cardslab > .std3d-ce-r { transform: rotateY(90deg) translateZ(calc(var(--cs) / 2)); }
+.std3d-cardslab > .std3d-ce-l { transform: rotateY(-90deg) translateZ(calc(var(--cs) / 2)); }
+.std3d-cardslab > .std3d-ce-t, .std3d-cardslab > .std3d-ce-b {
+  left: calc(50% - var(--cedge) / 2);
+  width: var(--cedge);
+  height: var(--th);
+  top: calc(50% - var(--th) / 2);
+  background: linear-gradient(180deg, #fff, var(--line));
+}
+.std3d-cardslab > .std3d-ce-t { transform: rotateX(90deg) translateZ(calc(var(--cs) / 2)); }
+.std3d-cardslab > .std3d-ce-b { transform: rotateX(-90deg) translateZ(calc(var(--cs) / 2)); }
+
+/* 4 mặt vát ở góc: xoay quanh trục Z tới hướng góc rồi dựng đứng như một cạnh bên. */
+.std3d-cardslab > .std3d-cc {
+  width: var(--th);
+  height: var(--cch);
+  top: calc(50% - var(--cch) / 2);
+  left: calc(50% - var(--th) / 2);
+  background: linear-gradient(90deg, #fff, var(--line));
+}
+.std3d-cardslab > .std3d-cc-1 { transform: rotateZ(45deg) rotateY(90deg) translateZ(var(--ccd)); }
+.std3d-cardslab > .std3d-cc-2 { transform: rotateZ(135deg) rotateY(90deg) translateZ(var(--ccd)); }
+.std3d-cardslab > .std3d-cc-3 { transform: rotateZ(225deg) rotateY(90deg) translateZ(var(--ccd)); }
+.std3d-cardslab > .std3d-cc-4 { transform: rotateZ(315deg) rotateY(90deg) translateZ(var(--ccd)); }
+
+/* Bảng dựng đứng nên bóng đổ dưới chân là một vệt hẹp, không rộng như đáy standee. */
+.std3d-n-cardshadow {
+  transform: translateY(calc(var(--cs) / 2 + 4 * var(--mm))) rotateX(90deg);
+}
+.std3d-n-cardshadow .std3d-shadow {
+  left: calc(var(--cs) * -.75);
+  top: calc(var(--cs) * -.34);
+  width: calc(var(--cs) * 1.5);
+  height: calc(var(--cs) * .68);
+}
 
 /* ----- Mặt đáy: tấm trong, hai cánh gấp gặp nhau bằng đường khớp giữa ----- */
 .std3d-base > .std3d-f {
@@ -3282,6 +3383,16 @@ p { text-wrap: pretty; }
 }
 .std3d-name b { font-size: .95rem; font-weight: 600; color: #fff; letter-spacing: var(--tracking-sub); }
 .std3d-name span { font-size: .76rem; color: rgba(255,255,255,.55); }
+
+.std3d-count {
+  position: absolute;
+  inset: clamp(12px, 2vw, 18px) clamp(14px, 2.2vw, 20px) auto auto;
+  z-index: 2;
+  font-size: .72rem;
+  color: rgba(255,255,255,.42);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
 
 .std3d-nav {
   position: absolute;
