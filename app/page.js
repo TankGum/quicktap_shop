@@ -347,13 +347,17 @@ export default async function HomePage() {
         <div className="product-splits">
           {showcase.map((p, i) => (
             <Reveal as="article" key={p.id} className={`product-split${i % 2 ? ' is-flipped' : ''}`}>
-              <div className="product-split-media">
+              {/* Ảnh cũng là đường vào trang chi tiết: bấm vào ảnh đi đúng chỗ mà nút "Chi tiết"
+                  bên dưới dẫn tới. Đặt aria-hidden + tabIndex -1 vì nút "Chi tiết" đã trỏ cùng
+                  một đích — để cả hai cùng nhận tab thì bàn phím phải bấm hai lần cho một nơi,
+                  và trình đọc màn hình đọc lặp. Tên sản phẩm vẫn còn nguyên ở <h3> bên cạnh. */}
+              <Link href={p.href} className="product-split-media" aria-hidden="true" tabIndex={-1}>
                 {p.image ? (
                   <ProgressiveImg src={p.image} alt={p.title} sizes="(min-width: 860px) 50vw, 100vw" />
                 ) : (
                   <p.Art aria-label={p.artLabel} />
                 )}
-              </div>
+              </Link>
 
               <div className="product-split-copy">
                 <p className="kicker">{p.kicker}</p>

@@ -2,8 +2,6 @@ import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 import JsonLd from '@/components/JsonLd';
 import ProductVariants from '@/components/ProductVariants';
-import ProgressiveImg from '@/components/ProgressiveImg';
-import { StandeeArt } from '@/components/illustrations';
 import { siteConfig } from '@/lib/siteConfig';
 import { getProduct } from '@/data/products';
 import { getVariantsByProduct } from '@/lib/airtable';
@@ -45,7 +43,6 @@ const faqs = [
 export default async function StandeePage() {
   const airtableVariants = await getVariantsByProduct();
   const variants = [...product.variants, ...(airtableVariants.standee || [])];
-  const heroImage = variants.find((v) => v.image)?.image;
 
   return (
     <>
@@ -63,27 +60,9 @@ export default async function StandeePage() {
 
       <section className="section" id="standee">
         <div className="container">
-          <Reveal as="article" className="card product">
-            <div className="product-media">
-              {heroImage ? (
-                <ProgressiveImg src={heroImage} alt={product.artLabel} />
-              ) : (
-                <StandeeArt aria-label={product.artLabel} />
-              )}
-            </div>
-            <div className="product-body">
-              <p className="kicker">{product.kicker}</p>
-              <h2 className="product-title">{product.title}</h2>
-              <p>{product.body}</p>
-              <ul className="ticks">
-                {product.ticks.map((t) => <li key={t}>{t}</li>)}
-              </ul>
-              <div className="product-ctas">
-                <Link className="btn btn-primary" href="/lien-he">Đặt standee</Link>
-              </div>
-            </div>
-          </Reveal>
-
+          {/* Vào trang là thấy ngay các mẫu thật. Trước đây chỗ này còn một thẻ giới thiệu
+              (ảnh + tên + mô tả + nút đặt hàng) nhưng nó chỉ nhắc lại đúng những gì hero ngay
+              trên vừa nói, đẩy lưới mẫu — thứ khách vào đây để xem — xuống dưới màn hình. */}
           <Reveal as="div">
             <ProductVariants variants={variants} />
           </Reveal>
@@ -105,19 +84,16 @@ export default async function StandeePage() {
 
           <ol className="steps">
             <Reveal as="li" className="card step" delay={0}>
-              <span className="step-num" aria-hidden="true">1</span>
               <span className="step-art" aria-hidden="true"><TapIcon /></span>
               <h3>Khách chạm hoặc quét</h3>
               <p>Đưa điện thoại lại gần vùng NFC, hoặc mở camera quét mã QR trên standee.</p>
             </Reveal>
             <Reveal as="li" className="card step" delay={60}>
-              <span className="step-num" aria-hidden="true">2</span>
               <span className="step-art" aria-hidden="true"><RedirectIcon /></span>
               <h3>Mở thẳng trang đánh giá</h3>
               <p>Điện thoại tự nhảy tới đúng trang viết review của quán bạn — Google Maps, Booking.com, TripAdvisor.</p>
             </Reveal>
             <Reveal as="li" className="card step" delay={120}>
-              <span className="step-num" aria-hidden="true">3</span>
               <span className="step-art" aria-hidden="true"><StarBigIcon /></span>
               <h3>Chấm sao &amp; gửi</h3>
               <p>Khách chọn 5 sao, gõ vài chữ rồi gửi — chưa tới một phút.</p>

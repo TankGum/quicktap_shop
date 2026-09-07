@@ -10,7 +10,10 @@ export default function ProductVariants({ variants, title = 'Các mẫu có sẵ
 
   return (
     <div className="variant-gallery">
-      <p className="kicker">{title}</p>
+      {/* h2 chứ không phải <p>: từ khi 2 trang /san-pham/* bỏ thẻ giới thiệu, đây là tiêu đề
+          của khối nội dung chính, dưới <h1> ở hero. Kiểu chữ vẫn do .variant-gallery .kicker
+          quy định (đã cỡ tiêu đề sẵn), đổi thẻ không đổi giao diện. */}
+      <h2 className="kicker">{title}</h2>
       <ul className="variant-grid">
         {variants.map((v) => {
           const media = (

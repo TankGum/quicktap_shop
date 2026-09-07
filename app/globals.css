@@ -1542,18 +1542,10 @@ p { text-wrap: pretty; }
    /san-pham/bang-nfc và /san-pham/standee) làm khối này mất hẳn layout lưới, 3 bước xếp dọc
    đè lên nhau. Dồn thẳng luật grid vào đây — 1 nơi sở hữu, không còn class chung chung dễ bị
    tưởng nhầm là "không ai dùng" nữa. */
-.steps { display: grid; gap: 20px; counter-reset: step; }
+.steps { display: grid; gap: 20px; }
 @media (min-width: 700px)  { .steps { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1000px) { .steps { grid-template-columns: repeat(3, 1fr); } }
 .step { position: relative; }
-/* Số thứ tự nhỏ, nhạt — không còn số khổng lồ mờ phía sau. */
-.step-num {
-  display: block;
-  font-size: .92rem;
-  font-weight: 500;
-  color: var(--ink-3);
-  margin-bottom: 1.2rem;
-}
 .step-art {
   display: grid;
   place-items: center;
@@ -1567,58 +1559,14 @@ p { text-wrap: pretty; }
 .step-art svg { width: 22px; height: 22px; }
 
 /* ---------- Products ---------- */
-.product { padding: 0; overflow: hidden; display: grid; background: var(--bg-alt); }
-.section-alt .product { background: var(--surface); }
-.product-media { background: var(--art-halo); aspect-ratio: 4 / 3; }
-.product-media svg { width: 100%; height: auto; }
-.product-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.product-body { padding: 32px 30px 36px; }
-.product-body h3, .product-title { font-size: 1.5rem; letter-spacing: var(--tracking-title); margin-bottom: .7rem; }
-.product-body > p { color: var(--ink-2); font-size: 1rem; line-height: 1.5; }
-.product-cta { margin-top: 1.7rem; width: 100%; }
+/* Chỉ còn hàng nút của VariantDetail.jsx (trang một mẫu cụ thể). Thẻ giới thiệu .product
+   (ảnh + tên + mô tả) đã bỏ khỏi /san-pham/bang-nfc và /san-pham/standee — hai trang đó giờ
+   mở ra là vào thẳng lưới mẫu — nên toàn bộ CSS của thẻ đó cũng đi theo. */
 .product-ctas { margin-top: 1.8rem; display: flex; flex-wrap: wrap; gap: .6rem; }
 .product-ctas .btn { flex: 1 1 auto; white-space: nowrap; }
-/* Trang danh sách sản phẩm (bang-nfc/standee) giờ chỉ còn 1 nút ở đây (đã bỏ "Xem sản phẩm
-   khác") — flex:1 1 auto phía trên vẫn cần cho VariantDetail.jsx (còn 2 nút, chia đều chỗ),
-   nhưng 1 nút đứng một mình thì không nên kéo giãn hết chiều ngang. */
+/* flex:1 1 auto phía trên là cho 2 nút chia đều chỗ; 1 nút đứng một mình thì không nên kéo
+   giãn hết chiều ngang. */
 .product-ctas .btn:only-child { flex: none; }
-
-/* Thẻ sản phẩm đứng một mình (trang chi tiết dòng sản phẩm) chiếm trọn chiều rộng —
-   để nguyên tỉ lệ 4:3 thì ảnh cao gần 1000px. Tách thành 2 cột: ảnh trái, nội dung phải.
-   Chỉ nhắm thẻ là con trực tiếp của .container, nên các thẻ nằm trong .grid ở trang
-   /san-pham vẫn giữ nguyên kiểu xếp dọc. */
-@media (min-width: 860px) {
-  .container > .product { grid-template-columns: 1fr 1fr; }
-  .container > .product .product-media {
-    /* PHẢI bỏ aspect-ratio ở bố cục 2 cột. Nếu giữ 4/3, khi cột chữ cao hơn khung ảnh
-       thì tỉ lệ này tính ngược ra chiều rộng lớn hơn cột → ảnh tràn sang đè lên chữ.
-       Bỏ đi rồi thì ô ảnh tự cao bằng hàng (stretch), chiều rộng luôn đúng bằng cột. */
-    aspect-ratio: auto;
-    min-width: 0;
-    min-height: 420px;
-  }
-  /* SVG minh hoạ (khi chưa có ảnh thật) co giãn vừa khung, giữ đúng tỉ lệ. */
-  .container > .product .product-media svg { height: 100%; }
-  .container > .product .product-body { padding: 40px 42px 44px; align-self: center; }
-}
-
-/* Danh sách gạch đầu dòng có tick mảnh, không nền tròn. */
-.ticks { margin-top: 1.4rem; display: grid; gap: .7rem; }
-.ticks li {
-  position: relative;
-  padding-left: 1.5rem;
-  font-size: .97rem;
-  color: var(--ink-2);
-}
-.ticks li::after {
-  content: "";
-  position: absolute;
-  left: 1px; top: .5em;
-  width: 9px; height: 5px;
-  border-left: 1.6px solid var(--accent);
-  border-bottom: 1.6px solid var(--accent);
-  transform: rotate(-45deg);
-}
 
 /* ---------- Sản phẩm: chia đôi, đổi chiều luân phiên ---------- */
 /* Mỗi dòng sản phẩm chiếm trọn một dải ngang riêng — ảnh thật cỡ lớn một bên, chữ bên kia.
@@ -1650,6 +1598,14 @@ p { text-wrap: pretty; }
    theo ảnh thì không mất gì cả. */
 .product-split-media img,
 .product-split-media svg { display: block; width: 100%; height: auto; }
+
+/* Ảnh sản phẩm cũng bấm được, dẫn vào đúng trang chi tiết (xem app/page.js). Phóng nhẹ khi rê
+   chuột để lộ ra là bấm được — không có dấu hiệu nào thì ảnh trông y hệt ảnh trang trí. */
+a.product-split-media { display: block; cursor: pointer; }
+a.product-split-media img,
+a.product-split-media svg { transition: transform .4s var(--ease); }
+a.product-split-media:hover img,
+a.product-split-media:hover svg { transform: scale(1.03); }
 
 .product-split-copy { display: flex; flex-direction: column; align-items: flex-start; gap: .85rem; }
 .product-split-copy h3 {
@@ -1846,7 +1802,9 @@ p { text-wrap: pretty; }
 }
 
 /* ---------- Product variants (mẫu thật: tên/giá/ảnh — xem lib/airtable.js) ---------- */
-.variant-gallery { margin-top: clamp(48px, 7vw, 84px); }
+/* Không đặt margin-top: đây là khối đầu tiên trong .section, padding của section đã lo phần
+   cách với hero rồi — thêm margin nữa thì hở một mảng trắng to giữa tiêu đề trang và lưới. */
+.variant-gallery { margin-top: 0; }
 /* Đây là tiêu đề của cả một mục nên để cỡ chữ lớn, màu mực — không còn là nhãn phụ. */
 .variant-gallery .kicker {
   font-size: clamp(1.3rem, 2.6vw, 1.7rem);
@@ -3761,6 +3719,10 @@ p { text-wrap: pretty; }
   pointer-events: none;
 }
 
+/* Chỉ còn mỗi mũi tên, không nền không viền: cái nút kính mờ tròn trước đây là vật thể nặng
+   nhất trong khung, tranh chỗ nhìn với chính sản phẩm đang xoay ở giữa.
+   Vẫn giữ nguyên ô bấm 44x44 (nền trong suốt) — bỏ nền là chuyện nhìn, không phải lý do thu
+   nhỏ chỗ chạm trên điện thoại. */
 .std3d-nav {
   position: absolute;
   top: 50%;
@@ -3769,21 +3731,24 @@ p { text-wrap: pretty; }
   place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,.16);
-  background: rgba(255,255,255,.08);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: #fff;
+  border: 0;
+  background: none;
+  /* Mũi tên trắng có lúc đè lên phần sáng của sản phẩm; bóng đổ mảnh giữ cho nó luôn tách
+     khỏi nền dù phía sau là gì. */
+  color: rgba(255,255,255,.72);
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,.55));
   cursor: pointer;
-  transition: background-color .2s var(--ease), border-color .2s var(--ease);
+  transition: color .2s var(--ease), transform .2s var(--ease);
 }
-.std3d-nav:hover { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.3); }
-.std3d-nav:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.std3d-nav svg { width: 18px; height: 18px; }
+.std3d-nav:hover { color: #fff; }
+.std3d-nav:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 50%; }
+/* Không còn vòng tròn bao quanh nên mũi tên 18px trông lọt thỏm — nới ra cho cân với khung. */
+.std3d-nav svg { width: 22px; height: 22px; }
 .std3d-prev { left: clamp(10px, 1.6vw, 18px); }
 .std3d-prev svg { transform: scaleX(-1); }
 .std3d-next { right: clamp(10px, 1.6vw, 18px); }
+.std3d-prev:hover { transform: translateX(-2px); }
+.std3d-next:hover { transform: translateX(2px); }
 
 .std3d-spec {
   position: absolute;
