@@ -26,6 +26,8 @@
 // lib/orderValidation.js. Ở đây mới là chốt chặn thật: phần kiểm tra trong trình duyệt ai
 // cũng sửa được, một cú curl là bỏ qua sạch.
 import { validateOrder } from '../../lib/orderValidation.js';
+// Bộ đếm hạn mức trên KV — dùng chung với functions/api/chat.js, xem lib/kvRateLimit.mjs.
+import { checkRateLimit } from '../../lib/kvRateLimit.mjs';
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 // Chặn ngay từ Content-Length, trước cả khi đọc body: ảnh mẫu là PNG cỡ vài MB, vượt xa mức
@@ -66,40 +68,13 @@ async function sha1Hex(text) {
 }
 
 // ---------- Chặn spam ----------
-
-/**
- * Đếm lượt theo cửa sổ cố định, lưu trên KV.
- *
- * Cửa sổ CỐ ĐỊNH chứ không trượt: mỗi lượt chỉ tốn 1 lần đọc + 1 lần ghi, trong khi cửa sổ
- * trượt phải giữ cả danh sách mốc thời gian. Đổi lại, ngay ranh giới hai cửa sổ có thể lọt
- * gần gấp đôi hạn mức trong chốc lát — với mức 3 đơn/10 phút thì chuyện đó vô hại.
- *
- * KV chỉ "cuối cùng cũng nhất quán", nên vài request bắn cùng lúc qua các máy chủ biên khác
- * nhau có thể cùng đọc ra một con số cũ và lọt qua. Muốn đếm chính xác tuyệt đối phải dùng
- * Durable Object; ở quy mô một form đặt hàng thì không đáng đổi lấy thêm hạ tầng.
- */
-async function hitLimit(kv, key, windowSec, max) {
-  const now = Math.floor(Date.now() / 1000);
-  const bucket = Math.floor(now / windowSec);
-  const k = `rl:${key}:${bucket}`;
-
-  const used = parseInt(await kv.get(k), 10) || 0;
-  if (used >= max) {
-    return { ok: false, retryAfter: (bucket + 1) * windowSec - now };
-  }
-  // expirationTtl dài hơn cửa sổ một chút, để bản ghi không hết hạn ngay trước lúc cửa sổ
-  // đóng và làm bộ đếm bị xoá trắng giữa chừng.
-  await kv.put(k, String(used + 1), { expirationTtl: windowSec + 60 });
-  return { ok: true };
-}
-
-async function checkRateLimit(kv, ip) {
-  for (const { windowSec, max } of IP_LIMITS) {
-    const r = await hitLimit(kv, `ip:${ip}:${windowSec}`, windowSec, max);
-    if (!r.ok) return r;
-  }
-  return hitLimit(kv, 'all', GLOBAL_LIMIT.windowSec, GLOBAL_LIMIT.max);
-}
+// Hai hàm đếm (hitLimit/checkRateLimit) trước đây nằm ngay ở đây, nay ở lib/kvRateLimit.mjs
+// để khung chat dùng chung — hai bản sao của một luật chặn spam thì sớm muộn lệch nhau, mà
+// lệch ở đây nghĩa là một endpoint âm thầm mất lớp bảo vệ trong khi nhìn từ ngoài vẫn ổn.
+//
+// Khoá KV nay có thêm tiền tố phạm vi ('rl:thiet-ke-rieng:ip:...') để hai endpoint không
+// đếm chung một bộ. Lần deploy đầu sau thay đổi này, các bộ đếm đang chạy coi như về 0 —
+// vô hại, vì chúng vốn chỉ sống trong một cửa sổ và sai số nghiêng về phía cho qua.
 
 // Chống bot. Chưa cấu hình secret thì bỏ qua — để tính năng chạy được ngay, bật Turnstile sau
 // mà không phải sửa code. Đây là lớp BỔ SUNG cho hạn mức ở trên chứ không thay thế: Turnstile
@@ -263,7 +238,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
   }
 
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-  const limit = await checkRateLimit(env.KV_BINDING, ip);
+  const limit = await checkRateLimit(env.KV_BINDING, 'thiet-ke-rieng', ip, IP_LIMITS, GLOBAL_LIMIT);
   if (!limit.ok) {
     const minutes = Math.max(1, Math.ceil(limit.retryAfter / 60));
     return json(

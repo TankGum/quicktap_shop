@@ -89,7 +89,7 @@ export default async function StandeePage() {
           </Reveal>
 
           <Reveal as="p" className="products-note">
-            Đặt 1 cái cũng nhận — số lượng lớn cho chuỗi có giá riêng.{' '}
+            Đặt 1 cái cũng nhận — đặt từ 2 cái được giá tốt hơn.{' '}
             <Link href="/lien-he">Liên hệ để báo giá theo số lượng</Link>.
           </Reveal>
         </div>

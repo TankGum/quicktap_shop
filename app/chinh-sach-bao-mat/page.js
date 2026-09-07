@@ -62,6 +62,14 @@ export default function PrivacyPage() {
                 <b>Khi gọi điện hoặc nhắn Zalo:</b> những gì bạn tự cung cấp trong cuộc trao đổi.
               </li>
               <li>
+                <b>Khi dùng khung chat trợ lý:</b> nội dung câu hỏi bạn gõ. Trước khi lưu, hệ
+                thống tự thay số điện thoại, mã đơn và địa chỉ email xuất hiện trong nội dung
+                bằng nhãn chung — chúng tôi giữ lại <em>câu hỏi</em> để cải thiện phần trả lời,
+                không giữ danh tính người hỏi. Muốn tra đơn qua khung chat thì bạn phải đưa cả
+                mã đơn lẫn số điện thoại đã dùng lúc đặt; cần đủ hai thông tin là để người khác
+                không tra được đơn của bạn.
+              </li>
+              <li>
                 <b>Số đếm chống spam:</b> hệ thống đếm số lần gửi theo địa chỉ IP để chặn gửi
                 hàng loạt. Bộ đếm này tự xoá sau tối đa 24 giờ và không gắn với đơn hàng nào.
               </li>
@@ -96,6 +104,12 @@ export default function PrivacyPage() {
               <li>
                 <b>Thông báo đơn mới</b> được gửi cho đội ngũ bán hàng qua Telegram, kèm các
                 thông tin bạn vừa điền để gọi lại kịp thời.
+              </li>
+              <li>
+                <b>Nội dung chat</b> (bản đã ẩn danh hoá như nêu ở mục 1) lưu cùng cơ sở dữ liệu
+                trên hạ tầng Cloudflare. Câu hỏi của bạn được gửi tới dịch vụ trí tuệ nhân tạo
+                của Cloudflare để sinh câu trả lời; nội dung hội thoại trên máy bạn tự xoá khi
+                đóng tab.
               </li>
             </ul>
             <p>

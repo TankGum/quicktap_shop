@@ -19,6 +19,7 @@ const inter = Inter({
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ZaloButton from '@/components/ZaloButton';
+import ChatWidget from '@/components/ChatWidget';
 import { siteConfig } from '@/lib/siteConfig';
 import { products } from '@/data/products';
 import { getVariantsByProduct } from '@/lib/airtable';
@@ -98,6 +99,11 @@ export default async function RootLayout({ children }) {
         <Header productLinks={productLinks} />
         <main id="main">{children}</main>
         <Footer />
+        {/* Hai nút nổi ở góc phải dưới, xếp dọc (xem .chat-fab/.zalo-fab trong
+            globals.css): chat trả lời ngay bằng máy, Zalo để người thật trả lời sau.
+            ChatWidget là client component nên khi JS không chạy nó không render gì —
+            nút Zalo vẫn còn, trang không mất kênh liên hệ nào. */}
+        <ChatWidget />
         <ZaloButton />
       </body>
     </html>

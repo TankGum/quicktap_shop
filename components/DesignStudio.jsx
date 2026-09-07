@@ -684,7 +684,7 @@ export default function DesignStudio() {
               <FieldError id="studio-phone-error" message={fieldErrors.phone} />
             </label>
             <label className="studio-input studio-input-qty">
-              <span>Số lượng</span>
+              <span>Số lượng <small>(từ 2 cái có giá tốt hơn)</small></span>
               <input
                 id="studio-quantity"
                 type="number"

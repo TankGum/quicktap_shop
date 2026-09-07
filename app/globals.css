@@ -2665,6 +2665,373 @@ p { text-wrap: pretty; }
   .zalo-fab-logo { width: 40px; height: 40px; }
 }
 
+/* ---------- Khung chat (components/ChatWidget.jsx) ----------
+   Nút chat xếp NGAY TRÊN nút Zalo thành một cột ở góc phải dưới. Thứ tự cố ý: Zalo ở dưới
+   cùng — vị trí ngón cái với tới dễ nhất — vì đó là kênh đang mang đơn thật về; chat là máy
+   trả lời ngay, đứng trên.
+
+   Mốc dọc phải khớp với .zalo-fab ở trên: 20px lề dưới + 56px chiều cao nút Zalo + 12px khe.
+   Sửa kích thước nút Zalo thì nhớ sửa cả hai con số bên dưới, nếu không hai nút sẽ dính vào
+   nhau hoặc hở một khoảng lạ. */
+.chat-fab {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  z-index: 55;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  /* Nền sáng chứ không phải var(--ink) như hồi còn dùng icon nét trắng: ảnh robot có nền xám
+     rất nhạt, đặt trên nền đen sẽ thành một vòng sáng lạ quanh mép ảnh. */
+  background: var(--bg-alt);
+  overflow: visible;
+  box-shadow: 0 8px 24px -6px rgba(29, 29, 31, .3), 0 2px 6px rgba(0, 0, 0, .08),
+              inset 0 0 0 1px rgba(0, 0, 0, .06);
+  cursor: pointer;
+  transition: transform .22s var(--ease), box-shadow .22s var(--ease);
+}
+/* Ảnh lấp đầy nút và bị cắt tròn theo nút. object-position hơi lệch lên để phần đầu nằm giữa
+   thị giác — cắt tròn ở tâm hình học sẽ làm đầu trông như bị tụt xuống. */
+.chat-fab-photo {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 42%;
+  display: block;
+}
+/* Chấm xanh ở góc dưới-phải xác nhận trợ lý đang hoạt động. Nó thay huy hiệu bong bóng
+   chat đỏ trước đây, vốn cạnh tranh thị giác với ảnh robot. */
+.chat-fab-badge {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #34c759;
+  border: 2px solid var(--bg);
+  box-sizing: border-box;
+}
+
+.chat-fab-minimize {
+  background: var(--ink);
+  box-shadow: 0 10px 26px -8px rgba(29, 29, 31, .52), 0 2px 6px rgba(0, 0, 0, .14);
+}
+
+.chat-fab:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 14px 32px -8px rgba(29, 29, 31, .5), 0 2px 6px rgba(0, 0, 0, .1);
+}
+.chat-fab:active { transform: translateY(0) scale(.98); }
+.chat-fab:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* Khung chat nằm PHÍA TRÊN cả cột hai nút (88px + 56px nút chat + 8px khe) để không che nút
+   nào — khách vẫn bấm sang Zalo được trong lúc khung chat đang mở. */
+.chat-panel {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: calc(152px + env(safe-area-inset-bottom));
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  width: min(384px, calc(100vw - 32px));
+  height: min(580px, calc(100vh - 200px));
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: 20px;
+  background: var(--surface);
+  /* Bóng nhiều lớp: một lớp rộng rất nhạt cho cảm giác nổi khỏi trang, một lớp sát viền cho
+     mép sắc. Một bóng đơn thì hoặc bệt hoặc trông như vệt xám. */
+  box-shadow: 0 24px 64px -16px rgba(0, 0, 0, .22), 0 2px 8px rgba(0, 0, 0, .06);
+  animation: chat-panel-in .22s var(--ease);
+}
+/* `.chat-panel { display: flex }` ở trên là CSS CỦA TRANG (author style), còn
+   `[hidden] { display: none }` chỉ là CSS mặc định của trình duyệt (user-agent style).
+   Thứ tự ưu tiên cascade: author LUÔN thắng user-agent, bất kể độ cụ thể selector — nên
+   thiếu dòng dưới đây, thuộc tính `hidden` React đặt vào không có tác dụng gì cả, khung chat
+   luôn hiện dù đã "đóng". Đây từng là lỗi thật: bấm nút đóng, panel vẫn còn nguyên trên màn hình. */
+.chat-panel[hidden] { display: none; }
+
+@keyframes chat-panel-in {
+  from { opacity: 0; transform: translateY(10px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ----- Đầu khung ----- */
+.chat-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px 12px 14px;
+  border-bottom: 1px solid var(--line-2);
+  background: var(--surface);
+}
+/* Avatar dùng đúng ảnh của nút nổi — nối hai thứ lại thành một danh tính, khách hiểu ngay
+   khung này mở ra từ nút kia. */
+.chat-avatar {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 42%;
+  background: var(--bg-alt);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .06);
+  display: block;
+}
+.chat-head-text { flex: 1; min-width: 0; }
+.chat-head strong { display: block; font-size: 14.5px; letter-spacing: -.01em; }
+.chat-head-sub { display: block; font-size: 12px; color: var(--ink-3); margin-top: 1px; }
+/* Chấm xanh "đang hoạt động" — tín hiệu quen thuộc của mọi khung chat, nói rằng trả lời là
+   tức thì chứ không phải để lại lời nhắn rồi chờ. */
+.chat-head-sub::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: #34c759;
+  vertical-align: 1px;
+}
+.chat-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--ink-3);
+  background: transparent;
+  cursor: pointer;
+  transition: background .15s var(--ease), color .15s var(--ease);
+}
+.chat-close:hover { background: var(--bg-alt); color: var(--ink); }
+.chat-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* ----- Dòng hội thoại ----- */
+.chat-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 14px;
+  overflow-y: auto;
+  /* Cuộn trong khung chat không được kéo theo cả trang phía sau. */
+  overscroll-behavior: contain;
+  /* Thanh cuộn mảnh, chìm — thanh mặc định của Chrome dày 15px, chiếm mất chỗ của bong bóng
+     trong một khung chỉ rộng 384px. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.chat-list::-webkit-scrollbar { width: 6px; }
+.chat-list::-webkit-scrollbar-track { background: transparent; }
+.chat-list::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+.chat-list::-webkit-scrollbar-thumb:hover { background: var(--ink-3); }
+
+.chat-msg {
+  max-width: 86%;
+  margin: 0;
+  padding: 9px 13px;
+  font-size: 14px;
+  line-height: 1.55;
+  /* Giữ nguyên xuống dòng model trả về, đồng thời bẻ dòng được URL dài (link ảnh mẫu đơn). */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  /* Góc lệch: ba góc bo tròn, riêng góc phía người nói thì vuốt nhọn lại — đây là quy ước
+     hình khối mà mọi ứng dụng nhắn tin đều dùng để mắt phân biệt ai nói mà không cần đọc. */
+  border-radius: 16px;
+}
+.chat-msg-bot {
+  align-self: flex-start;
+  color: var(--ink);
+  background: var(--bg-alt);
+  border-bottom-left-radius: 5px;
+}
+.chat-msg-me {
+  align-self: flex-end;
+  color: #fff;
+  background: var(--accent);
+  border-bottom-right-radius: 5px;
+}
+
+/* Con trỏ nhấp nháy ở cuối bong bóng đang được bơm chữ. */
+.chat-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--ink-3);
+  animation: chat-blink 1s steps(2, start) infinite;
+}
+@keyframes chat-blink { 50% { opacity: 0; } }
+
+/* Ba chấm trong lúc chờ mẩu chữ đầu tiên — quãng chờ dài nhất, vì model này còn phải suy
+   luận trước khi phát chữ ra. */
+.chat-typing {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  /* Cao bằng đúng một dòng chữ để lúc chữ thật hiện ra, bong bóng không nhảy kích thước. */
+  padding: 13px 14px;
+}
+.chat-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  animation: chat-bounce 1.2s var(--ease) infinite;
+}
+.chat-typing span:nth-child(2) { animation-delay: .15s; }
+.chat-typing span:nth-child(3) { animation-delay: .3s; }
+@keyframes chat-bounce {
+  0%, 60%, 100% { transform: translateY(0);    opacity: .35; }
+  30%           { transform: translateY(-4px); opacity: 1; }
+}
+
+/* ----- Gợi ý bấm nhanh ----- */
+.chat-chips { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; margin-top: 4px; }
+.chat-chip {
+  max-width: 100%;
+  padding: 9px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 16px;
+  color: var(--accent-ink);
+  background: var(--surface);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: left;
+  cursor: pointer;
+  transition: background .15s var(--ease), border-color .15s var(--ease);
+}
+.chat-chip:hover { background: var(--accent-soft); border-color: var(--accent-2); }
+.chat-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.chat-error {
+  margin: 0;
+  padding: 10px 13px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--danger) 22%, transparent);
+  background: color-mix(in srgb, var(--danger) 6%, var(--surface));
+  color: var(--danger);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.chat-error a { color: var(--accent-ink); }
+
+/* ----- Ô nhập ----- */
+.chat-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 14px 8px;
+  border-top: 1px solid var(--line-2);
+  background: var(--surface);
+}
+.chat-input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 15px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  /* 16px là ngưỡng: nhỏ hơn thì Safari trên iPhone tự phóng to cả trang khi khách chạm vào ô. */
+  font: inherit;
+  font-size: 16px;
+  background: var(--bg-alt);
+  color: var(--ink);
+  transition: border-color .15s var(--ease), box-shadow .15s var(--ease), background .15s var(--ease);
+}
+.chat-input::placeholder {
+  color: var(--ink-3);
+  font-size: 14px;
+}
+.chat-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.chat-send {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--accent);
+  cursor: pointer;
+  transition: background .15s var(--ease), transform .15s var(--ease);
+}
+.chat-send:hover:not(:disabled) { background: var(--accent-ink); transform: scale(1.05); }
+.chat-send:active:not(:disabled) { transform: scale(.96); }
+.chat-send:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chat-send:disabled { background: var(--line); cursor: default; }
+
+.chat-note {
+  margin: 0 14px 12px;
+  color: var(--ink-3);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+}
+.chat-note a { color: var(--ink-2); }
+
+/* Trên điện thoại: TẤM TRƯỢT ĐÁY, không phủ toàn màn hình.
+   Khung 384x580 của desktop đặt lên màn 360px thì vừa chật vừa che nửa vời, nhưng phủ kín cả
+   màn hình cũng sai: khách mất hoàn toàn ngữ cảnh trang đang đọc, và cảm giác như bị chuyển
+   sang một ứng dụng khác chứ không phải hỏi nhanh một câu rồi đọc tiếp.
+   Chừa 28% chiều cao phía trên để vẫn thấy trang nằm sau — đúng quy ước bottom sheet mà điện
+   thoại dùng cho mọi hộp thoại phụ. */
+@media (max-width: 859px) {
+  .chat-fab { width: 52px; height: 52px; bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .chat-panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    height: min(72vh, 560px);
+    /* Chỉ bo hai góc trên: mép dưới ăn liền cạnh máy nên bo góc ở đó sẽ hở ra một khe lạ. */
+    border-radius: 18px 18px 0 0;
+    border-bottom: 0;
+    /* Bóng hắt LÊN trên, vì tấm này nổi lên từ đáy chứ không lơ lửng giữa trang. */
+    box-shadow: 0 -14px 44px -12px rgba(0, 0, 0, .3);
+    padding-bottom: env(safe-area-inset-bottom);
+    animation: chat-sheet-in .24s var(--ease);
+  }
+  /* Trượt lên từ đáy — quãng đường dài hơn hiệu ứng của bản desktop cho khớp với hướng xuất hiện. */
+  @keyframes chat-sheet-in {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .chat-msg { max-width: 90%; }
+}
+
+/* Khách bật "giảm hiệu ứng chuyển động": bỏ hẳn các hiệu ứng lặp vô tận và hiệu ứng mở khung.
+   Chỉ dựa vào rule chung ở đầu file (rút animation còn .001ms) thì chúng đứng yên ở khung
+   hình cuối — con trỏ có thể kẹt ở trạng thái ẩn, ba chấm kẹt lệch nhau. */
+@media (prefers-reduced-motion: reduce) {
+  /* Cả hiệu ứng bản desktop (chat-panel-in) lẫn bản mobile (chat-sheet-in). */
+  .chat-panel { animation: none; }
+  .chat-caret { animation: none; }
+  .chat-typing span { animation: none; opacity: .5; transform: none; }
+  .chat-fab:hover { transform: none; }
+  .chat-send:hover:not(:disabled) { transform: none; }
+}
+
 /* ---------- Chữ kim loại (components/MetallicText.jsx) ----------
    Chữ THẬT luôn nằm trong DOM; khi hiệu ứng bật thì nó chỉ trong suốt đi chứ không bị xoá,
    nên vẫn bôi đen copy được, trình đọc màn hình vẫn đọc, Google vẫn thấy chữ.
