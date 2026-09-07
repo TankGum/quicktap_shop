@@ -27,12 +27,28 @@ import { getVariantsByProduct } from '@/lib/airtable';
 export const metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
   title: {
-    default: `${siteConfig.brandName} — Bảng NFC & standee QR giúp quán tăng đánh giá 5 sao chỉ với 1 chạm`,
+    // Từ khoá đứng TRƯỚC tên thương hiệu: người Việt gõ "bảng nfc đánh giá google maps",
+    // gần như không ai gõ "quicktapreview" — mà tên đó còn trùng với một site Mỹ cùng ngành
+    // đã lên top từ lâu, nên đặt cược vào từ khoá thương hiệu là cầm chắc thua.
+    // Giữ dưới ~60 ký tự để Google không cắt cụt tiêu đề trên trang kết quả.
+    default: `Bảng NFC & standee QR đánh giá Google Maps — ${siteConfig.brandName}`,
     template: `%s — ${siteConfig.brandName}`,
   },
   description:
     'Bảng NFC 10x10cm (chip NFC + QR) dán tường/quầy và standee QR đặt tại quầy thu ngân. Khách chạm điện thoại hoặc quét mã là mở thẳng trang đánh giá Google Maps, Booking.com, TripAdvisor — không cần tìm tên quán, không cần cài app.',
   applicationName: siteConfig.brandName,
+  // Nói thẳng với Google là được phép index. Mặc định không có thẻ này thì Google vẫn index,
+  // nhưng `max-image-preview: large` là thứ phải khai rõ mới có — nó cho phép hiện ảnh lớn
+  // kèm kết quả tìm kiếm, thứ quyết định tỉ lệ bấm vào với một site bán hàng nhìn bằng ảnh.
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1 },
+  },
+  // Chỉ in thẻ xác minh khi đã có mã — Next bỏ qua hẳn `verification` nếu giá trị rỗng.
+  ...(siteConfig.googleSiteVerification
+    ? { verification: { google: siteConfig.googleSiteVerification } }
+    : {}),
   icons: {
     // Thiếu `type` khiến vài trình duyệt không nhận SVG làm favicon rồi âm thầm rơi về
     // /favicon.ico (trước đây chưa có file này nên 404, tab hiện icon mặc định trống).

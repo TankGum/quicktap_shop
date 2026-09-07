@@ -2,25 +2,25 @@ import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 import JsonLd from '@/components/JsonLd';
 import ProductVariants from '@/components/ProductVariants';
-import { siteConfig } from '@/lib/siteConfig';
 import { getProduct } from '@/data/products';
 import { getVariantsByProduct } from '@/lib/airtable';
 import { TapIcon, RedirectIcon, StarBigIcon } from '@/components/icons';
+import { localBusinessSchema, faqSchema, breadcrumbSchema, ORG_ID } from '@/lib/schema';
+
+// "A6" là khổ giấy, không phải từ khoá — khách tìm "standee QR review Google Maps" hoặc
+// "standee đánh giá google map để bàn". Khổ giấy lùi xuống mô tả (xem ghi chú cùng loại ở
+// trang bảng NFC).
+const ogTitle = 'Standee QR review Google Maps để bàn';
+const ogDescription =
+  'Standee để bàn QR + NFC, đứng vững trên quầy thu ngân. Khách quét hoặc chạm là mở thẳng trang đánh giá Google Maps.';
 
 export const metadata = {
-  title: 'Standee để bàn A6',
+  title: ogTitle,
   description:
-    'Standee để bàn tích hợp QR + NFC — đứng vững trên quầy thu ngân, khách quét QR hoặc chạm NFC là mở thẳng trang đánh giá Google Maps, Booking.com, TripAdvisor.',
+    'Standee QR review Google Maps để bàn (khổ A6), tích hợp QR + NFC — đứng vững trên quầy thu ngân, khách quét QR hoặc chạm NFC là mở thẳng trang đánh giá Google Maps, Booking.com, TripAdvisor. In theo logo quán, giao toàn quốc, trong ngày tại Hà Nội.',
   alternates: { canonical: '/san-pham/standee' },
-  openGraph: {
-    url: '/san-pham/standee',
-    title: 'Standee để bàn A6 — QuickTapReview',
-    description: 'Standee để bàn QR + NFC, đứng vững trên quầy. Quét hoặc chạm là mở thẳng trang đánh giá.',
-  },
-  twitter: {
-    title: 'Standee để bàn A6 — QuickTapReview',
-    description: 'Standee để bàn QR + NFC, đứng vững trên quầy. Quét hoặc chạm là mở thẳng trang đánh giá.',
-  },
+  openGraph: { url: '/san-pham/standee', title: ogTitle, description: ogDescription },
+  twitter: { title: ogTitle, description: ogDescription },
 };
 
 const product = getProduct('standee');
@@ -122,29 +122,19 @@ export default async function StandeePage() {
         data={{
           '@context': 'https://schema.org',
           '@graph': [
-            {
-              '@type': 'Organization',
-              '@id': `${siteConfig.siteUrl}/#org`,
-              name: siteConfig.brandName,
-              url: `${siteConfig.siteUrl}/`,
-              telephone: siteConfig.phoneDisplay,
-              areaServed: 'VN',
-            },
+            localBusinessSchema,
+            breadcrumbSchema([
+              { name: 'Trang chủ', href: '/' },
+              { name: 'Standee QR review Google Maps', href: product.href },
+            ]),
             {
               '@type': 'Product',
-              name: product.title,
-              brand: { '@id': `${siteConfig.siteUrl}/#org` },
+              name: 'Standee QR review Google Maps để bàn',
+              brand: { '@id': ORG_ID },
               description: product.body,
               category: 'Thiết bị marketing tại điểm bán',
             },
-            {
-              '@type': 'FAQPage',
-              mainEntity: faqs.map((f) => ({
-                '@type': 'Question',
-                name: f.q,
-                acceptedAnswer: { '@type': 'Answer', text: f.a },
-              })),
-            },
+            faqSchema(faqs),
           ],
         }}
       />

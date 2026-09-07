@@ -20,6 +20,20 @@ import {
   BarsIcon, PinIcon, BoltIcon, PhoneOutlineIcon, LayersIcon, RefreshIcon,
   HotelIcon, HomestayIcon, RestaurantIcon, CafeIcon, SpaIcon, ShopIcon,
 } from '@/components/icons';
+import { localBusinessSchema, websiteSchema, faqSchema } from '@/lib/schema';
+
+// Trang chủ trước đây KHÔNG có khối metadata riêng — nó là trang DUY NHẤT của site thiếu thẻ
+// canonical, mà lại là trang quan trọng nhất. Thiếu canonical thì mọi biến thể URL cùng trỏ về
+// trang chủ (kèm ?fbclid=... khi chia sẻ Facebook, có hoặc không có dấu / ở cuối, và bản
+// *.pages.dev mà Cloudflare Pages luôn tạo sẵn) bị Google coi là những trang riêng biệt trùng
+// nội dung — nó tự chọn bản nào để xếp hạng, và thường không chọn bản mình muốn.
+export const metadata = {
+  // `absolute` để bỏ qua template "%s — QuickTapReview" của layout: chuỗi dưới đây đã có sẵn
+  // tên thương hiệu ở cuối, để template dán thêm lần nữa là thừa và làm tiêu đề bị cắt cụt.
+  title: { absolute: `Bảng NFC & standee QR đánh giá Google Maps — ${siteConfig.brandName}` },
+  alternates: { canonical: '/' },
+  openGraph: { url: '/' },
+};
 
 const ART_BY_ID = { 'bang-nfc': NfcPlateArt, standee: StandeeArt };
 
@@ -549,30 +563,9 @@ export default async function HomePage() {
         data={{
           '@context': 'https://schema.org',
           '@graph': [
-            {
-              '@type': 'Organization',
-              '@id': `${siteConfig.siteUrl}/#org`,
-              name: siteConfig.brandName,
-              url: `${siteConfig.siteUrl}/`,
-              telephone: siteConfig.phoneDisplay,
-              areaServed: 'VN',
-              description:
-                'Cung cấp bảng NFC và standee QR giúp quán ăn, khách sạn, cà phê, spa tăng số lượng đánh giá trên Google Maps, Booking.com và TripAdvisor.',
-            },
-            {
-              '@type': 'WebSite',
-              url: `${siteConfig.siteUrl}/`,
-              name: siteConfig.brandName,
-              inLanguage: 'vi',
-            },
-            {
-              '@type': 'FAQPage',
-              mainEntity: faqs.map((f) => ({
-                '@type': 'Question',
-                name: f.q,
-                acceptedAnswer: { '@type': 'Answer', text: f.a },
-              })),
-            },
+            localBusinessSchema,
+            websiteSchema,
+            faqSchema(faqs),
           ],
         }}
       />

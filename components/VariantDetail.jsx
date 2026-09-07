@@ -8,6 +8,7 @@ import JsonLd from '@/components/JsonLd';
 import VariantGallery from '@/components/VariantGallery';
 import { siteConfig } from '@/lib/siteConfig';
 import { toPlainText } from '@/lib/airtable';
+import { localBusinessSchema, breadcrumbSchema, ORG_ID } from '@/lib/schema';
 
 // Mô tả trong Airtable có thể chứa <br> (gõ tay để xuống dòng) hoặc xuống dòng thật (Enter
 // trong ô Long text) — render thẳng chuỗi thì React tự escape "<br>" thành chữ trần, còn
@@ -90,15 +91,35 @@ export default function VariantDetail({ variant, product, FallbackArt }) {
         data={{
           '@context': 'https://schema.org',
           '@graph': [
+            // Phải có mặt ở ĐÂY, không chỉ ở trang chủ: `brand` bên dưới trỏ tới '#org' bằng
+            // @id, mà mỗi trang là một tài liệu JSON-LD độc lập — Google không ghép @id giữa
+            // các trang. Trước đây trang chi tiết mẫu trỏ tới một thực thể không tồn tại trên
+            // chính nó, nên trường `brand` coi như không có.
+            localBusinessSchema,
+            breadcrumbSchema([
+              { name: 'Trang chủ', href: '/' },
+              { name: product.title, href: product.href },
+              { name: variant.name, href: variant.href },
+            ]),
             {
               '@type': 'Product',
               name: variant.name,
               description: variant.description ? toPlainText(variant.description) : product.body,
               ...(variant.images?.length ? { image: variant.images } : {}),
-              brand: { '@id': `${siteConfig.siteUrl}/#org` },
+              brand: { '@id': ORG_ID },
               category: product.title,
               ...(priceNumber
-                ? { offers: { '@type': 'Offer', priceCurrency: 'VND', price: priceNumber, availability: 'https://schema.org/InStock' } }
+                ? {
+                    offers: {
+                      '@type': 'Offer',
+                      priceCurrency: 'VND',
+                      price: priceNumber,
+                      availability: 'https://schema.org/InStock',
+                      // Google bỏ qua cả khối Offer nếu thiếu url — không có nó thì giá không
+                      // bao giờ hiện kèm kết quả tìm kiếm, tức mất đúng phần đáng giá nhất.
+                      url: `${siteConfig.siteUrl}${variant.href}`,
+                    },
+                  }
                 : {}),
             },
           ],

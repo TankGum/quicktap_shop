@@ -2,25 +2,26 @@ import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 import JsonLd from '@/components/JsonLd';
 import ProductVariants from '@/components/ProductVariants';
-import { siteConfig } from '@/lib/siteConfig';
 import { getProduct } from '@/data/products';
 import { getVariantsByProduct } from '@/lib/airtable';
 import { TapIcon, RedirectIcon, StarBigIcon } from '@/components/icons';
+import { localBusinessSchema, faqSchema, breadcrumbSchema, ORG_ID } from '@/lib/schema';
+
+// "Bảng NFC 10x10cm" là cách MÌNH gọi sản phẩm, không phải cách khách gõ vào Google — không ai
+// tìm theo kích thước cả. Cụm thật sự có người tìm là "bảng NFC đánh giá Google Maps" / "bảng
+// QR review Google" (xem các trang đang đứng top cho nhóm từ khoá này). Kích thước lùi xuống
+// phần mô tả, nơi nó vẫn giúp khách quyết định nhưng không chiếm chỗ của từ khoá trong tiêu đề.
+const ogTitle = 'Bảng NFC đánh giá Google Maps 10x10cm';
+const ogDescription =
+  'Bảng NFC + QR dán tường, quầy thu ngân. Khách chạm hoặc quét là mở thẳng trang đánh giá Google Maps. Chống nước, in logo quán.';
 
 export const metadata = {
-  title: 'Bảng NFC 10x10cm',
+  title: ogTitle,
   description:
-    'Bảng NFC 10x10cm — tích hợp cả chip NFC và mã QR ngay trên mặt bảng, chống nước, mặt sau có keo dán chắc. Dán lên tường, quầy thu ngân hay mặt bàn, khách chạm điện thoại hoặc quét QR là mở thẳng trang đánh giá Google Maps, Booking.com, TripAdvisor.',
+    'Bảng NFC đánh giá Google Maps 10x10cm — tích hợp cả chip NFC và mã QR ngay trên mặt bảng, chống nước, mặt sau có keo dán chắc. Dán lên tường, quầy thu ngân hay mặt bàn, khách chạm điện thoại hoặc quét QR là mở thẳng trang đánh giá Google Maps, Booking.com, TripAdvisor. Giao toàn quốc, trong ngày tại Hà Nội.',
   alternates: { canonical: '/san-pham/bang-nfc' },
-  openGraph: {
-    url: '/san-pham/bang-nfc',
-    title: 'Bảng NFC 10x10cm — QuickTapReview',
-    description: 'Bảng NFC 10x10cm (chip NFC + mã QR), chống nước, in logo quán. Khách chạm hoặc quét là mở thẳng trang đánh giá.',
-  },
-  twitter: {
-    title: 'Bảng NFC 10x10cm — QuickTapReview',
-    description: 'Bảng NFC 10x10cm (chip NFC + mã QR), chống nước, in logo quán. Khách chạm hoặc quét là mở thẳng trang đánh giá.',
-  },
+  openGraph: { url: '/san-pham/bang-nfc', title: ogTitle, description: ogDescription },
+  twitter: { title: ogTitle, description: ogDescription },
 };
 
 const product = getProduct('bang-nfc');
@@ -121,29 +122,19 @@ export default async function NfcPlatePage() {
         data={{
           '@context': 'https://schema.org',
           '@graph': [
-            {
-              '@type': 'Organization',
-              '@id': `${siteConfig.siteUrl}/#org`,
-              name: siteConfig.brandName,
-              url: `${siteConfig.siteUrl}/`,
-              telephone: siteConfig.phoneDisplay,
-              areaServed: 'VN',
-            },
+            localBusinessSchema,
+            breadcrumbSchema([
+              { name: 'Trang chủ', href: '/' },
+              { name: 'Bảng NFC đánh giá Google Maps', href: product.href },
+            ]),
             {
               '@type': 'Product',
-              name: product.title,
-              brand: { '@id': `${siteConfig.siteUrl}/#org` },
+              name: 'Bảng NFC đánh giá Google Maps 10x10cm',
+              brand: { '@id': ORG_ID },
               description: product.body,
               category: 'Thiết bị marketing tại điểm bán',
             },
-            {
-              '@type': 'FAQPage',
-              mainEntity: faqs.map((f) => ({
-                '@type': 'Question',
-                name: f.q,
-                acceptedAnswer: { '@type': 'Answer', text: f.a },
-              })),
-            },
+            faqSchema(faqs),
           ],
         }}
       />

@@ -4,21 +4,21 @@ import JsonLd from '@/components/JsonLd';
 import FaqAccordion from '@/components/FaqAccordion';
 import { siteConfig } from '@/lib/siteConfig';
 import { PhoneIcon } from '@/components/icons';
+import { localBusinessSchema, contactPointSchema, faqSchema, breadcrumbSchema } from '@/lib/schema';
+
+// "Liên hệ đặt hàng" đúng nhưng trống rỗng với công cụ tìm kiếm — hàng triệu trang có tiêu đề
+// y hệt. Thêm chính món đang bán vào tiêu đề để trang này còn có cơ hội xuất hiện với truy vấn
+// dạng "mua bảng nfc đánh giá google ở hà nội".
+const ogTitle = 'Đặt bảng NFC & standee QR đánh giá Google';
+const ogDescription = 'Gọi ngay để đặt bảng NFC / standee QR đánh giá cho quán của bạn. Giao toàn quốc, trong ngày tại Hà Nội.';
 
 export const metadata = {
-  title: 'Liên hệ đặt hàng',
+  title: ogTitle,
   description:
-    'Gọi ngay để đặt bảng NFC / standee QR đánh giá cho quán của bạn. Tư vấn nhanh, chỉ cần tên và địa chỉ quán, giao hàng toàn quốc.',
+    'Gọi ngay để đặt bảng NFC / standee QR đánh giá Google Maps cho quán của bạn. Tư vấn nhanh, chỉ cần tên và địa chỉ quán, giao hàng toàn quốc, trong ngày tại Hà Nội.',
   alternates: { canonical: '/lien-he' },
-  openGraph: {
-    url: '/lien-he',
-    title: 'Liên hệ đặt hàng',
-    description: 'Gọi ngay để đặt bảng NFC / standee QR đánh giá cho quán của bạn.',
-  },
-  twitter: {
-    title: 'Liên hệ đặt hàng',
-    description: 'Gọi ngay để đặt bảng NFC / standee QR đánh giá cho quán của bạn.',
-  },
+  openGraph: { url: '/lien-he', title: ogTitle, description: ogDescription },
+  twitter: { title: ogTitle, description: ogDescription },
 };
 
 const faqs = [
@@ -114,29 +114,12 @@ export default function ContactPage() {
         data={{
           '@context': 'https://schema.org',
           '@graph': [
-            {
-              '@type': 'Organization',
-              '@id': `${siteConfig.siteUrl}/#org`,
-              name: siteConfig.brandName,
-              url: `${siteConfig.siteUrl}/`,
-              telephone: siteConfig.phoneDisplay,
-              areaServed: 'VN',
-              contactPoint: {
-                '@type': 'ContactPoint',
-                telephone: siteConfig.phoneDisplay,
-                contactType: 'sales',
-                areaServed: 'VN',
-                availableLanguage: 'Vietnamese',
-              },
-            },
-            {
-              '@type': 'FAQPage',
-              mainEntity: faqs.map((f) => ({
-                '@type': 'Question',
-                name: f.q,
-                acceptedAnswer: { '@type': 'Answer', text: f.a },
-              })),
-            },
+            { ...localBusinessSchema, contactPoint: contactPointSchema },
+            breadcrumbSchema([
+              { name: 'Trang chủ', href: '/' },
+              { name: 'Liên hệ đặt hàng', href: '/lien-he' },
+            ]),
+            faqSchema(faqs),
           ],
         }}
       />

@@ -6,20 +6,18 @@ import { getCustomDesigns } from '@/lib/airtable';
 import { siteConfig } from '@/lib/siteConfig';
 import { PhoneIcon } from '@/components/icons';
 
+// Tiêu đề cũ không chứa một từ khoá nào — không nói mình thiết kế CÁI GÌ. "In bảng đánh giá
+// theo yêu cầu" là cụm các shop cùng ngành đang xếp hạng, và đúng là việc trang này làm.
+const ogTitle = 'In bảng NFC đánh giá theo logo quán';
+const ogDescription = 'Tải logo lên, xem ngay nó nằm trên bảng NFC / standee QR thật rồi gửi cho chúng tôi lên bản in. Giá không đổi.';
+
 export const metadata = {
-  title: 'Tự thiết kế mẫu riêng',
+  title: ogTitle,
   description:
-    'Tải logo quán lên, kéo chỉnh vị trí và cỡ, xem ngay logo của bạn nằm trên bảng NFC 10x10cm hoặc standee A6 thật rồi gửi cho chúng tôi lên bản in. Giá không đổi so với mẫu có sẵn.',
+    'In bảng NFC / standee QR đánh giá Google Maps theo logo và màu thương hiệu của quán. Tải logo lên, kéo chỉnh vị trí và cỡ, xem ngay logo của bạn nằm trên bảng NFC 10x10cm hoặc standee A6 thật rồi gửi cho chúng tôi lên bản in. Giá không đổi so với mẫu có sẵn.',
   alternates: { canonical: '/thiet-ke-rieng' },
-  openGraph: {
-    url: '/thiet-ke-rieng',
-    title: 'Tự thiết kế mẫu riêng',
-    description: 'Tải logo lên, xem ngay nó nằm trên sản phẩm thật rồi gửi cho chúng tôi lên bản in.',
-  },
-  twitter: {
-    title: 'Tự thiết kế mẫu riêng',
-    description: 'Tải logo lên, xem ngay nó nằm trên sản phẩm thật rồi gửi cho chúng tôi lên bản in.',
-  },
+  openGraph: { url: '/thiet-ke-rieng', title: ogTitle, description: ogDescription },
+  twitter: { title: ogTitle, description: ogDescription },
 };
 
 export default async function CustomDesignPage() {
