@@ -46,7 +46,7 @@ export default function ContactPage() {
           <Reveal as="h1">Chỉ cần tên và địa chỉ quán của bạn</Reveal>
           <Reveal as="p" className="page-hero-sub">
             Gọi cho chúng tôi — tư vấn chọn bảng hay standee và giao tận nơi.
-            Bạn chỉ việc đặt lên quầy.
+            Bạn chỉ việc đặt lên quầy. Đặt từ 2 cái được giá tốt hơn.
           </Reveal>
         </div>
       </section>
@@ -66,7 +66,7 @@ export default function ContactPage() {
                 <span className="contact-call-number">{siteConfig.phoneDisplay}</span>
                 <span className="contact-call-cta">Bấm để gọi ngay</span>
                 <span className="contact-call-note">
-                  Trả lời trong vòng 2 phút · Đặt 1 cái cũng nhận · Giao hàng toàn quốc
+                  Trả lời trong vòng 2 phút · Đặt từ 2 cái có giá tốt hơn · Giao hàng toàn quốc
                 </span>
               </a>
             </Reveal>
@@ -91,7 +91,7 @@ export default function ContactPage() {
           </div>
 
           <Reveal as="p" className="products-note">
-            Chưa chắc nên chọn bảng NFC hay standee? <Link href="/#san-pham">Xem lại sản phẩm</Link>.
+            {siteConfig.quantityPricing} Chưa chắc nên chọn bảng NFC hay standee? <Link href="/#san-pham">Xem lại sản phẩm</Link>.
           </Reveal>
         </div>
       </section>

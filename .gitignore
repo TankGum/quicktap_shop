@@ -25,3 +25,9 @@ yarn-error.log*
 
 # Python bytecode của scripts/skill
 __pycache__/
+
+# Cấu hình wrangler ở GỐC repo — chỉ dùng lúc chạy thử ở máy, KHÔNG BAO GIỜ commit.
+# Pages đọc file này ở gốc và khi có nó thì bỏ qua sạch binding + biến môi trường đặt trong
+# Dashboard, tức là bản deploy thật mất KV_BINDING và khoá Cloudinary mà không báo lỗi gì.
+/wrangler.jsonc
+/wrangler.toml

@@ -86,8 +86,28 @@ Cập nhật `openGraph.images` trong `app/layout.js` nếu đổi ảnh hoặc 
 
 ```bash
 npm install
-npm run dev        # http://localhost:3000 — có hot reload
+npm run dev        # → mở http://localhost:8788
 ```
+
+`npm run dev` chạy **hai** tiến trình rồi ghép làm một cửa vào (xem `scripts/dev.sh`):
+
+```
+trình duyệt → localhost:8788  (wrangler pages dev)
+                 ├── /api/*        → tự chạy functions/       ← backend thật
+                 └── mọi thứ khác  → đẩy sang next dev :3001  ← hot reload còn nguyên
+```
+
+Phải ghép như vậy vì site dùng `output: 'export'` nên **không có server Next lúc chạy**; toàn
+bộ backend nằm ở `functions/`, thư mục mà chỉ Cloudflare Pages hiểu. `next dev` không biết
+thư mục đó tồn tại, nên gọi `/api/*` trên cổng của nó luôn ra 404.
+
+- Mở đúng **8788**, không phải 3001. Vào 3001 thì trang vẫn hiện nhưng khung chat và form đặt
+  hàng đều báo lỗi kết nối.
+- Cần **Node ≥ 22** (yêu cầu của wrangler). Node cũ hơn thì script tự tìm bản dự phòng ở
+  `~/.local/share/quicktap-node22`; không có thì nó báo lỗi rõ ràng chứ không chạy nửa vời.
+- Đang có sẵn một `next dev` ở 3001 thì script **dùng lại**, không bật cái thứ hai (hai tiến
+  trình next dev dùng chung `.next` sẽ giẫm lên nhau).
+- Chỉ sửa giao diện, không cần backend: `npm run dev:next` → cổng 3001, nhẹ hơn.
 
 ## Build & xem thử bản tĩnh
 
@@ -271,6 +291,192 @@ còn bị chặn từ `Content-Length` trước cả khi đọc.
 > `d1/wrangler.jsonc` cố ý nằm trong `d1/` chứ không phải gốc repo: Pages đọc `wrangler.jsonc`
 > **ở gốc** và khi có file đó thì bỏ qua toàn bộ biến môi trường + binding đã đặt trong
 > Dashboard — đặt ở gốc là âm thầm gỡ mất `KV_BINDING` và khoá Cloudinary của bản deploy thật.
+
+### Trợ lý chat (`functions/api/chat.js`)
+
+Khung chat nổi ở góc phải dưới mọi trang (`components/ChatWidget.jsx`), xếp **ngay trên** nút
+Zalo. Hai nút cố ý cùng tồn tại: chat là máy trả lời ngay 24/7, Zalo là người thật trả lời sau
+— Zalo giữ vị trí dưới cùng (ngón cái với tới dễ nhất) vì đó là kênh đang mang đơn thật về.
+Không có JS thì khung chat không render, nút Zalo vẫn còn — site không mất kênh liên hệ nào.
+
+Nó làm **hai** việc: tư vấn sản phẩm/giá, và tra đơn "Thiết kế riêng".
+
+Là **Pages Function**, không phải Worker riêng trên `workers.dev`: đặt ở đây thì dùng chung tên
+miền với site (không cần CORS), dùng lại đúng binding `DB` và `KV_BINDING` sẵn có, và đi chung
+một lần deploy.
+
+**1. Ba binding trong Pages** (Settings → Functions), nhớ làm cho **cả Production lẫn Preview**:
+
+| Binding | Loại | Trỏ tới |
+| --- | --- | --- |
+| `AI` | Workers AI | (không cần chọn gì thêm) |
+| `DB` | D1 database | `quicktap-orders` — dùng chung với endpoint nhận đơn |
+| `KV_BINDING` | KV namespace | dùng chung với endpoint nhận đơn |
+
+Model đang dùng: `@cf/google/gemma-4-26b-a4b-it` (đổi ở hằng `MODEL` đầu file).
+
+> **Bắt buộc phải tắt suy luận.** Đây là model *reasoning*: nó phát `reasoning_content` (tự
+> lẩm bẩm, bằng tiếng Anh) TRƯỚC rồi mới tới `content`. Với system prompt ~2.500 token của
+> mình, phần lẩm bẩm ăn sạch hạn mức token, `content` trả về **rỗng**, `finish_reason` là
+> `"length"` — khung chat không hiện một chữ nào. Đo thật trên cùng một câu hỏi:
+>
+> | Cấu hình | Giây | `finish` | `content` | lẩm bẩm | token ra | neuron |
+> | --- | --- | --- | --- | --- | --- | --- |
+> | mặc định | 6,7 | stop | 276 ký tự | 1.361 | 409 | 11,55 |
+> | **`chat_template_kwargs: { enable_thinking: false }`** | **1,7** | stop | **299 ký tự** | **0** | **72** | **2,38** |
+> | `reasoning_effort: 'low'` | 7,9 | **length** | **rỗng** | 1.984 | 512 | 14,36 |
+>
+> Nhanh gấp 4, rẻ gấp 4,9, câu trả lời còn nhỉnh hơn. Chú ý `reasoning_effort` — tham số **có
+> trong tài liệu Cloudflare** — lại làm suy luận DÀI THÊM và giết chết câu trả lời. Đừng dùng.
+>
+> `chat_template_kwargs` là tham số riêng của họ gemma. **Đổi model thì phải đo lại**: model
+> không hiểu khoá này sẽ bỏ qua (vô hại), nhưng nếu nó cũng là model reasoning thì lỗi "không
+> hiện chữ" quay lại y nguyên.
+
+Ngoài ra `lib/chatStream.mjs` vẫn lọc bỏ `reasoning_content` khỏi luồng — lớp phòng thứ hai,
+phòng khi đổi sang model không tắt được suy luận.
+
+Chạy `npm run d1:schema` một lần để tạo bảng `chat_logs` (an toàn khi chạy lại).
+
+**2. Kiến thức lấy từ đâu.** `app/kb.json/route.js` sinh ra `out/kb.json` **lúc build**, đọc
+đúng những nguồn site đang hiển thị (`data/products.js`, `industries`, `platforms`,
+`siteConfig`, và giá/tên mẫu từ Airtable qua `lib/airtable.js`). Function nạp file đó bằng
+`fetch` cùng tên miền rồi nhớ trong isolate.
+
+Phải làm vòng vèo vậy vì site là static export: giá chỉ tồn tại **lúc build**, còn Function
+chạy trong môi trường Workers không có Airtable lẫn `data/*.js`. Chép tay giá sang Function là
+tạo nguồn sự thật thứ hai — đổi giá trên Airtable rồi quên sửa là chat báo giá sai cho khách.
+
+> Đổi giá trên Airtable xong phải **deploy lại** thì chat mới biết. Mở `/kb.json` trên trình
+> duyệt để soi chat đang biết những gì; khoá `generatedAt` cho biết đang đọc bản build nào.
+
+`/kb.json` **công khai** — đừng bao giờ thêm vào đó thứ không muốn công khai. Khối
+`siteConfig.stats` cố tình bị loại vì đang là placeholder `[SỐ QUÁN]+`.
+
+**3. Tra đơn — vì sao phải có ĐỦ mã đơn + số điện thoại.** Mã đơn chỉ 4 ký tự từ bảng 32
+(~1 triệu tổ hợp): đủ để đọc qua điện thoại, **không** đủ làm mật khẩu. Chỉ cần mã là ai đó
+viết script quét sẽ moi ra danh sách số điện thoại khách hàng. Bắt kèm số điện thoại thì kẻ
+quét phải đoán trúng cả hai.
+
+Ranh giới an ninh nằm trong **code**, không nằm ở chỗ model có ngoan hay không:
+
+- Model không bao giờ sinh SQL và không chọn được đọc đơn nào. `functions/api/chat.js` tự dò mã
+  + số trong câu hỏi (`lib/chatOrderRef.mjs`, chuẩn hoá số bằng `normalizePhone` dùng chung với
+  form đơn), rồi chạy một câu `SELECT` tham số cố định.
+- Câu `SELECT` **không** lấy `customer_name` và `phone` dù D1 có sẵn: khách đã biết rồi, còn
+  model thì không nên có cơ hội đọc chúng ra.
+- Không khớp thì chỉ nói "không tìm thấy đơn khớp" — **không bao giờ** tách ra "mã đúng, số
+  sai", vì chính câu đó xác nhận mã có tồn tại, tức là biến việc quét mã thành có ích.
+- Bảng `design_orders` không có cột trạng thái, nên chat chỉ xác nhận đã nhận đơn ngày nào, số
+  lượng bao nhiêu, rồi mời gọi hotline hỏi tiến độ. Cố ý: thêm cột `status` nghĩa là phải tự
+  cập nhật tay từng đơn, mà quên cập nhật thì chat nói sai — còn tệ hơn im lặng.
+
+**4. Hạn mức.** Chặt hơn form đặt hàng vì mỗi lượt ở đây tốn neuron (tiền), không chỉ tốn ghi.
+
+| Phạm vi | Mức |
+| --- | --- |
+| 1 IP | 8 tin / 5 phút |
+| 1 IP | 40 tin / ngày |
+| Toàn endpoint | 300 tin / ngày |
+| 1 IP, lượt có tra đơn | 5 / giờ |
+
+Trần 300 lấy từ **số đo thật**: bốn lượt chat đầy đủ chạy qua endpoint này tốn trung bình
+**27 neuron/lượt** (sau khi tắt suy luận). Hạn mức miễn phí là 10.000 neuron/ngày →
+`10.000 / 27 ≈ 370 lượt`; lấy 300 để còn biên.
+
+Chi phí gần như nằm hết ở **prompt** (~2.500 token system prompt so với ~100 token trả lời),
+nên hội thoại càng dài thì mỗi lượt càng đắt — đó là lý do server tự cắt lịch sử còn 12 tin.
+Vượt trần không gãy gì, chỉ là bắt đầu tính tiền.
+
+Cột `neurons` trong `chat_logs` ghi chi phí thật từng lượt; chạy thật vài ngày rồi chỉnh
+`GLOBAL_LIMIT` theo số của chính mình:
+
+```bash
+npm run d1:chat         # D1 THẬT   — 40 lượt gần nhất, kèm cột neurons
+npm run d1:chat:local   # D1 Ở MÁY  — log của phiên `wrangler pages dev`
+```
+
+> **Hai kho D1 tách biệt, rất dễ nhầm.** `wrangler pages dev` ghi vào bản SQLite ở máy
+> (`.wrangler/state`), KHÔNG phải D1 thật — cố ý, để dữ liệu thử không lẫn vào production.
+> Chat thử ở `localhost:8788` rồi mở Cloudflare Dashboard (hoặc chạy `npm run d1:chat`) sẽ
+> thấy bảng **rỗng**, và đó là đúng chứ không phải log hỏng. Muốn xem log của phiên chạy thử
+> thì dùng bản `:local`.
+
+**Muốn chạy ở máy nhưng dùng D1 THẬT** (để tra đơn thật, và log chảy thẳng vào bảng thật):
+`wrangler pages dev` **không có cờ `--config`**, nên `remote: true` chỉ khai được trong
+`wrangler.jsonc` ở **gốc repo**:
+
+```jsonc
+{
+  "name": "quicktapreview",
+  "pages_build_output_dir": "out",
+  "compatibility_date": "2026-09-03",
+  "d1_databases": [{ "binding": "DB", "database_name": "quicktap-orders",
+                     "database_id": "e6ed458c-b10b-467e-a983-7036a5be91e2", "remote": true }],
+  "kv_namespaces": [{ "binding": "KV_BINDING", "id": "5eb842e6938a44148d1e7b170262a828" }],
+  "ai": { "binding": "AI" }
+}
+```
+
+Rồi chỉ cần `npx wrangler pages dev out --port 8788` (không cần cờ `--kv/--d1/--ai` nữa). Khởi
+động xong wrangler in bảng binding — cột Mode của `DB` phải là **remote**.
+
+> ⚠️ **File đó KHÔNG BAO GIỜ được commit** (đã có trong `.gitignore`). Pages đọc
+> `wrangler.jsonc` ở gốc lúc deploy, và khi thấy nó thì **bỏ qua toàn bộ binding + biến môi
+> trường đặt trong Dashboard** — bản deploy thật sẽ mất `KV_BINDING`, khoá Cloudinary và token
+> Telegram, khiến `/thiet-ke-rieng` trả 503 mà nhìn từ ngoài không thấy gì bất thường. Đó cũng
+> là lý do `d1/wrangler.jsonc` cố tình nằm trong thư mục con.
+
+KV cố ý để **local** (không có `remote: true`): nó chỉ là bộ đếm chặn spam, cho dùng bản thật
+nghĩa là mỗi lần thử ở máy lại ăn vào hạn mức 300 lượt/ngày của khách.
+
+Bộ đếm dùng chung `lib/kvRateLimit.mjs` với endpoint nhận đơn (khoá KV có tiền tố phạm vi nên
+hai bên không đếm lẫn của nhau).
+
+**5. Log ẩn danh.** Mỗi lượt ghi 2 dòng vào `chat_logs` — nhưng **đã ẩn danh hoá** trước
+(`lib/chatRedact.mjs`): số điện thoại → `[SĐT]`, mã đơn → `[MÃ ĐƠN]`, email → `[EMAIL]`. Khung
+chat vừa tư vấn vừa tra đơn nên khách sẽ tự gõ số điện thoại vào; ghi nguyên văn là biến bảng
+này thành nơi chứa thông tin cá nhân **thứ hai** bên cạnh `design_orders` — trong khi thứ đáng
+đọc lại chỉ là "khách hỏi gì", không cần biết ai hỏi.
+
+Ghi log **không bao giờ** làm hỏng câu trả lời: tới lúc đó khách đã đọc xong rồi, lỗi ghi chỉ
+vào log — cùng nguyên tắc `notifyTelegram` ở endpoint nhận đơn.
+
+Trên máy khách, hội thoại nằm ở `sessionStorage` (đóng tab là hết), **không** phải
+`localStorage`: khách có thể vừa gõ mã đơn + số điện thoại vào đó, mà máy quầy thì dùng chung.
+
+**6. Chạy thử.** `npm run dev` KHÔNG phục vụ endpoint này (Next dev server không biết gì về
+`functions/`) — giống hệt endpoint nhận đơn. Gọi `localhost:3000/api/chat` ra 404 là **đúng**,
+không phải lỗi.
+
+```bash
+npm test          # test logic thuần, không cần mạng (node --test, không thêm dependency)
+npm run preview   # = next build && wrangler pages dev out --kv ... --d1 ... --ai AI
+```
+
+`--ai AI` trong `preview` là bắt buộc, thiếu nó thì `/api/chat` trả 503.
+
+Ba điều hay vấp khi chạy thử ở máy:
+
+1. **wrangler cần Node ≥ 22.** Node 18 thì mọi lệnh `wrangler` (kể cả `npm run d1:*`) chết ngay
+   ở dòng đầu với thông báo yêu cầu nâng phiên bản.
+2. **Phải `npx wrangler login`** — `--ai AI` gọi lên hạ tầng Cloudflare thật.
+3. **Workers AI KHÔNG có bản giả lập ở máy.** Wrangler in rõ `env.AI ... remote` lúc khởi động:
+   mọi lượt chat local đều tính neuron vào tài khoản thật y như production. Đừng để chạy vòng lặp.
+
+Muốn thử mà **không** động tới `.next` của phiên `next dev` đang chạy: bỏ qua `npm run preview`,
+tự gọi `wrangler pages dev out ...` trên thư mục `out/` đã build sẵn (wrangler đọc `functions/`
+trực tiếp từ repo, không cần build lại).
+
+**Dò lỗi:** mở thẳng `/api/chat` bằng trình duyệt (GET) — trả về danh sách binding còn thiếu
+của môi trường đang chạy, chỉ TÊN chứ không bao giờ trả giá trị:
+
+```json
+{ "ready": false, "missing": ["AI"], "off": ["TURNSTILE_SECRET_KEY"], "model": "@cf/google/gemma-4-26b-a4b-it" }
+```
+
+Bốn nguyên nhân 503 trên production giống hệt danh sách ở mục endpoint nhận đơn (hay gặp nhất:
+đổi binding xong **chưa deploy lại**).
 
 ### Ảnh mẫu sản phẩm
 
