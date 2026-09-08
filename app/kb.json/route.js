@@ -37,6 +37,11 @@ export async function GET() {
       zalo: siteConfig.zaloHref,
       siteUrl: siteConfig.siteUrl,
       quantityPricing: siteConfig.quantityPricing,
+      // chatPrompt.mjs CẤM trợ lý tự nghĩ ra chính sách giao hàng — đúng, vì bịa ra là hứa
+      // sai với khách. Nhưng hệ quả là trước đây câu "có freeship không?" nó không trả lời
+      // được, dù đây là câu khách hỏi nhiều nhất ngay trước lúc chốt đơn. Khai ở đây thì trợ
+      // lý có nguồn thật để dẫn, không phải đoán.
+      shipping: siteConfig.shippingPolicy,
     },
 
     products: products.map((p) => ({

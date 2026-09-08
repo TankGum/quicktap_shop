@@ -118,6 +118,19 @@ export default function VariantDetail({ variant, product, FallbackArt }) {
                       // Google bỏ qua cả khối Offer nếu thiếu url — không có nó thì giá không
                       // bao giờ hiện kèm kết quả tìm kiếm, tức mất đúng phần đáng giá nhất.
                       url: `${siteConfig.siteUrl}${variant.href}`,
+                      // Khai phí vận chuyển = 0 và GIỚI HẠN đúng ở Hà Nội bằng addressRegion.
+                      // Nhờ vậy Google được phép hiện nhãn "Miễn phí vận chuyển" cho người
+                      // tìm ở Hà Nội mà không hứa nhầm với khách tỉnh khác — nơi phí vẫn báo
+                      // lúc xác nhận đơn (xem siteConfig.shippingPolicy).
+                      shippingDetails: {
+                        '@type': 'OfferShippingDetails',
+                        shippingRate: { '@type': 'MonetaryAmount', value: 0, currency: 'VND' },
+                        shippingDestination: {
+                          '@type': 'DefinedRegion',
+                          addressCountry: 'VN',
+                          addressRegion: siteConfig.shippingFreeRegion,
+                        },
+                      },
                     },
                   }
                 : {}),

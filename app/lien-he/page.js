@@ -10,12 +10,12 @@ import { localBusinessSchema, contactPointSchema, faqSchema, breadcrumbSchema } 
 // y hệt. Thêm chính món đang bán vào tiêu đề để trang này còn có cơ hội xuất hiện với truy vấn
 // dạng "mua bảng nfc đánh giá google ở hà nội".
 const ogTitle = 'Đặt bảng NFC & standee QR đánh giá Google';
-const ogDescription = 'Gọi ngay để đặt bảng NFC / standee QR đánh giá cho quán của bạn. Giao toàn quốc, trong ngày tại Hà Nội.';
+const ogDescription = 'Freeship Hà Nội, đặt 1 cái cũng giao. Gọi ngay để đặt bảng NFC / standee QR đánh giá cho quán của bạn.';
 
 export const metadata = {
   title: ogTitle,
   description:
-    'Gọi ngay để đặt bảng NFC / standee QR đánh giá Google Maps cho quán của bạn. Tư vấn nhanh, chỉ cần tên và địa chỉ quán, giao hàng toàn quốc, trong ngày tại Hà Nội.',
+    'Freeship Hà Nội, đặt 1 cái cũng giao. Gọi ngay để đặt bảng NFC / standee QR đánh giá Google Maps cho quán của bạn — tư vấn nhanh, chỉ cần tên và địa chỉ quán, giao hàng toàn quốc.',
   alternates: { canonical: '/lien-he' },
   openGraph: { url: '/lien-he', title: ogTitle, description: ogDescription },
   twitter: { title: ogTitle, description: ogDescription },
@@ -33,6 +33,10 @@ const faqs = [
   {
     q: 'Đổi link đánh giá sau này có phải làm bảng mới không?',
     a: 'Không cần. Chúng tôi trỏ lại đích đến cho bạn, chiếc bảng và standee đang dán/đặt tại quán vẫn dùng bình thường.',
+  },
+  {
+    q: 'Có mất phí giao hàng không?',
+    a: 'Giao hàng tại Hà Nội miễn phí, kể cả khi bạn chỉ đặt 1 cái — không có mức đơn tối thiểu. Các tỉnh thành khác giao toàn quốc, phí giao chúng tôi báo cụ thể khi xác nhận đơn.',
   },
 ];
 
@@ -66,7 +70,7 @@ export default function ContactPage() {
                 <span className="contact-call-number">{siteConfig.phoneDisplay}</span>
                 <span className="contact-call-cta">Bấm để gọi ngay</span>
                 <span className="contact-call-note">
-                  Trả lời trong vòng 2 phút · Đặt từ 2 cái có giá tốt hơn · Giao hàng toàn quốc
+                  Trả lời trong vòng 2 phút · Freeship Hà Nội · Giao hàng toàn quốc
                 </span>
               </a>
             </Reveal>
@@ -85,7 +89,7 @@ export default function ContactPage() {
               <li>
                 <span className="contact-step-num" aria-hidden="true">3</span>
                 <h3>Nhận hàng, đặt lên quầy</h3>
-                <p>Giao tận nơi toàn quốc. Cài sẵn rồi, không phải thiết lập gì thêm.</p>
+                <p>Giao tận nơi toàn quốc, miễn phí tại Hà Nội. Cài sẵn rồi, không phải thiết lập gì thêm.</p>
               </li>
             </Reveal>
           </div>

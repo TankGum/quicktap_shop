@@ -12,12 +12,12 @@ import { localBusinessSchema, faqSchema, breadcrumbSchema, ORG_ID } from '@/lib/
 // trang bảng NFC).
 const ogTitle = 'Standee QR review Google Maps để bàn';
 const ogDescription =
-  'Standee để bàn QR + NFC, đứng vững trên quầy thu ngân. Khách quét hoặc chạm là mở thẳng trang đánh giá Google Maps.';
+  'Standee để bàn QR + NFC, đứng vững trên quầy thu ngân. Khách quét hoặc chạm là mở thẳng trang đánh giá. Freeship Hà Nội.';
 
 export const metadata = {
   title: ogTitle,
   description:
-    'Standee QR review Google Maps để bàn (khổ A6), tích hợp QR + NFC — đứng vững trên quầy thu ngân, khách quét QR hoặc chạm NFC là mở thẳng trang đánh giá Google Maps, Booking.com, TripAdvisor. In theo logo quán, giao toàn quốc, trong ngày tại Hà Nội.',
+    'Standee QR review Google Maps để bàn (khổ A6), freeship Hà Nội — tích hợp QR + NFC, đứng vững trên quầy thu ngân, khách quét QR hoặc chạm NFC là mở thẳng trang đánh giá Google Maps, Booking.com, TripAdvisor. In theo logo quán, giao toàn quốc.',
   alternates: { canonical: '/san-pham/standee' },
   openGraph: { url: '/san-pham/standee', title: ogTitle, description: ogDescription },
   twitter: { title: ogTitle, description: ogDescription },

@@ -61,7 +61,7 @@ const highlights = [
   { Icon: PhoneOutlineIcon, title: 'Không cần cài app', body: 'Khách chạm là xong' },
   { Icon: RefreshIcon, title: 'Đổi link bất cứ lúc nào', body: 'Không phải làm bảng mới' },
   { Icon: BoltIcon, title: 'Dùng được ngay', body: 'Không phải cài đặt gì' },
-  { Icon: LayersIcon, title: 'Đặt 1 cái cũng nhận', body: 'Giao trong ngày tại Hà Nội' },
+  { Icon: LayersIcon, title: 'Freeship Hà Nội', body: 'Đặt 1 cái cũng miễn phí giao' },
 ];
 
 const benefits = [
@@ -100,6 +100,12 @@ const faqs = [
   {
     q: 'Bảng NFC có hoạt động qua ốp lưng điện thoại không?',
     a: 'Hầu hết ốp lưng thường không cản NFC. Với ốp quá dày hoặc có tấm chống từ, khách chỉ cần bỏ ốp ra hoặc dùng mã QR in sẵn trên bảng/standee thay thế.',
+  },
+  {
+    // Đặt NGAY TRƯỚC câu hỏi về thời gian giao: hai câu này khách luôn hỏi liền nhau, và
+    // FAQ ở đây tự chảy vào FAQPage trong JSON-LD nên còn có cơ hội hiện thẳng trên Google.
+    q: 'Có mất phí giao hàng không?',
+    a: 'Giao hàng tại Hà Nội miễn phí, kể cả khi bạn chỉ đặt 1 cái — không có mức đơn tối thiểu. Các tỉnh thành khác giao toàn quốc, phí giao chúng tôi báo cụ thể khi xác nhận đơn.',
   },
   {
     q: 'Cần bao lâu để nhận hàng sau khi đặt?',

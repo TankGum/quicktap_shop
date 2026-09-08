@@ -13,12 +13,12 @@ import { localBusinessSchema, faqSchema, breadcrumbSchema, ORG_ID } from '@/lib/
 // phần mô tả, nơi nó vẫn giúp khách quyết định nhưng không chiếm chỗ của từ khoá trong tiêu đề.
 const ogTitle = 'Bảng NFC đánh giá Google Maps 10x10cm';
 const ogDescription =
-  'Bảng NFC + QR dán tường, quầy thu ngân. Khách chạm hoặc quét là mở thẳng trang đánh giá Google Maps. Chống nước, in logo quán.';
+  'Bảng NFC + QR dán tường, quầy thu ngân. Khách chạm hoặc quét là mở thẳng trang đánh giá Google Maps. Freeship Hà Nội, đặt 1 cái cũng giao.';
 
 export const metadata = {
   title: ogTitle,
   description:
-    'Bảng NFC đánh giá Google Maps 10x10cm — tích hợp cả chip NFC và mã QR ngay trên mặt bảng, chống nước, mặt sau có keo dán chắc. Dán lên tường, quầy thu ngân hay mặt bàn, khách chạm điện thoại hoặc quét QR là mở thẳng trang đánh giá Google Maps, Booking.com, TripAdvisor. Giao toàn quốc, trong ngày tại Hà Nội.',
+    'Bảng NFC đánh giá Google Maps 10x10cm, freeship Hà Nội — tích hợp cả chip NFC và mã QR ngay trên mặt bảng, chống nước, mặt sau có keo dán chắc. Dán lên tường, quầy thu ngân hay mặt bàn, khách chạm hoặc quét QR là mở thẳng trang đánh giá Google Maps, Booking.com, TripAdvisor.',
   alternates: { canonical: '/san-pham/bang-nfc' },
   openGraph: { url: '/san-pham/bang-nfc', title: ogTitle, description: ogDescription },
   twitter: { title: ogTitle, description: ogDescription },
