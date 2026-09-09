@@ -20,6 +20,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ZaloButton from '@/components/ZaloButton';
 import ChatWidget from '@/components/ChatWidget';
+import { CartProvider } from '@/components/CartStore';
 import { siteConfig } from '@/lib/siteConfig';
 import { products } from '@/data/products';
 import { getVariantsByProduct } from '@/lib/airtable';
@@ -112,8 +113,12 @@ export default async function RootLayout({ children }) {
       </head>
       <body>
         <a className="skip-link" href="#main">Bỏ qua tới nội dung chính</a>
-        <Header productLinks={productLinks} />
-        <main id="main">{children}</main>
+        {/* CartProvider phải bọc CẢ Header lẫn main: huy hiệu số lượng nằm trên header, còn
+            nút thêm vào giỏ nằm trong trang — hai chỗ phải đọc cùng một state. */}
+        <CartProvider>
+          <Header productLinks={productLinks} />
+          <main id="main">{children}</main>
+        </CartProvider>
         <Footer />
         {/* Hai nút nổi ở góc phải dưới, xếp dọc (xem .chat-fab/.zalo-fab trong
             globals.css): chat trả lời ngay bằng máy, Zalo để người thật trả lời sau.

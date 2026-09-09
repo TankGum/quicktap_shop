@@ -28,6 +28,9 @@
 import { validateOrder } from '../../lib/orderValidation.js';
 // Bộ đếm hạn mức trên KV — dùng chung với functions/api/chat.js, xem lib/kvRateLimit.mjs.
 import { checkRateLimit } from '../../lib/kvRateLimit.mjs';
+// Mã đơn dùng chung với luồng giỏ hàng (functions/api/dat-hang.js) — mã này vừa là tên file
+// trên Cloudinary, vừa là cột `code` (UNIQUE) trong D1.
+import { orderCode } from '../../lib/orderCode.mjs';
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 // Chặn ngay từ Content-Length, trước cả khi đọc body: ảnh mẫu là PNG cỡ vài MB, vượt xa mức
@@ -53,14 +56,6 @@ function json(data, status = 200, headers = {}) {
   });
 }
 
-// Mã đơn ngắn để hai bên gọi đúng một thứ lúc nói chuyện điện thoại. Bỏ các ký tự dễ đọc
-// nhầm khi đọc qua điện thoại: 0/O, 1/I. Mã này vừa là tên file trên Cloudinary, vừa là cột
-// `code` (UNIQUE) trong D1 — khách đọc mã qua điện thoại là tra ra đúng đơn.
-function orderCode() {
-  const ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-  const bytes = crypto.getRandomValues(new Uint8Array(4));
-  return `TK-${[...bytes].map((b) => ALPHABET[b % ALPHABET.length]).join('')}`;
-}
 
 async function sha1Hex(text) {
   const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(text));

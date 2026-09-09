@@ -105,7 +105,7 @@ const faqs = [
     // Đặt NGAY TRƯỚC câu hỏi về thời gian giao: hai câu này khách luôn hỏi liền nhau, và
     // FAQ ở đây tự chảy vào FAQPage trong JSON-LD nên còn có cơ hội hiện thẳng trên Google.
     q: 'Có mất phí giao hàng không?',
-    a: 'Giao hàng tại Hà Nội miễn phí, kể cả khi bạn chỉ đặt 1 cái — không có mức đơn tối thiểu. Các tỉnh thành khác giao toàn quốc, phí giao chúng tôi báo cụ thể khi xác nhận đơn.',
+    a: 'Giao hàng tại Hà Nội miễn phí, kể cả khi bạn chỉ đặt 1 cái — không có mức đơn tối thiểu. Các tỉnh thành khác phí giao 30.000đ, giao toàn quốc. Tổng tiền hiện đủ trong giỏ hàng trước khi bạn đặt.',
   },
   {
     q: 'Cần bao lâu để nhận hàng sau khi đặt?',
@@ -396,7 +396,6 @@ export default async function HomePage() {
                 )}
 
                 <div className="product-split-actions">
-                  <Link className="btn btn-primary" href="/lien-he">{p.cta}</Link>
                   <Link className="btn btn-ghost" href={p.href}>
                     {p.detail}
                     <ArrowRightIcon className="i" />

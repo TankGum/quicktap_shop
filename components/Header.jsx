@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import CartLink from '@/components/CartLink';
+import { PRODUCTS_HREF } from '@/data/products';
 import { siteConfig } from '@/lib/siteConfig';
 import { products } from '@/data/products';
 import ProgressiveImg from './ProgressiveImg';
@@ -31,7 +33,7 @@ const SECTION_LINKS = [
 ];
 
 // Đích của mục "Sản phẩm": khối giới thiệu 2 dòng sản phẩm ngoài trang chủ.
-const PRODUCTS_HREF = '/#san-pham';
+
 
 // "/#loi-ich" -> "loi-ich". Trả null cho link không phải dạng neo tới khối trên trang chủ.
 const hashId = (href) => (href.startsWith('/#') ? href.slice(2) : null);
@@ -218,6 +220,9 @@ export default function Header({ productLinks }) {
           ))}
         </nav>
 
+        {/* Luôn hiện, kể cả giỏ trống — xem components/CartLink.jsx. */}
+        <CartLink />
+
         <Link className="btn btn-primary btn-sm header-cta" href="/lien-he">
           <PhoneIcon className="i" />
           Liên hệ
@@ -272,6 +277,10 @@ export default function Header({ productLinks }) {
             KHÔNG đổi pathname, nên useEffect theo dõi pathname ở trên không hề chạy — thiếu
             onClick là bấm xong menu vẫn nằm chình ình đè lên chỗ vừa cuộn tới. */}
         <ul className="mobile-nav-list">
+          {/* Đặt NGAY ĐẦU danh sách, tách riêng bằng style: đây là một HÀNH ĐỘNG (đi làm việc),
+              khác với các mục còn lại vốn chỉ để ĐỌC/xem nội dung. Header đã có icon giỏ riêng,
+              nhưng nó nằm cạnh nút hamburger nên bị che khi sidebar mở — không có mục này thì
+              từ trong sidebar không có đường nào quay lại giỏ ngoài việc đóng menu ra lại. */}
           <li>
             {/* Chỉ sáng khi thực sự đang ở đầu trang chủ. Trước đây chỉ xét pathname nên bấm
                 sang khối nào ở trang chủ thì "Trang chủ" vẫn sáng, còn khối vừa chọn thì không. */}

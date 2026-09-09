@@ -49,3 +49,67 @@ CREATE TABLE IF NOT EXISTS chat_logs (
 -- Đọc theo cuộc trò chuyện (hay dùng nhất) và đọc lượt mới nhất trước.
 CREATE INDEX IF NOT EXISTS idx_chat_logs_session ON chat_logs(session_id, id);
 CREATE INDEX IF NOT EXISTS idx_chat_logs_date    ON chat_logs(created_at DESC);
+
+-- ---------------------------------------------------------------------------------------
+-- Đơn từ GIỎ HÀNG (/gio-hang -> functions/api/dat-hang.js).
+--
+-- Tách khỏi design_orders chứ không nhét chung: đơn thiết kế riêng là 1 mẫu + 1 ảnh, còn đơn
+-- giỏ hàng có nhiều dòng hàng, có địa chỉ giao, có phương thức thanh toán và có trạng thái.
+-- Nhồi cả hai vào một bảng thì nửa số cột luôn NULL và không ai đọc ra được ý nghĩa nữa.
+CREATE TABLE IF NOT EXISTS shop_orders (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  -- Cùng dạng mã và cùng hàm sinh với design_orders (TK-8F3K) — khách đọc mã qua điện thoại,
+  -- và với đơn chuyển khoản thì đây CHÍNH LÀ nội dung chuyển khoản.
+  code            TEXT NOT NULL UNIQUE,
+  customer_name   TEXT NOT NULL,
+  phone           TEXT NOT NULL,
+
+  -- Địa chỉ giao. Lưu CẢ MÃ LẪN TÊN là cố ý: mã để tính phí ship và tra cứu chính xác, tên để
+  -- đọc lại đơn cũ. Đơn vị hành chính có lúc đổi tên hoặc sáp nhập — giữ tên đã chép thì đơn
+  -- cũ vẫn in ra đúng địa chỉ khách đã nhập, thay vì lặng lẽ hiển thị theo tên mới.
+  province_code   TEXT NOT NULL,
+  province_name   TEXT NOT NULL,
+  ward_code       TEXT NOT NULL,
+  ward_name       TEXT NOT NULL,
+  address_line    TEXT NOT NULL,              -- số nhà, tên đường — phần dropdown không phủ được
+
+  payment_method  TEXT NOT NULL,              -- 'cod' | 'transfer'
+
+  -- Tiền để INTEGER, đơn vị đồng. VND không có phần lẻ, mà dùng số thực thì có ngày tổng đơn
+  -- ghi vào D1 thành 756199.9999999999.
+  subtotal        INTEGER NOT NULL,
+  discount_rate   REAL    NOT NULL,           -- 0 | 0.05 | 0.12 — chép lại bậc ĐÃ áp lúc đặt
+  discount        INTEGER NOT NULL,
+  shipping_fee    INTEGER NOT NULL,
+  total           INTEGER NOT NULL,
+
+  -- Giá trị tiếng Anh, để khớp tên cột/giá trị enum ở mọi nơi khác trong D1 (bảng này là bảng
+  -- duy nhất từng có giá trị tiếng Việt, gây lệch khi lọc/thống kê bằng SQL thuần).
+  -- 'pending_payment'      : đơn chuyển khoản, đã tạo mã, chưa thấy tiền
+  -- 'pending_confirmation' : COD vừa đặt, hoặc chuyển khoản đã gửi ảnh — chờ người gọi xác nhận
+  -- 'confirmed' | 'cancelled'
+  status          TEXT NOT NULL,
+  receipt_key     TEXT,                       -- khoá object trên R2, NULL khi chưa gửi ảnh
+  notes           TEXT,
+  order_date      TEXT NOT NULL               -- ISO 8601 UTC, cùng quy ước design_orders
+);
+
+CREATE INDEX IF NOT EXISTS idx_shop_orders_date   ON shop_orders(order_date DESC);
+CREATE INDEX IF NOT EXISTS idx_shop_orders_phone  ON shop_orders(phone);
+CREATE INDEX IF NOT EXISTS idx_shop_orders_status ON shop_orders(status);
+
+-- Từng dòng hàng trong đơn.
+--
+-- variant_name và unit_price là BẢN CHÉP tại thời điểm đặt, không phải tham chiếu sang
+-- Airtable. Giá trên Airtable đổi rồi build lại là giá hiện tại đổi theo — nhưng đơn cũ phải
+-- giữ đúng con số khách đã đồng ý trả. Không chép thì lịch sử đơn tự viết lại sau lưng mình.
+CREATE TABLE IF NOT EXISTS shop_order_items (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  order_code   TEXT    NOT NULL REFERENCES shop_orders(code),
+  variant_href TEXT    NOT NULL,              -- khoá tra ngược sang kb.json / trang sản phẩm
+  variant_name TEXT    NOT NULL,
+  unit_price   INTEGER NOT NULL,
+  quantity     INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_shop_order_items_order ON shop_order_items(order_code);

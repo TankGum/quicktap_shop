@@ -10,16 +10,18 @@
     "start": "npx serve out",
     "lint": "next lint",
     "test": "node --test test/",
-    "preview": "next build && npx wrangler pages dev out --kv KV_BINDING --d1 DB=e6ed458c-b10b-467e-a983-7036a5be91e2 --ai AI",
+    "preview": "next build && npx wrangler pages dev out --kv KV_BINDING --d1 DB=e6ed458c-b10b-467e-a983-7036a5be91e2 --r2 RECEIPTS --ai AI",
     "d1:orders": "npx wrangler d1 execute quicktap-orders --remote --command \"SELECT code, customer_name, phone, quantity, order_date, cloudinary_link FROM design_orders ORDER BY id DESC LIMIT 20\"",
     "d1:chat": "npx wrangler d1 execute quicktap-orders --remote --command \"SELECT session_id, role, content, neurons, created_at FROM chat_logs ORDER BY id DESC LIMIT 40\"",
     "d1:chat:local": "npx wrangler d1 execute DB --local --config d1/wrangler.jsonc --persist-to .wrangler/state --command \"SELECT session_id, role, content, neurons, created_at FROM chat_logs ORDER BY id DESC LIMIT 40\"",
     "d1:schema": "npx wrangler d1 execute quicktap-orders --remote --file=d1/schema.sql",
-    "d1:schema:local": "npx wrangler d1 execute DB --local --file=d1/schema.sql --config d1/wrangler.jsonc --persist-to .wrangler/state"
+    "d1:schema:local": "npx wrangler d1 execute DB --local --file=d1/schema.sql --config d1/wrangler.jsonc --persist-to .wrangler/state",
+    "diagioi": "node scripts/fetch-diagioi.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.41.0",
     "next": "^15.5.4",
+    "qrcode.react": "^4.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

@@ -185,16 +185,59 @@ async function lookupOrder(db, ref) {
     .bind(ref.code, ref.phone)
     .first();
 
-  // Không khớp thì chỉ báo "không tìm thấy", KHÔNG bao giờ tách ra "mã đúng, số sai" — chính
-  // câu đó xác nhận mã có tồn tại, tức là biến việc quét mã thành có ích. Xem orderSection
-  // trong lib/chatPrompt.mjs.
-  if (!row) return { notFound: true };
+  if (row) {
+    return {
+      kind: 'design',
+      code: row.code,
+      quantity: row.quantity,
+      orderDate: row.order_date,
+      designUrl: row.cloudinary_link,
+    };
+  }
+
+  // Hai luồng đặt hàng ghi vào hai bảng khác nhau nhưng dùng CHUNG một họ mã (lib/orderCode.mjs)
+  // và khách thì chỉ biết đúng một mã. Quên tra bảng thứ hai là khách đặt qua giỏ hàng hỏi "đơn
+  // tôi sao rồi" sẽ nhận "không tìm thấy đơn" — dữ liệu có đủ mà đường dẫn tới model bị đứt.
+  const shop = await db
+    .prepare(
+      `SELECT code, order_date, payment_method, status, subtotal, discount, shipping_fee, total
+         FROM shop_orders
+        WHERE code = ? AND phone = ?`
+    )
+    .bind(ref.code, ref.phone)
+    .first();
+
+  // Không khớp ở CẢ HAI bảng thì chỉ báo "không tìm thấy", KHÔNG bao giờ tách ra "mã đúng, số
+  // sai" — chính câu đó xác nhận mã có tồn tại, tức là biến việc quét mã thành có ích. Xem
+  // orderSection trong lib/chatPrompt.mjs.
+  if (!shop) return { notFound: true };
+
+  // Câu SELECT ở đây cũng KHÔNG lấy customer_name, phone và địa chỉ dù D1 có sẵn: cùng lý do
+  // với design_orders — khách vốn đã biết, còn model thì không nên có cơ hội đọc chúng ra.
+  const items = await db
+    .prepare(
+      `SELECT variant_name, unit_price, quantity
+         FROM shop_order_items
+        WHERE order_code = ?`
+    )
+    .bind(ref.code)
+    .all();
 
   return {
-    code: row.code,
-    quantity: row.quantity,
-    orderDate: row.order_date,
-    designUrl: row.cloudinary_link,
+    kind: 'shop',
+    code: shop.code,
+    orderDate: shop.order_date,
+    paymentMethod: shop.payment_method,
+    status: shop.status,
+    subtotal: shop.subtotal,
+    discount: shop.discount,
+    shippingFee: shop.shipping_fee,
+    total: shop.total,
+    lines: (items?.results || []).map((r) => ({
+      name: r.variant_name,
+      unitPrice: r.unit_price,
+      quantity: r.quantity,
+    })),
   };
 }
 

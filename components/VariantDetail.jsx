@@ -6,8 +6,12 @@ import Link from 'next/link';
 import Reveal from '@/components/Reveal';
 import JsonLd from '@/components/JsonLd';
 import VariantGallery from '@/components/VariantGallery';
+// Server Component render được Client Component — AddToCartButton cần localStorage nên nó
+// mang 'use client', còn trang này vẫn dựng sẵn lúc build.
+import AddToCartButton from '@/components/AddToCartButton';
 import { siteConfig } from '@/lib/siteConfig';
 import { toPlainText } from '@/lib/airtable';
+import { parsePrice } from '@/lib/cartPricing.mjs';
 import { localBusinessSchema, breadcrumbSchema, ORG_ID } from '@/lib/schema';
 
 // Mô tả trong Airtable có thể chứa <br> (gõ tay để xuống dòng) hoặc xuống dòng thật (Enter
@@ -31,7 +35,10 @@ function renderMultiline(text) {
 }
 
 export default function VariantDetail({ variant, product, FallbackArt }) {
-  const priceNumber = variant.price ? variant.price.replace(/[^\d]/g, '') : '';
+  // Dùng parsePrice thay vì bóc mọi chữ số: ô Price trên Airtable cho gõ text tự do, và
+  // "Liên hệ 0388102842" mà bóc số sẽ khai vào JSON-LD một mức giá 388.102.842đ — Google đọc
+  // được, khách thì không, nên kiểu sai này không ai phát hiện ra.
+  const priceNumber = parsePrice(variant.price) ?? '';
 
   return (
     <>
@@ -62,9 +69,11 @@ export default function VariantDetail({ variant, product, FallbackArt }) {
               {variant.price && <p className="variant-detail-price">{variant.price}</p>}
               {variant.description && <p className="variant-detail-desc">{renderMultiline(variant.description)}</p>}
 
+              <AddToCartButton variant={variant} />
+
               <div className="product-ctas">
-                <Link className="btn btn-primary" href="/lien-he">Đặt mẫu này</Link>
                 <Link className="btn btn-ghost" href={product.href}>Xem các mẫu khác</Link>
+                <Link className="btn btn-ghost" href="/lien-he">Gọi đặt trực tiếp</Link>
               </div>
             </div>
           </Reveal>
@@ -118,19 +127,37 @@ export default function VariantDetail({ variant, product, FallbackArt }) {
                       // Google bỏ qua cả khối Offer nếu thiếu url — không có nó thì giá không
                       // bao giờ hiện kèm kết quả tìm kiếm, tức mất đúng phần đáng giá nhất.
                       url: `${siteConfig.siteUrl}${variant.href}`,
-                      // Khai phí vận chuyển = 0 và GIỚI HẠN đúng ở Hà Nội bằng addressRegion.
-                      // Nhờ vậy Google được phép hiện nhãn "Miễn phí vận chuyển" cho người
-                      // tìm ở Hà Nội mà không hứa nhầm với khách tỉnh khác — nơi phí vẫn báo
-                      // lúc xác nhận đơn (xem siteConfig.shippingPolicy).
-                      shippingDetails: {
-                        '@type': 'OfferShippingDetails',
-                        shippingRate: { '@type': 'MonetaryAmount', value: 0, currency: 'VND' },
-                        shippingDestination: {
-                          '@type': 'DefinedRegion',
-                          addressCountry: 'VN',
-                          addressRegion: siteConfig.shippingFreeRegion,
+                      // Hai mục: Hà Nội 0đ và phần còn lại của Việt Nam theo phí cố định. Mục
+                      // Hà Nội hẹp hơn (có addressRegion) nên Google áp nó cho người tìm ở Hà
+                      // Nội, còn mục kia phủ các tỉnh — nhờ vậy nhãn "Miễn phí vận chuyển" chỉ
+                      // hiện đúng nơi được miễn, không hứa nhầm với khách tỉnh.
+                      //
+                      // Trước đây chỉ có mục Hà Nội vì phí tỉnh khác chưa chốt con số. Nay giỏ
+                      // hàng bắt buộc phải hiện tổng tiền dứt khoát nên phí đã cố định — xem
+                      // siteConfig.shippingFlatFee.
+                      shippingDetails: [
+                        {
+                          '@type': 'OfferShippingDetails',
+                          shippingRate: { '@type': 'MonetaryAmount', value: 0, currency: 'VND' },
+                          shippingDestination: {
+                            '@type': 'DefinedRegion',
+                            addressCountry: 'VN',
+                            addressRegion: siteConfig.shippingFreeRegion,
+                          },
                         },
-                      },
+                        {
+                          '@type': 'OfferShippingDetails',
+                          shippingRate: {
+                            '@type': 'MonetaryAmount',
+                            value: siteConfig.shippingFlatFee,
+                            currency: 'VND',
+                          },
+                          shippingDestination: {
+                            '@type': 'DefinedRegion',
+                            addressCountry: 'VN',
+                          },
+                        },
+                      ],
                     },
                   }
                 : {}),

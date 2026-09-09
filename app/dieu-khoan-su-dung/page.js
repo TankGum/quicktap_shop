@@ -62,16 +62,28 @@ export default function TermsPage() {
             <h2>3. Đặt hàng và xác nhận</h2>
             <ul>
               <li>
-                Yêu cầu bạn gửi trên website là <b>đề nghị đặt hàng</b>, chưa phải hợp đồng.
+                Đơn đặt qua <Link href="/gio-hang">giỏ hàng</Link> có giá và phí giao hiển thị
+                đầy đủ trước khi bạn bấm đặt. Chúng tôi vẫn gọi điện xác nhận trước khi sản
+                xuất, và có quyền từ chối hoặc huỷ đơn nếu không liên hệ được, mẫu không thể
+                sản xuất, hoặc nghi ngờ đơn giả mạo.
               </li>
               <li>
-                Đơn được xác lập khi hai bên xác nhận qua điện thoại về mẫu, số lượng, giá và
-                địa chỉ giao hàng.
+                Yêu cầu gửi qua các kênh khác (điện thoại, Zalo, công cụ Thiết kế riêng) là{' '}
+                <b>đề nghị đặt hàng</b>; giá và thời gian giao được báo khi hai bên xác nhận.
               </li>
               <li>
-                Giá và thời gian giao hàng được báo tại thời điểm xác nhận. Chúng tôi có quyền
-                từ chối hoặc huỷ đơn nếu thông tin không liên hệ được, mẫu không thể sản xuất,
-                hoặc nghi ngờ đơn giả mạo.
+                <b>Thanh toán khi nhận hàng (COD):</b> bạn trả tiền cho đơn vị giao hàng, không
+                phải trả trước bất kỳ khoản nào.
+              </li>
+              <li>
+                <b>Chuyển khoản:</b> bạn chuyển đúng số tiền và nội dung (mã đơn) hiển thị sau
+                khi đặt. Nếu chúng tôi huỷ đơn hoặc không thể giao hàng sau khi đã nhận tiền,
+                chúng tôi <b>hoàn lại toàn bộ</b> số tiền đã nhận về chính tài khoản bạn đã
+                chuyển, trong vòng 7 ngày làm việc kể từ khi hai bên thống nhất huỷ.
+              </li>
+              <li>
+                Phí giao hàng: miễn phí tại Hà Nội, {'30.000đ'} cho các tỉnh thành khác. Mức phí
+                này đã tính sẵn trong tổng tiền hiển thị ở giỏ hàng.
               </li>
               <li>
                 Sản phẩm in theo yêu cầu riêng (logo của quán) là hàng đặt làm riêng — mọi thay

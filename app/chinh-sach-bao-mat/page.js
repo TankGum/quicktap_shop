@@ -75,8 +75,18 @@ export default function PrivacyPage() {
               </li>
             </ul>
             <p>
-              Chúng tôi <b>không</b> thu thập email, không yêu cầu thông tin thanh toán, không
-              thu thập vị trí và không lập hồ sơ hành vi người dùng.
+              Khi bạn đặt qua <Link href="/gio-hang">giỏ hàng</Link>, chúng tôi lưu thêm{' '}
+              <b>địa chỉ giao hàng</b> (tỉnh/thành, phường/xã, số nhà và tên đường) và{' '}
+              <b>hình thức thanh toán</b> bạn chọn. Nếu bạn chuyển khoản và gửi ảnh chụp màn
+              hình xác nhận, chúng tôi lưu ảnh đó trong kho riêng tư để đối chiếu — ảnh{' '}
+              <b>không</b> có đường dẫn công khai, chỉ nhân viên xử lý đơn mở được. Việc gửi ảnh
+              là tuỳ chọn, đơn của bạn vẫn được ghi nhận nếu không gửi.
+            </p>
+            <p>
+              Chúng tôi <b>không</b> thu thập email, <b>không</b> lưu số thẻ hay thông tin đăng
+              nhập ngân hàng của bạn (chúng tôi không có cổng thanh toán — bạn chuyển khoản trực
+              tiếp qua ứng dụng ngân hàng của mình), không thu thập vị trí và không lập hồ sơ
+              hành vi người dùng.
             </p>
 
             <h2>2. Dùng để làm gì</h2>
