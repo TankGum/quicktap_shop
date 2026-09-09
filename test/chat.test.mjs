@@ -139,7 +139,13 @@ test('extractDelta: lấy số neuron khi có', () => {
 // ---------- lib/chatPrompt.mjs ----------
 
 const kb = {
-  brand: { name: 'QuickTapReview', phone: '0388 102 842', zalo: 'https://zalo.me/0388102842' },
+  brand: {
+    name: 'QuickTapReview',
+    phone: '0388 102 842',
+    zalo: 'https://zalo.me/0388102842',
+    quantityPricing: 'Đặt từ 2 cái được giá tốt hơn.',
+    shipping: 'Miễn phí giao hàng tại Hà Nội, kể cả khi chỉ đặt 1 cái.',
+  },
   products: [
     {
       title: 'Standee để bàn A6',
@@ -159,6 +165,15 @@ test('buildSystemPrompt: có giá và tên mẫu từ KB', () => {
   assert.match(prompt, /199\.000 VND/);
   assert.match(prompt, /Mẫu A/);
   assert.match(prompt, /0388 102 842/);
+});
+
+test('buildSystemPrompt: chính sách giao hàng và giá theo số lượng lọt vào prompt', () => {
+  // Hai trường này khai ở siteConfig rồi chảy qua kb.json, nhưng chỉ có mặt trong prompt nếu
+  // knowledgeSection() đọc tới. Đã từng khai `shipping` mà quên đọc: chat gặp câu "có freeship
+  // không?" liền trả lời "mình chưa chắc" rồi đẩy khách sang hotline, ngay trước lúc chốt đơn.
+  const prompt = buildSystemPrompt(kb, null);
+  assert.match(prompt, /Miễn phí giao hàng tại Hà Nội/);
+  assert.match(prompt, /Đặt từ 2 cái được giá tốt hơn/);
 });
 
 test('buildSystemPrompt: có luật chặn mẫu hết hàng và cấm tô vẽ', () => {
