@@ -207,3 +207,42 @@ test('buildSystemPrompt: không khớp thì cấm nói phần nào sai', () => {
   assert.match(prompt, /không tìm thấy đơn khớp/i);
   assert.match(prompt, /không nói phần nào đúng phần nào sai/i);
 });
+
+test('buildSystemPrompt: đơn từ giỏ hàng hiện đủ dòng hàng, tiền và trạng thái', () => {
+  const prompt = buildSystemPrompt(kb, {
+    kind: 'shop',
+    code: 'TK-8F3K',
+    orderDate: '2026-09-08T04:12:09.123Z',
+    paymentMethod: 'transfer',
+    status: 'pending_payment',
+    subtotal: 796000,
+    discount: 39800,
+    shippingFee: 30000,
+    total: 786200,
+    lines: [{ name: 'Mẫu A', unitPrice: 199000, quantity: 4 }],
+  });
+  assert.match(prompt, /Mẫu A × 4/);
+  assert.match(prompt, /786\.200đ/);
+  assert.match(prompt, /CHƯA thấy tiền/, 'trả lời sai chỗ này là xác nhận nhầm đã nhận tiền');
+  // Vẫn phải sạch thông tin cá nhân y như đơn thiết kế riêng.
+  assert.doesNotMatch(prompt, /customer_name|Tên quán:|Địa chỉ:/);
+});
+
+test('buildSystemPrompt: luật cấm đọc lại có cả địa chỉ', () => {
+  // Đơn giỏ hàng có thêm địa chỉ giao — luật cũ chỉ nêu tên quán và số điện thoại.
+  assert.match(buildSystemPrompt(kb, null), /Không bao giờ đọc lại tên quán, số điện thoại hay ĐỊA CHỈ/);
+});
+
+test('buildSystemPrompt: link ảnh KHÔNG lọt vào prompt', () => {
+  // kb.json có `image` cho mỗi mẫu để giỏ hàng hiện thumbnail. Prompt thì tuyệt đối không được
+  // chứa chúng: model chỉ đọc chữ, mà mỗi link Cloudinary dài cả trăm ký tự — lọt vào là đốt
+  // token của MỌI lượt chat cho thứ không bao giờ dùng tới.
+  const withImages = {
+    ...kb,
+    products: kb.products.map((p) => ({
+      ...p,
+      variants: p.variants.map((v) => ({ ...v, image: 'https://res.cloudinary.com/x/anh-mau.png' })),
+    })),
+  };
+  assert.doesNotMatch(buildSystemPrompt(withImages, null), /cloudinary|anh-mau\.png/i);
+});

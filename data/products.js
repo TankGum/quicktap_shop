@@ -1,3 +1,8 @@
+// Khối "Sản phẩm" nằm trên TRANG CHỦ, không phải một trang riêng — /san-pham không tồn tại.
+// Khai một chỗ vì Header và giỏ hàng cùng trỏ tới nó; hai bản chép tay thì có ngày một bên
+// dẫn khách vào trang 404 mà không ai thử bấm.
+export const PRODUCTS_HREF = '/#san-pham';
+
 // Nội dung tiếp thị cố định của 2 dòng sản phẩm (Bảng NFC, Standee) — sửa ở ĐÂY.
 //
 // Các MẪU THẬT (tên, mô tả, giá, ảnh, video) thì KHÔNG sửa ở file này nữa — điền qua

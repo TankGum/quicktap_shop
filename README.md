@@ -69,7 +69,43 @@ export const siteConfig = {
 Toàn bộ Header, Footer, CTA mobile, trang Liên hệ, JSON-LD đều đọc từ file này — sửa xong là
 cập nhật khắp site.
 
-### 2. Ảnh sản phẩm thật
+### 2. Tài khoản nhận chuyển khoản + kho ảnh biên lai (giỏ hàng)
+
+Giỏ hàng chạy được ngay với **COD**. Muốn bật thêm **chuyển khoản** thì cần hai thứ:
+
+**a) Điền tài khoản trong `lib/siteConfig.js`.** Để trống thì trang thanh toán tự ẩn hẳn lựa
+chọn chuyển khoản và chỉ hiện COD — cố ý như vậy, thà thiếu một cách trả tiền còn hơn hiện mã
+QR trỏ vào tài khoản rỗng.
+
+```js
+bank: {
+  bin: '970436',              // mã ngân hàng 6 số theo Napas (Vietcombank 970436, MB 970422…)
+  accountNo: '1234567890',
+  accountName: 'NGUYEN VAN A', // KHÔNG DẤU, in hoa — đúng cách ngân hàng hiển thị
+  bankName: 'Vietcombank',
+},
+```
+
+**b) Bucket R2 `quicktap-receipts` đã tạo sẵn** (`wrangler r2 bucket create`) — chỉ còn thêm
+binding `RECEIPTS` trong Cloudflare Pages → Settings → Functions → R2 bindings để bản deploy
+THẬT nhìn thấy nó (Pages đọc binding từ Dashboard, không đọc từ file `wrangler.jsonc` ở máy).
+Đây là chỗ chứa ảnh chụp màn hình chuyển khoản. Dùng R2 chứ không phải Cloudinary như ảnh
+thiết kế: link Cloudinary là URL công khai ai có link cũng mở được, mà ảnh sao kê thì có tên
+chủ tài khoản, số tài khoản, đôi khi cả số dư.
+
+Thiếu binding `RECEIPTS` thì đơn vẫn đặt được bình thường, chỉ riêng bước gửi ảnh trả 503.
+Xem đủ hết đơn/ảnh trong bucket bằng `npx wrangler r2 object get quicktap-receipts/<key>` hoặc
+mở trực tiếp trong Cloudflare Dashboard → R2.
+
+**Chạy `npm run d1:schema`** sau khi kéo code này về — giỏ hàng dùng 2 bảng mới
+(`shop_orders`, `shop_order_items`), chưa tạo thì đặt hàng trả 502.
+
+**Danh mục địa chỉ** (`public/diachi.json`, 34 tỉnh/thành + 3.321 phường/xã) đã commit sẵn.
+Khi nào đơn vị hành chính thay đổi thì chạy `npm run diagioi` để sinh lại — script chạy tay,
+KHÔNG nằm trong `npm run build`, vì build mà phụ thuộc API ngoài thì hôm nào nó sập là không
+deploy được.
+
+### 3. Ảnh sản phẩm thật
 
 **Hero** (`components/HeroShowcase.jsx`) và phần "SẢN PHẨM" ở trang chủ tự lấy ảnh chụp thật
 của từng dòng sản phẩm từ Airtable (ảnh đầu tiên có trong bảng mẫu — xem `getVariantsByProduct`
@@ -77,7 +113,7 @@ trong `lib/airtable.js`) — **không cần sửa code**, chỉ cần upload ả
 sản phẩm nào chưa có ảnh thật thì tự rơi về hình vẽ SVG minh hoạ (`components/illustrations.jsx`,
 `NfcPlateArt`/`StandeeArt`) làm placeholder tạm thời.
 
-### 3. Ảnh chia sẻ (Open Graph)
+### 4. Ảnh chia sẻ (Open Graph)
 
 `public/assets/img/og-image.png` (1200×630) đang là bản dựng sẵn, dùng chung cho cả 3 trang.
 Cập nhật `openGraph.images` trong `app/layout.js` nếu đổi ảnh hoặc kích thước.

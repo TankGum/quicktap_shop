@@ -3760,3 +3760,333 @@ a.product-split-media:hover svg { transform: scale(1.03); }
 }
 /* Điện thoại: hai dòng chú thích dưới đáy khung đâm vào nhau, bỏ thông số cho thoáng. */
 @media (max-width: 560px) { .std3d-spec { display: none; } }
+
+/* ============================================================================
+   GIỎ HÀNG & THANH TOÁN  (CartLink, AddToCartButton, CheckoutView)
+   ========================================================================= */
+
+/* Trang giỏ không cần khoảng trống hero lớn như các trang giới thiệu — khách vào đây để làm
+   việc, không phải để đọc. */
+.page-hero-tight { padding-bottom: 0; }
+
+/* --- Link giỏ trên header ---
+   Cùng ngôn ngữ hình với .nav-toggle (hamburger) đứng ngay cạnh: ô vuông bo góc 10px, không
+   viền, nền xám nhạt khi hover — trước đây bo tròn có viền riêng, đứng cạnh hamburger vuông
+   trông như hai hệ thống nút khác nhau lạc vào cùng một hàng. */
+.cart-link {
+  position: relative;
+  display: inline-grid; place-items: center;
+  width: 40px; height: 40px; border-radius: 10px;
+  color: var(--ink); text-decoration: none;
+  transition: background-color .2s var(--ease);
+}
+.cart-link:hover { background: var(--bg-alt); }
+.cart-link .i { width: 21px; height: 21px; }
+.cart-link-count {
+  position: absolute; top: 3px; right: 3px;
+  min-width: 16px; height: 16px; padding: 0 4px;
+  display: grid; place-items: center; border-radius: 999px;
+  background: var(--accent); color: #fff;
+  font-size: .66rem; font-weight: 700; line-height: 1;
+  box-shadow: 0 0 0 2px var(--bg);
+}
+/* Sát ngay cạnh hamburger trên màn hẹp — hai nút cùng cỡ, cùng kiểu, đọc như một cặp thao tác
+   nhanh thay vì hai icon rời rạc mỗi cái một style. */
+@media (max-width: 1039px) { .cart-link { margin-right: -2px; } }
+
+/* --- Nút thêm vào giỏ trên trang mẫu --- */
+.cart-add { margin: 1.5rem 0 1rem; }
+.cart-add-row { display: flex; flex-wrap: wrap; gap: .6rem; align-items: stretch; }
+.cart-add-stepper {
+  display: inline-flex; align-items: center; flex: none;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+}
+.cart-add-stepper button {
+  width: 2.4rem; align-self: stretch; border: 0; border-radius: 999px; background: none;
+  color: var(--ink-2); font-size: 1.15rem; line-height: 1; cursor: pointer;
+}
+.cart-add-stepper button:hover { background: var(--bg-alt); color: var(--ink); }
+.cart-add-stepper input {
+  width: 2.6rem; border: 0; background: none; text-align: center;
+  font: inherit; font-weight: 600; color: var(--ink);
+  -moz-appearance: textfield; appearance: textfield;
+}
+.cart-add-stepper input::-webkit-outer-spin-button,
+.cart-add-stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.cart-add-main { flex: 1 1 9rem; justify-content: center; }
+.cart-add-main .i { width: 18px; height: 18px; }
+/* Từ tablet xuống mobile, khóa bố cục thành 2 cột: bộ đếm đứng một hàng riêng, hai CTA
+   luôn bằng nhau. Không còn trạng thái một nút bị hất xuống dòng lẻ ở khoảng 421–559px. */
+@media (max-width: 600px) {
+  .cart-add-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; }
+  .cart-add-stepper { grid-column: 1 / -1; justify-self: start; }
+  .cart-add-main { min-width: 0; width: 100%; padding-inline: .75rem; }
+}
+@media (max-width: 360px) {
+  .cart-add-row { grid-template-columns: 1fr; }
+  .cart-add-main { grid-column: 1; }
+}
+.cart-add-note { margin: .7rem 0 0; color: var(--ink-3); font-size: .88rem; }
+.cart-add-done {
+  margin: .7rem 0 0; padding: .55rem .8rem; border-radius: var(--radius-sm);
+  background: var(--accent-soft); color: var(--accent-ink); font-size: .9rem;
+}
+.cart-add-done a { color: inherit; font-weight: 600; }
+.cart-add-off {
+  margin: 1.5rem 0 1rem; padding: .9rem 1.1rem;
+  background: var(--bg-alt); border-radius: var(--radius-sm);
+  color: var(--ink-2); font-size: .93rem; line-height: 1.55;
+}
+
+/* --- Bố cục 2 cột --- */
+.ck { display: grid; gap: clamp(24px, 3vw, 40px); align-items: start; }
+/* min-width:0 là bắt buộc, không phải trang trí: ô lưới mặc định không co nhỏ hơn nội dung của
+   nó, nên một href dài ở dòng hàng lỗi sẽ đẩy toàn bộ cột phình ra khỏi màn hình. */
+.ck-main { min-width: 0; }
+@media (min-width: 900px) {
+  .ck { grid-template-columns: minmax(0, 1fr) 350px; }
+  /* Thẻ tổng tiền đi theo mắt khách khi cuộn qua form dài — con số họ sắp trả luôn nhìn thấy
+     được, không phải cuộn xuống đáy mới biết. 88px = 68px (mốc header dính, cùng con số với
+     scroll-margin-top ở trên) + 20px thở. */
+  .ck-aside { position: sticky; top: 88px; }
+}
+
+.ck-empty, .ck-loading {
+  padding: 3rem 1rem; text-align: center; color: var(--ink-2);
+  background: var(--bg-alt); border-radius: var(--radius);
+}
+.ck-empty-icon {
+  display: block; width: 40px; height: 40px; margin: 0 auto .9rem;
+  color: var(--ink-3);
+}
+.ck-empty p { margin: 0 0 1.2rem; font-size: 1.05rem; }
+
+/* --- Dòng hàng --- */
+.ck-lines {
+  margin-bottom: 2rem; padding: clamp(1rem, 2.5vw, 1.4rem);
+  border: 1px solid var(--line-2); border-radius: var(--radius);
+  background: var(--surface);
+}
+.ck-lines-head {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+  margin-bottom: .25rem;
+}
+.ck-lines-head h2 { margin: 0; font-size: 1.08rem; letter-spacing: -.01em; }
+.ck-lines-head span { color: var(--ink-3); font-size: .85rem; white-space: nowrap; }
+.ck-line {
+  display: grid; align-items: center; gap: 1rem;
+  grid-template-columns: 64px minmax(0, 1fr) auto auto auto;
+  padding: 1.1rem 0; border-bottom: 1px solid var(--line-2);
+}
+.ck-line:first-child { padding-top: 1.1rem; }
+.ck-thumb {
+  width: 64px; height: 64px; border-radius: var(--radius-sm);
+  object-fit: cover; background: var(--bg-alt);
+}
+.ck-thumb-none { display: block; border: 1px solid var(--line-2); }
+.ck-line-main { display: grid; gap: .25rem; min-width: 0; }
+.ck-line-name {
+  font-weight: 600; color: var(--ink); text-decoration: none; line-height: 1.35;
+}
+.ck-line-name:hover { color: var(--accent-ink); }
+.ck-line-unit { color: var(--ink-3); font-size: .87rem; }
+
+.ck-line-qty {
+  display: inline-flex; align-items: center;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--surface);
+}
+.ck-line-qty button {
+  width: 2rem; height: 2rem; border: 0; border-radius: 50%; background: none;
+  color: var(--ink-2); font-size: 1.05rem; line-height: 1; cursor: pointer;
+}
+.ck-line-qty button:hover { background: var(--bg-alt); color: var(--ink); }
+.ck-line-qty input {
+  width: 2.4rem; height: 2rem; border: 0; background: none;
+  text-align: center; font: inherit; font-weight: 600; color: var(--ink);
+  -moz-appearance: textfield; appearance: textfield;
+}
+.ck-line-qty input::-webkit-outer-spin-button,
+.ck-line-qty input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+.ck-line-total { min-width: 6rem; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ck-line-remove {
+  border: 0; background: none; color: var(--ink-3);
+  font-size: .85rem; cursor: pointer; padding: .4em;
+}
+.ck-line-remove:hover { color: var(--danger); }
+.ck-line-bad { grid-template-columns: 64px minmax(0, 1fr) auto; }
+.ck-line-bad .ck-line-name { color: var(--ink-3); font-weight: 500; word-break: break-all; font-size: .9rem; }
+.ck-line-bad .ck-line-unit { color: var(--danger); }
+
+/* --- Form --- */
+.ck-h2 {
+  display: flex; align-items: center; gap: .6rem;
+  margin: 0 0 1rem; font-size: 1.1rem; letter-spacing: -.01em;
+  padding-bottom: .7rem; border-bottom: 1px solid var(--line-2);
+}
+/* Số bước nhỏ trước tiêu đề: hai mục "Thông tin nhận hàng" / "Thanh toán" nối tiếp nhau trong
+   cùng một form dài, đánh số cho khách thấy đây là 2 bước của một quy trình chứ không phải
+   hai khối rời rạc. */
+.ck-step {
+  display: inline-grid; place-items: center; flex: none;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--ink); color: var(--bg);
+  font-size: .78rem; font-weight: 700;
+}
+.ck-form > .ck-h2 + .ck-field { margin-top: 0; }
+.ck-form .ck-h2:not(:first-child) { margin-top: 2rem; }
+
+/* Hai ô ngắn (tên + điện thoại, tỉnh + phường) đứng cạnh nhau cho form đỡ dài lê thê. */
+@media (min-width: 560px) {
+  .ck-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+  .ck-form > .ck-h2, .ck-form > .ck-pay, .ck-form > .ck-err { grid-column: 1 / -1; }
+  .ck-field-wide { grid-column: 1 / -1; }
+}
+
+.ck-field { display: grid; gap: .4rem; margin-bottom: 1.1rem; align-content: start; }
+.ck-label { font-size: .87rem; font-weight: 600; color: var(--ink-2); }
+.ck-required { color: var(--danger); }
+.ck-input {
+  width: 100%; padding: .7em .85em;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  font: inherit; color: var(--ink); background: var(--surface);
+  transition: border-color .18s var(--ease), box-shadow .18s var(--ease);
+}
+.ck-input:hover { border-color: var(--ink-3); }
+.ck-input:focus-visible {
+  outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.ck-input:disabled { background: var(--bg-alt); color: var(--ink-3); cursor: not-allowed; }
+textarea.ck-input { resize: vertical; min-height: 4.5rem; }
+select.ck-input {
+  appearance: none; cursor: pointer; padding-right: 2.5rem;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink-3) 50%),
+    linear-gradient(135deg, var(--ink-3) 50%, transparent 50%);
+  background-position: calc(100% - 19px) 53%, calc(100% - 14px) 53%;
+  background-size: 5px 5px, 5px 5px; background-repeat: no-repeat;
+}
+.ck-err { color: var(--danger); font-size: .84rem; margin: 0; }
+
+/* --- Chọn thanh toán --- */
+.ck-pay { display: grid; gap: .7rem; margin-bottom: .5rem; }
+.ck-pay-opt {
+  display: flex; gap: .8rem; align-items: flex-start;
+  padding: 1rem 1.1rem; border: 1px solid var(--line); border-radius: var(--radius-sm);
+  cursor: pointer; transition: border-color .18s var(--ease), background .18s var(--ease);
+}
+.ck-pay-opt:hover { border-color: var(--ink-3); }
+.ck-pay-opt:has(input:checked) {
+  border-color: var(--accent); background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+.ck-pay-opt input { margin-top: .25rem; accent-color: var(--accent); flex: none; }
+.ck-pay-text { display: grid; gap: .2rem; }
+.ck-pay-text b { font-size: .97rem; }
+.ck-pay-text em { font-style: normal; color: var(--ink-2); font-size: .87rem; line-height: 1.5; }
+
+/* --- Thẻ tổng tiền --- */
+.ck-card {
+  padding: 1.4rem; border: 1px solid var(--line-2); border-radius: var(--radius);
+  background: var(--surface); box-shadow: var(--shadow);
+}
+.ck-sum { margin: 0 0 1.2rem; display: grid; gap: .1rem; }
+.ck-sum > div { display: flex; justify-content: space-between; gap: 1rem; padding: .38rem 0; font-size: .94rem; }
+.ck-sum dt { color: var(--ink-2); }
+.ck-sum dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 500; }
+.ck-sum-off dt, .ck-sum-off dd { color: var(--accent-ink); }
+.ck-sum-pending { color: var(--ink-3); font-size: .85rem; font-weight: 400; }
+.ck-sum-total {
+  margin-top: .5rem; padding-top: .8rem !important;
+  border-top: 1px solid var(--line); align-items: baseline;
+}
+.ck-sum-total dt { color: var(--ink) !important; font-weight: 600; }
+.ck-sum-total dd { font-size: 1.35rem; font-weight: 700; letter-spacing: -.02em; }
+.ck-submit { width: 100%; justify-content: center; }
+.ck-aside-note { margin: 1rem 0 0; color: var(--ink-3); font-size: .82rem; line-height: 1.55; }
+.ck-alert {
+  margin: 0 0 1rem; padding: .8rem 1rem; border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--danger) 7%, var(--bg));
+  color: var(--danger); font-size: .89rem; line-height: 1.5;
+}
+
+/* --- Sau khi đặt xong --- */
+.ck-done { max-width: 520px; margin-inline: auto; text-align: center; }
+.ck-done-mark {
+  width: 3.2rem; height: 3.2rem; margin: 0 auto 1.2rem; border-radius: 50%;
+  background: var(--accent); color: #fff;
+  font-size: 1.6rem; line-height: 3.2rem;
+  box-shadow: 0 8px 24px -8px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+.ck-done-title { margin: 0 0 .6rem; font-size: clamp(1.35rem, 3vw, 1.7rem); }
+.ck-done-sub, .ck-done-note { color: var(--ink-2); margin: 0 0 1.6rem; line-height: 1.6; }
+
+.ck-pay-panel {
+  margin: 0 0 1.6rem; padding: 1.5rem; text-align: left;
+  border: 1px solid var(--line-2); border-radius: var(--radius);
+  background: var(--surface); box-shadow: var(--shadow);
+}
+.ck-pay-amount {
+  margin: 0 0 1.3rem; text-align: center; font-size: 1rem; color: var(--ink-2); line-height: 1.6;
+}
+.ck-pay-amount b { color: var(--ink); font-size: 1.15rem; }
+.ck-qr {
+  display: flex; justify-content: center; padding: 1rem;
+  background: #fff; border: 1px solid var(--line-2); border-radius: var(--radius-sm);
+}
+.ck-bank { margin: 1.3rem 0 0; display: grid; gap: .1rem; }
+.ck-bank > div {
+  display: flex; justify-content: space-between; gap: 1rem; align-items: center;
+  padding: .55rem 0; border-bottom: 1px solid var(--line-2); font-size: .92rem;
+}
+.ck-bank > div:last-child { border-bottom: 0; }
+.ck-bank dt { color: var(--ink-3); flex: none; }
+.ck-bank dd { margin: 0; font-weight: 600; text-align: right; min-width: 0; }
+.ck-copy {
+  display: inline-flex; align-items: center; gap: .55rem;
+  border: 0; background: none; cursor: pointer; font: inherit; font-weight: 600;
+  color: var(--ink); padding: 0; text-align: right;
+}
+.ck-copy:hover { color: var(--accent-ink); }
+.ck-copy-hint {
+  flex: none; color: var(--accent-ink); font-size: .72rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .04em;
+  padding: .15em .5em; border-radius: 999px; background: var(--accent-soft);
+}
+
+.ck-receipt { margin-top: 1.5rem; padding-top: 1.3rem; border-top: 1px solid var(--line); }
+.ck-receipt-hint { margin: 0 0 .9rem; color: var(--ink-2); font-size: .89rem; line-height: 1.55; }
+.ck-receipt .btn { width: 100%; justify-content: center; }
+.ck-receipt-done {
+  margin: 0 0 1.6rem; padding: .9rem 1.1rem; border-radius: var(--radius-sm);
+  background: var(--accent-soft); color: var(--accent-ink); font-size: .92rem; line-height: 1.55;
+}
+
+@media (max-width: 559px) {
+  /* Dùng grid-template-areas thay vì chỉ đặt grid-column cho từng ô: bản trước đặt
+     .ck-line-total ở cột 3 nhưng KHÔNG ghim hàng, nên trình duyệt tự xếp nó vào hàng 1 (hàng
+     còn trống ở cột đó) — đúng ô mà .ck-line-remove cũng đang chiếm, hai thứ đè lên nhau và
+     bộ đếm số lượng bị đẩy trôi xuống một mình. Khai rõ từng vùng thì không còn chỗ cho
+     thuật toán tự xếp đoán sai nữa.
+     Card 2 hàng: ảnh bên trái cao hết card; hàng trên là tên + nút xoá, hàng dưới là bộ đếm
+     số lượng + thành tiền — đúng bố cục giỏ hàng quen mắt trên điện thoại. */
+  .ck-line {
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    grid-template-areas:
+      "thumb main   remove"
+      "thumb qty    total";
+    row-gap: .6rem; column-gap: .8rem;
+  }
+  .ck-thumb { grid-area: thumb; width: 56px; height: 56px; align-self: start; }
+  .ck-line-main { grid-area: main; }
+  .ck-line-remove { grid-area: remove; justify-self: end; align-self: start; }
+  .ck-line-qty { grid-area: qty; justify-self: start; }
+  .ck-line-total { grid-area: total; justify-self: end; align-self: center; min-width: 0; }
+
+  .ck-line-bad {
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    grid-template-areas: "thumb main remove";
+  }
+  .ck-pay-panel, .ck-card { padding: 1.1rem; }
+}

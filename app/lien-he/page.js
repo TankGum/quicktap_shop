@@ -36,7 +36,7 @@ const faqs = [
   },
   {
     q: 'Có mất phí giao hàng không?',
-    a: 'Giao hàng tại Hà Nội miễn phí, kể cả khi bạn chỉ đặt 1 cái — không có mức đơn tối thiểu. Các tỉnh thành khác giao toàn quốc, phí giao chúng tôi báo cụ thể khi xác nhận đơn.',
+    a: 'Giao hàng tại Hà Nội miễn phí, kể cả khi bạn chỉ đặt 1 cái — không có mức đơn tối thiểu. Các tỉnh thành khác phí giao 30.000đ, giao toàn quốc. Tổng tiền hiện đủ trong giỏ hàng trước khi bạn đặt.',
   },
 ];
 

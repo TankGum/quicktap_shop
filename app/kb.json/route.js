@@ -44,6 +44,19 @@ export async function GET() {
       shipping: siteConfig.shippingPolicy,
     },
 
+    // Cấu hình giá cho GIỎ HÀNG chạy ở trình duyệt. Cùng nguồn siteConfig mà Pages Function
+    // dùng (functions/api/dat-hang.js), nên hai bên không thể lệch: con số khách nhìn thấy
+    // trong giỏ đúng bằng con số server ghi vào D1.
+    //
+    // Công khai được: cả ba đều đã hiện sẵn trên trang sản phẩm và trang thanh toán.
+    // CỐ Ý không có siteConfig.bank ở đây — thông tin tài khoản chỉ đi ra qua phản hồi của
+    // /api/dat-hang sau khi đơn đã tạo, không nằm trong file mà chatbot đọc.
+    pricing: {
+      quantityTiers: siteConfig.quantityTiers,
+      freeProvinceCode: siteConfig.shippingFreeProvinceCode,
+      flatFee: siteConfig.shippingFlatFee,
+    },
+
     products: products.map((p) => ({
       id: p.id,
       title: p.title,
@@ -51,13 +64,19 @@ export async function GET() {
       tagline: p.tagline,
       body: p.body,
       ticks: p.ticks,
-      // Ảnh/video bỏ hẳn: model chỉ đọc chữ, mà mỗi link Cloudinary dài cả trăm ký tự — nhét
-      // vào là đốt token của MỌI lượt chat cho thứ không bao giờ dùng tới.
+      // Video vẫn bỏ hẳn. Riêng ẢNH ĐẠI DIỆN thì giữ lại một tấm — giỏ hàng cần nó để hiện
+      // thumbnail từng dòng hàng.
+      //
+      // Không mâu thuẫn với lý do cũ (đốt token chat): buildSystemPrompt chỉ đọc name/price/
+      // description/href của variant, `image` KHÔNG bao giờ chạm tới prompt. Cái tăng thêm chỉ
+      // là kích thước file mà chat tải đúng một lần cho mỗi isolate — 8 link, khoảng 1KB.
+      // Có test chặn ở test/chat.test.mjs để nếu sau này ai đó cho ảnh vào prompt thì đỏ ngay.
       variants: (variantsByProduct[p.id] || []).map((v) => ({
         name: v.name,
         price: v.price,
         description: v.description,
         href: v.href,
+        image: v.image || null,
       })),
     })),
 
