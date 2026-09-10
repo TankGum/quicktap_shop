@@ -103,12 +103,16 @@ function json(data, status = 200, headers = {}) {
 // lâu: deploy mới sinh isolate mới, mà /kb.json cũng chỉ đổi khi deploy.
 let kbCache = null;
 
-async function loadKnowledgeBase(request) {
+async function loadKnowledgeBase(env, request) {
   if (kbCache) return kbCache;
 
-  // Cùng tên miền với chính request đang xử lý, nên chạy đúng ở cả production, preview lẫn
-  // `wrangler pages dev` mà không cần biến cấu hình nào.
-  const res = await fetch(new URL('/kb.json', request.url), { cf: { cacheTtl: 300 } });
+  // env.ASSETS chứ KHÔNG phải fetch(). Cả hai đều lấy đúng file tĩnh của chính deployment này,
+  // nhưng fetch() đi một vòng ra edge — và bản preview có Cloudflare Access đứng chặn ở edge.
+  // Subrequest do Function tự gọi không mang cookie Access, nên nó nhận 302 về trang đăng nhập
+  // thay vì JSON: khung chat trả 503 trong khi binding không thiếu gì cả, nhìn log chỉ thấy
+  // "/kb.json trả 302". env.ASSETS đọc thẳng tài sản của deployment, không rời khỏi Worker, nên
+  // không có gì chặn được và cũng không tốn một lượt đi ra ngoài.
+  const res = await env.ASSETS.fetch(new URL('/kb.json', request.url));
   if (!res.ok) throw new Error(`/kb.json trả ${res.status}`);
 
   kbCache = await res.json();
@@ -457,7 +461,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
 
   let kb;
   try {
-    kb = await loadKnowledgeBase(request);
+    kb = await loadKnowledgeBase(env, request);
   } catch (err) {
     // Không có kiến thức thì thà im lặng còn hơn để model tự bịa giá cho khách.
     console.error(`[chat] không nạp được /kb.json: ${err.message}`);

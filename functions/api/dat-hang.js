@@ -47,15 +47,19 @@ function json(data, status = 200, headers = {}) {
 let kbCache = null;
 let diaGioiCache = null;
 
-async function loadStatic(request, path, cacheRef) {
-  const res = await fetch(new URL(path, request.url), { cf: { cacheTtl: 300 } });
+async function loadStatic(env, request, path) {
+  // env.ASSETS chứ KHÔNG phải fetch() — lý do đầy đủ ghi ở loadKnowledgeBase trong
+  // functions/api/chat.js. Ngắn gọn: fetch() đi ra edge, bản preview có Cloudflare Access chặn
+  // ở đó, subrequest không mang cookie nên nhận 302 và endpoint này trả 503 y hệt lúc thiếu
+  // binding DB — cùng một câu báo lỗi cho hai nguyên nhân khác nhau, rất mất thời gian để lần.
+  const res = await env.ASSETS.fetch(new URL(path, request.url));
   if (!res.ok) throw new Error(`${path} trả ${res.status}`);
   return res.json();
 }
 
-async function loadCatalogs(request) {
-  if (!kbCache) kbCache = await loadStatic(request, '/kb.json');
-  if (!diaGioiCache) diaGioiCache = await loadStatic(request, '/diachi.json');
+async function loadCatalogs(env, request) {
+  if (!kbCache) kbCache = await loadStatic(env, request, '/kb.json');
+  if (!diaGioiCache) diaGioiCache = await loadStatic(env, request, '/diachi.json');
   return { kb: kbCache, diaGioi: diaGioiCache };
 }
 
@@ -147,7 +151,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
 
   let kb, diaGioi;
   try {
-    ({ kb, diaGioi } = await loadCatalogs(request));
+    ({ kb, diaGioi } = await loadCatalogs(env, request));
   } catch (err) {
     console.error(`[dat-hang] không nạp được danh mục: ${err.message}`);
     return json({ message: 'Hệ thống đặt hàng đang tạm gián đoạn.' }, 503);
