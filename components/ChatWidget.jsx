@@ -33,6 +33,10 @@ const SUGGESTIONS = [
   'Giá bao nhiêu 1 cái?',
   'Lợi ích sử dụng là gì?',
   'Cách sử dụng như nào?',
+  // Lời chào đã mời khách "tra đơn đã đặt" nhưng trước đây không có mẫu nào để bấm, nên chỉ
+  // ai tự nghĩ ra cách hỏi mới dùng tới. Bot trả lời được câu này mà không cần sửa prompt:
+  // luật xin đủ mã đơn + số điện thoại đã nằm ở lib/chatPrompt.mjs.
+  'Cách check đơn?',
 ];
 
 // Giữ hội thoại trong sessionStorage chứ KHÔNG phải localStorage: khách có thể vừa gõ mã đơn
