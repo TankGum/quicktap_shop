@@ -5,7 +5,7 @@ import ProductVariants from '@/components/ProductVariants';
 import { getProduct } from '@/data/products';
 import { getVariantsByProduct } from '@/lib/airtable';
 import { TapIcon, RedirectIcon, StarBigIcon } from '@/components/icons';
-import { localBusinessSchema, faqSchema, breadcrumbSchema, ORG_ID } from '@/lib/schema';
+import { localBusinessSchema, faqSchema, breadcrumbSchema, itemListSchema } from '@/lib/schema';
 
 // "A6" là khổ giấy, không phải từ khoá — khách tìm "standee QR review Google Maps" hoặc
 // "standee đánh giá google map để bàn". Khổ giấy lùi xuống mô tả (xem ghi chú cùng loại ở
@@ -127,13 +127,10 @@ export default async function StandeePage() {
               { name: 'Trang chủ', href: '/' },
               { name: 'Standee QR review Google Maps', href: product.href },
             ]),
-            {
-              '@type': 'Product',
-              name: 'Standee QR review Google Maps để bàn',
-              brand: { '@id': ORG_ID },
-              description: product.body,
+            itemListSchema(variants, {
+              name: ogTitle,
               category: 'Thiết bị marketing tại điểm bán',
-            },
+            }),
             faqSchema(faqs),
           ],
         }}

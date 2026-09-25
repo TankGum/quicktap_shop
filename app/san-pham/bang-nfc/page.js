@@ -5,7 +5,7 @@ import ProductVariants from '@/components/ProductVariants';
 import { getProduct } from '@/data/products';
 import { getVariantsByProduct } from '@/lib/airtable';
 import { TapIcon, RedirectIcon, StarBigIcon } from '@/components/icons';
-import { localBusinessSchema, faqSchema, breadcrumbSchema, ORG_ID } from '@/lib/schema';
+import { localBusinessSchema, faqSchema, breadcrumbSchema, itemListSchema } from '@/lib/schema';
 
 // "Bảng NFC 10x10cm" là cách MÌNH gọi sản phẩm, không phải cách khách gõ vào Google — không ai
 // tìm theo kích thước cả. Cụm thật sự có người tìm là "bảng NFC đánh giá Google Maps" / "bảng
@@ -127,13 +127,10 @@ export default async function NfcPlatePage() {
               { name: 'Trang chủ', href: '/' },
               { name: 'Bảng NFC đánh giá Google Maps', href: product.href },
             ]),
-            {
-              '@type': 'Product',
-              name: 'Bảng NFC đánh giá Google Maps 10x10cm',
-              brand: { '@id': ORG_ID },
-              description: product.body,
+            itemListSchema(variants, {
+              name: ogTitle,
               category: 'Thiết bị marketing tại điểm bán',
-            },
+            }),
             faqSchema(faqs),
           ],
         }}
