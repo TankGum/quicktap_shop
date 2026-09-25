@@ -31,3 +31,7 @@ __pycache__/
 # Dashboard, tức là bản deploy thật mất KV_BINDING và khoá Cloudinary mà không báo lỗi gì.
 /wrangler.jsonc
 /wrangler.toml
+
+# Video quảng cáo (Remotion) — deps và bản render riêng của thư mục video/
+/video/node_modules/
+/video/out/

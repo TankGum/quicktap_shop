@@ -1254,6 +1254,18 @@ p { text-wrap: pretty; }
   background: var(--art-halo);
   box-shadow: var(--shadow-lg);
 }
+/* Có bản dọc (heroVideoMobile): dưới 640px HeroVideo chiếu video 9:16, nên tỉ lệ dự phòng
+   cũng phải là 9:16 — để 16:9 thì khung nhảy cao vọt lên khi metadata về. Khung dọc còn bị
+   chặn chiều cao theo màn hình, không thì video dọc cao hơn cả màn điện thoại, khách phải
+   cuộn mới xem hết. Mốc 640px phải khớp DESKTOP_MEDIA trong components/HeroVideo.jsx. */
+@media (max-width: 639px) {
+  .video-showcase-media.has-mobile video {
+    aspect-ratio: 9 / 16;
+    width: min(100%, calc(82svh * 9 / 16));
+    margin-inline: auto;
+    display: block;
+  }
+}
 
 /* ---------- Sub-page hero (Sản phẩm / Liên hệ) ---------- */
 /* Trang con: tiêu đề căn giữa, thoáng — kiểu trang giới thiệu sản phẩm của Apple. */
@@ -1279,55 +1291,6 @@ p { text-wrap: pretty; }
   margin-inline: auto;
   max-width: 34em;
 }
-
-/* ---------- Platform strip ---------- */
-.platform-strip {
-  margin-top: clamp(40px, 6vw, 68px);
-  padding-top: 30px;
-  border-top: 1px solid var(--line-2);
-  display: grid;
-  gap: 14px;
-  /* Canh giữa theo các cột "điểm mạnh" ngay phía trên — để lệch trái thì hai khối trong cùng
-     một section nhìn như hai mảnh rời nhau. */
-  justify-items: center;
-}
-.platform-label {
-  font-size: .9rem;
-  font-weight: 500;
-  color: var(--ink-3);
-}
-.platform-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px 10px;
-}
-.platform-list li {
-  display: flex;
-  align-items: center;
-  gap: .5em;
-  font-size: .9rem;
-  font-weight: 500;
-  color: var(--ink-2);
-  background: var(--bg-alt);
-  padding: .38em .95em .38em .5em;
-  border-radius: 980px;
-}
-/* Ảnh logo thật (xem data/platforms.js) — object-fit: contain vì mỗi ảnh một tỉ lệ
-   khác nhau, không ép khung tròn vì hình dạng nền (tròn/vuông bo góc/không nền) đã
-   có sẵn trong chính file ảnh. */
-.platform-ico { width: 20px; height: 20px; flex: none; object-fit: contain; }
-.platform-more {
-  color: var(--ink-3);
-  background: transparent;
-  box-shadow: inset 0 0 0 1px var(--line-2);
-  /* Không có logo nên bù lại padding trái để chữ không lệch so với các pill có icon. */
-  padding-left: .95em;
-}
-/* Trước đây từ 760px trở lên dải này tách 2 cột (nhãn bên trái | pill bên phải). Bỏ đi khi
-   khối "điểm mạnh" phía trên chuyển sang canh giữa: giữ 2 cột thì nhãn dính mép trái trong
-   khi mọi thứ khác canh giữa, mà canh giữa nội dung trong cột phải lại hở một mảng trống giữa
-   nhãn và pill đầu tiên. Một cột canh giữa là cách duy nhất hợp với composition mới. */
 
 /* ---------- Sections ---------- */
 /* Khoảng thở rộng giữa các khối — yếu tố tạo cảm giác "cao cấp". */
@@ -1634,79 +1597,93 @@ a.product-split-media:hover svg { transform: scale(1.03); }
 .product-split-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: .4rem; }
 .product-split-actions .i { width: 1em; height: 1em; }
 
-/* ---------- Thiết kế riêng: dải ảnh chạy ngang (xem components/CustomDesignsGallery.jsx) ---------- */
-/* Dải tràn hết bề ngang màn hình, thoát khỏi .container của section — ảnh chạy ra tận hai mép
-   mới ra dáng một dải trôi, chứ dừng lại đúng lề nội dung thì nhìn như cái khay bị cắt cụt. */
-.custom-marquee {
-  /* Đã đặt ngoài .container trong app/page.js nên chỉ cần 100% — không dùng 100vw vì nó tính
-     cả bề ngang thanh cuộn, thừa ra chừng 15px và đẩy dải lệch tâm. */
-  width: 100%;
-  margin-block: clamp(6px, 1.5vw, 18px);
-  overflow: hidden;
-  /* Mờ dần hai mép để ảnh trôi vào/ra thay vì bị cắt phựt ở biên. */
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
-}
-
-.custom-marquee-track {
+/* ---------- Thiết kế riêng: gallery (xem components/CustomDesignsGallery.jsx) ---------- */
+/* Flex-wrap chứ không phải grid: hàng cuối thiếu ảnh thì dồn vào GIỮA (7 mẫu trên desktop
+   thành 4 + 3), grid thì bỏ lửng ảnh lẻ ở mép trái. Mỗi ô rộng đúng 1/--cols hàng. */
+.custom-gallery {
+  --cols: 2;
+  --gap: clamp(12px, 2vw, 22px);
   display: flex;
-  gap: 18px;
-  width: max-content;
-  will-change: transform;
-  animation: custom-marquee-scroll var(--marquee-duration, 48s) linear infinite;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(var(--gap) * 1.3) var(--gap);
+  margin-block: clamp(8px, 2vw, 20px);
 }
-/* Trượt sang trái đúng bề rộng MỘT lượt. Track gồm --sets lượt giống hệt nhau, nên một lượt
-   bằng 100%/--sets bề rộng track — tới đó thì lượt kế tiếp đã nằm khít vào chỗ cũ, vòng lặp
-   không lộ mối nối. (translateX theo % là tính trên bề rộng của chính track.) */
-@keyframes custom-marquee-scroll {
-  from { transform: translateX(0); }
-  to   { transform: translateX(calc(-100% / var(--sets))); }
-}
-
-/* Dừng khi khách rê chuột vào hoặc tab tới một ảnh — ảnh bấm được, cứ trôi tiếp thì nhắm
-   trúng ảnh muốn xem là chuyện bực mình. */
-.custom-marquee:hover .custom-marquee-track,
-.custom-marquee:focus-within .custom-marquee-track { animation-play-state: paused; }
+@media (min-width: 700px) { .custom-gallery { --cols: 3; } }
+@media (min-width: 1000px) { .custom-gallery { --cols: 4; } }
 
 .custom-item {
-  /* Bề rộng cố định (không co theo lưới nữa) để mỗi lượt lặp rộng đúng bằng nhau — lượt trước
-     và lượt sau lệch nhau một chút thôi là vòng lặp giật một cái mỗi vòng. */
-  flex: 0 0 auto;
-  width: clamp(210px, 24vw, 290px);
-  aspect-ratio: 4 / 3;
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: var(--art-halo);
+  flex: 0 0 calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
+  min-width: 0;
 }
-.custom-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.custom-item:hover img { transform: scale(1.04); }
 
 .custom-item-btn {
-  display: block;
+  display: grid;
+  gap: 10px;
   width: 100%;
-  height: 100%;
   border: 0;
   padding: 0;
   background: none;
+  text-align: left;
+  color: inherit;
+  font: inherit;
   cursor: zoom-in;
   -webkit-tap-highlight-color: transparent;
 }
-.custom-item-btn:focus-visible {
+/* Khung dọc 3:4 — đúng tỉ lệ phần lớn ảnh mẫu (ảnh chụp standee dựng đứng). Ảnh khác tỉ lệ
+   (tấm rất cao, tấm ghép hai standee nằm ngang) KHÔNG bị cắt: .custom-item-img hiện trọn
+   bằng contain, khoảng dư lấp bằng .custom-item-backdrop — cùng ảnh đó phủ kín khung và làm
+   mờ. Trước đây khung ngang + cover xén mất đầu đuôi ảnh dọc. */
+.custom-item-media {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 4;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--art-halo);
+  box-shadow: var(--shadow-sm);
+}
+.custom-item-media img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* Selector có thêm tên thẻ + .custom-item-media để thắng .img-fade.is-loaded của
+   ProgressiveImg (đặt filter/transform về none khi ảnh tải xong) — thua thì lớp nền hết mờ. */
+.custom-item-media img.custom-item-backdrop {
+  object-fit: cover;
+  /* Phóng to thêm để viền mờ của filter không lộ mép trong suốt ở rìa khung. */
+  transform: scale(1.2);
+  filter: blur(18px) saturate(1.1);
+}
+.custom-item-media img.custom-item-img {
+  object-fit: contain;
+  /* .img-fade tô nền xám cho chính thẻ img; ảnh contain chừa khoảng trống nên nền đó sẽ che
+     mất lớp mờ phía sau. */
+  background: transparent;
+  transition: opacity .55s var(--ease), filter .85s var(--ease), transform .5s var(--ease);
+}
+.custom-item-btn:hover .custom-item-media img.custom-item-img { transform: scale(1.04); }
+.custom-item-name {
+  font-size: .9rem;
+  font-weight: 500;
+  color: var(--ink-2);
+  letter-spacing: var(--tracking-small);
+  padding-inline: 2px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.custom-item-btn:focus-visible { outline: none; }
+.custom-item-btn:focus-visible .custom-item-media {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
-  border-radius: var(--radius);
 }
-
-/* Khách bật "giảm hiệu ứng chuyển động": không tự chạy nữa. Nhưng track vẫn dài hơn màn hình,
-   nên phải cho cuộn ngang bằng tay — không thì phần lớn ảnh nằm ngoài màn hình và không có
-   cách nào xem được. */
 @media (prefers-reduced-motion: reduce) {
-  .custom-marquee { overflow-x: auto; }
-  .custom-marquee-track { animation: none; }
+  .custom-item-media img.custom-item-img { transition: none; }
+  .custom-item-btn:hover .custom-item-media img.custom-item-img { transform: none; }
 }
 
 /* ---------- Popup xem chi tiết "Thiết kế riêng" (xem components/CustomDesignsGallery.jsx) ---------- */

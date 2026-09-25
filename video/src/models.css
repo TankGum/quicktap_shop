@@ -1,0 +1,145 @@
+/* Hình học 3D của standee và bảng NFC — chép từ khối .std3d-* trong app/globals.css (mô hình
+   xoay được ở hero trang chủ) để sản phẩm trong video khớp đúng mô hình trên web.
+   Khác bản web: không will-change / transition (Remotion chụp từng khung hình rời, cần
+   Chrome vẽ lại nét ở mọi cỡ), bóng đổ nhạt hơn vì nền video sáng chứ không phải hộp tối. */
+
+.qt-holder { position: absolute; width: 0; height: 0; }
+
+.std3d-stand {
+  --pw: calc(105 * var(--mm));
+  --ph: calc(148 * var(--mm));
+  --th: calc(2 * var(--mm));
+  --depth: calc(2 * var(--ph) * var(--sin));
+  --feet: calc(var(--ph) * var(--cos));
+  --cs: calc(100 * var(--mm));
+  --cr: calc(8 * var(--mm));
+  --cedge: calc(var(--cs) - 2 * var(--cr));
+  --ccd: calc((var(--cs) / 2 - var(--cr)) * 1.41421 + var(--cr) * 0.70711);
+  --cch: calc(var(--cr) * 1.41421);
+  --line: #d2d2d7;
+  position: relative;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+}
+
+.std3d-node { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-style: preserve-3d; }
+.std3d-rig { transform: translateY(calc(var(--feet) / -2)); }
+.std3d-n-front { transform: rotateX(var(--fold)) translateY(calc(var(--ph) / 2)); }
+.std3d-n-back { transform: rotateX(calc(-1 * var(--fold))) rotateY(180deg) translateY(calc(var(--ph) / 2)); }
+.std3d-n-base {
+  transform: translateY(calc(var(--feet) + var(--th) / 2 - .6 * var(--mm))) rotateX(-90deg);
+}
+.std3d-n-shadow { transform: translateY(calc(var(--feet) + var(--th) + 2 * var(--mm))) rotateX(90deg); }
+
+.std3d-slab {
+  position: absolute;
+  transform-style: preserve-3d;
+  left: calc(var(--w) / -2);
+  top: calc(var(--h) / -2);
+  width: var(--w);
+  height: var(--h);
+}
+.std3d-panel { --w: var(--pw); --h: var(--ph); }
+.std3d-base { --w: var(--pw); --h: var(--depth); }
+.std3d-slab > .std3d-f {
+  position: absolute;
+  display: block;
+  backface-visibility: hidden;
+  overflow: hidden;
+  background: #f4f6f5;
+}
+.std3d-out { inset: 0; transform: translateZ(calc(var(--th) / 2)); }
+.std3d-in { inset: 0; background: #e9ecea; transform: rotateY(180deg) translateZ(calc(var(--th) / 2)); }
+.std3d-sl, .std3d-sr {
+  top: 0; height: 100%; width: var(--th); left: calc(50% - var(--th) / 2);
+  background: linear-gradient(90deg, #fff, var(--line));
+}
+.std3d-sl { transform: rotateY(-90deg) translateZ(calc(var(--w) / 2)); }
+.std3d-sr { transform: rotateY(90deg) translateZ(calc(var(--w) / 2)); }
+.std3d-st, .std3d-sb {
+  left: 0; width: 100%; height: var(--th); top: calc(50% - var(--th) / 2);
+  background: linear-gradient(180deg, #fff, var(--line));
+}
+.std3d-st { transform: rotateX(90deg) translateZ(calc(var(--h) / 2)); }
+.std3d-sb { transform: rotateX(-90deg) translateZ(calc(var(--h) / 2)); }
+
+.std3d-f.std3d-art-front { background: #fff var(--front) center/100% 100% no-repeat; }
+.std3d-f.std3d-art-back { background: #fff var(--back) center/100% 100% no-repeat; }
+.std3d-f.std3d-art-back::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,.06); }
+
+/* Vệt bóng loáng quét ngang mặt in — mặt bảng là mica bóng như ảnh mockup thật. */
+.qt-sheen {
+  position: absolute;
+  inset: -20%;
+  background: linear-gradient(105deg,
+    transparent calc(var(--sheen) * 100% - 16%),
+    rgba(255,255,255,.62) calc(var(--sheen) * 100%),
+    transparent calc(var(--sheen) * 100% + 16%));
+  pointer-events: none;
+}
+
+.std3d-cardslab { --w: var(--cs); --h: var(--cs); }
+.std3d-cardslab > .std3d-out,
+.std3d-cardslab > .std3d-in { border-radius: var(--cr); }
+.std3d-cardslab > .std3d-in { background: #fff; }
+.std3d-cardslab > .std3d-ce-r, .std3d-cardslab > .std3d-ce-l {
+  top: calc(50% - var(--cedge) / 2);
+  height: var(--cedge);
+  width: var(--th);
+  left: calc(50% - var(--th) / 2);
+  background: linear-gradient(90deg, #fff, var(--line));
+}
+.std3d-cardslab > .std3d-ce-r { transform: rotateY(90deg) translateZ(calc(var(--cs) / 2)); }
+.std3d-cardslab > .std3d-ce-l { transform: rotateY(-90deg) translateZ(calc(var(--cs) / 2)); }
+.std3d-cardslab > .std3d-ce-t, .std3d-cardslab > .std3d-ce-b {
+  left: calc(50% - var(--cedge) / 2);
+  width: var(--cedge);
+  height: var(--th);
+  top: calc(50% - var(--th) / 2);
+  background: linear-gradient(180deg, #fff, var(--line));
+}
+.std3d-cardslab > .std3d-ce-t { transform: rotateX(90deg) translateZ(calc(var(--cs) / 2)); }
+.std3d-cardslab > .std3d-ce-b { transform: rotateX(-90deg) translateZ(calc(var(--cs) / 2)); }
+.std3d-cardslab > .std3d-cc {
+  width: var(--th);
+  height: var(--cch);
+  top: calc(50% - var(--cch) / 2);
+  left: calc(50% - var(--th) / 2);
+  background: linear-gradient(90deg, #fff, var(--line));
+}
+.std3d-cardslab > .std3d-cc-1 { transform: rotateZ(45deg) rotateY(90deg) translateZ(var(--ccd)); }
+.std3d-cardslab > .std3d-cc-2 { transform: rotateZ(135deg) rotateY(90deg) translateZ(var(--ccd)); }
+.std3d-cardslab > .std3d-cc-3 { transform: rotateZ(225deg) rotateY(90deg) translateZ(var(--ccd)); }
+.std3d-cardslab > .std3d-cc-4 { transform: rotateZ(315deg) rotateY(90deg) translateZ(var(--ccd)); }
+.std3d-n-cardshadow { transform: translateY(calc(var(--cs) / 2 + 4 * var(--mm))) rotateX(90deg); }
+.std3d-n-cardshadow .std3d-shadow {
+  left: calc(var(--cs) * -.75);
+  top: calc(var(--cs) * -.34);
+  width: calc(var(--cs) * 1.5);
+  height: calc(var(--cs) * .68);
+}
+
+.std3d-base > .std3d-f {
+  background: linear-gradient(150deg, rgba(255,255,255,.58), rgba(255,255,255,.42) 46%, rgba(255,255,255,.56));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.42);
+}
+.std3d-base > .std3d-out, .std3d-base > .std3d-in {
+  background:
+    var(--base) center/100% 100% no-repeat,
+    linear-gradient(150deg, rgba(255,255,255,.62), rgba(255,255,255,.46) 46%, rgba(255,255,255,.60));
+}
+.std3d-base > .std3d-in { transform: rotateY(180deg) translateZ(calc(var(--th) / 2)) rotate(180deg); }
+.std3d-base > .std3d-sl, .std3d-base > .std3d-sr,
+.std3d-base > .std3d-st, .std3d-base > .std3d-sb { background: rgba(255,255,255,.40); }
+
+.std3d-shadow {
+  position: absolute;
+  display: block;
+  left: calc(var(--pw) * -.85);
+  top: calc(var(--depth) * -1.35);
+  width: calc(var(--pw) * 1.7);
+  height: calc(var(--depth) * 2.7);
+  background: radial-gradient(ellipse at center, rgba(0,0,0,.26) 0%, transparent 66%);
+  filter: blur(10px);
+}

@@ -9,10 +9,18 @@
 // video "Cách hoạt động", 1920/946 cho video sản phẩm) kèm object-fit: cover — video nào quay
 // ở tỉ lệ khác là bị cắt cụt hai bên hoặc trên dưới. Giờ đọc tỉ lệ thật từ chính file video
 // rồi gán vào, nên upload video dọc hay ngang gì cũng hiện trọn, không phải sửa CSS.
+//
+// `mobileSrc` (không bắt buộc): bản dọc cho màn hẹp. Trình duyệt chọn một trong hai <source>
+// ngay lúc tải trang theo thuộc tính media — chỉ tải đúng một file, không tải cả hai. Bản
+// NGANG đứng trước và mang điều kiện min-width: trình duyệt đời cũ bỏ qua `media` sẽ lấy
+// <source> đầu tiên, tức là bản ngang, nên desktop không bao giờ nhận nhầm video dọc.
+// Mốc 640px phải khớp media query của .video-showcase-media.has-mobile trong globals.css.
 
 import { useEffect, useRef, useState } from 'react';
 
-export default function HeroVideo({ src, poster, alt }) {
+const DESKTOP_MEDIA = '(min-width: 640px)';
+
+export default function HeroVideo({ src, mobileSrc, poster, alt }) {
   const ref = useRef(null);
   const [ratio, setRatio] = useState(null);
 
@@ -35,7 +43,7 @@ export default function HeroVideo({ src, poster, alt }) {
   return (
     <video
       ref={ref}
-      src={src}
+      src={mobileSrc ? undefined : src}
       poster={poster}
       autoPlay
       muted
@@ -46,6 +54,9 @@ export default function HeroVideo({ src, poster, alt }) {
       onLoadedMetadata={(e) => readRatio(e.currentTarget)}
       // Đè lên tỉ lệ dự phòng khai báo trong globals.css.
       style={ratio ? { aspectRatio: ratio } : undefined}
-    />
+    >
+      {mobileSrc && <source src={src} media={DESKTOP_MEDIA} type="video/mp4" />}
+      {mobileSrc && <source src={mobileSrc} type="video/mp4" />}
+    </video>
   );
 }

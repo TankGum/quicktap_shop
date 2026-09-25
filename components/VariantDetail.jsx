@@ -12,7 +12,7 @@ import AddToCartButton from '@/components/AddToCartButton';
 import { siteConfig } from '@/lib/siteConfig';
 import { toPlainText } from '@/lib/airtable';
 import { parsePrice } from '@/lib/cartPricing.mjs';
-import { localBusinessSchema, breadcrumbSchema, ORG_ID } from '@/lib/schema';
+import { localBusinessSchema, breadcrumbSchema, ORG_ID, availabilityOf } from '@/lib/schema';
 
 // Mô tả trong Airtable có thể chứa <br> (gõ tay để xuống dòng) hoặc xuống dòng thật (Enter
 // trong ô Long text) — render thẳng chuỗi thì React tự escape "<br>" thành chữ trần, còn
@@ -113,6 +113,9 @@ export default function VariantDetail({ variant, product, FallbackArt }) {
             {
               '@type': 'Product',
               name: variant.name,
+              // Mã bản ghi Airtable làm sku: bền qua mọi lần đổi tên mẫu, nhờ đó Google nối
+              // đúng một thực thể khi cùng mẫu xuất hiện ở cả trang danh mục lẫn trang này.
+              sku: variant.id,
               description: variant.description ? toPlainText(variant.description) : product.body,
               ...(variant.images?.length ? { image: variant.images } : {}),
               brand: { '@id': ORG_ID },
@@ -123,7 +126,8 @@ export default function VariantDetail({ variant, product, FallbackArt }) {
                       '@type': 'Offer',
                       priceCurrency: 'VND',
                       price: priceNumber,
-                      availability: 'https://schema.org/InStock',
+                      availability: availabilityOf(variant),
+                      itemCondition: 'https://schema.org/NewCondition',
                       // Google bỏ qua cả khối Offer nếu thiếu url — không có nó thì giá không
                       // bao giờ hiện kèm kết quả tìm kiếm, tức mất đúng phần đáng giá nhất.
                       url: `${siteConfig.siteUrl}${variant.href}`,

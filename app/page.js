@@ -11,7 +11,6 @@ import Standee3D from '@/components/Standee3D';
 import { NfcPlateArt, StandeeArt } from '@/components/illustrations';
 import { siteConfig } from '@/lib/siteConfig';
 import { products } from '@/data/products';
-import { platforms } from '@/data/platforms';
 import { standeeModels } from '@/data/standee3d';
 import { industries as industryData } from '@/data/industries';
 import { getVariantsByProduct, getCustomDesigns, getSiteMedia } from '@/lib/airtable';
@@ -239,35 +238,31 @@ export default async function HomePage() {
               </li>
             ))}
           </Reveal>
-
-          <Reveal as="div" className="platform-strip" delay={80}>
-            <span className="platform-label">Đưa khách thẳng tới</span>
-            <ul className="platform-list">
-              {platforms.map(({ name, icon }) => (
-                <li key={name}>
-                  {icon && <ProgressiveImg src={icon} alt="" className="platform-ico" />}
-                  {name}
-                </li>
-              ))}
-              <li className="platform-more">…hoặc bất kỳ link nào</li>
-            </ul>
-          </Reveal>
         </div>
       </section>
 
       {/* ============ VIDEO SẢN PHẨM ============ */}
       {/* Trước đây video này nằm trong Hero (field heroVideo) — chuyển xuống thành section
           riêng ngay sau Hero để Hero tập trung vào ảnh sản phẩm. Airtable chưa có heroVideo
-          thì ẩn hẳn section, không để khung trống. */}
+          thì ẩn hẳn section, không để khung trống.
+
+          Video hiện tại là video motion graphic dựng bằng Remotion (mã nguồn ở video/, xem
+          video/README.md), có hai bản: heroVideo ngang 16:9 cho desktop và heroVideoMobile dọc
+          9:16 cho điện thoại. */}
       {media.heroVideo && (
         <section className="section video-showcase" id="video-san-pham">
           <div className="container">
             <Reveal as="header" className="section-head">
               <h2>Một chạm, trang đánh giá mở ra ngay</h2>
             </Reveal>
-            <Reveal as="div" className="video-showcase-media" delay={80}>
+            <Reveal
+              as="div"
+              className={`video-showcase-media${media.heroVideoMobile ? ' has-mobile' : ''}`}
+              delay={80}
+            >
               <HeroVideo
                 src={media.heroVideo.url}
+                mobileSrc={media.heroVideoMobile?.url}
                 alt={media.heroVideo.alt || siteConfig.heroImageAlt}
               />
             </Reveal>
@@ -459,15 +454,13 @@ export default async function HomePage() {
             </Link>
           </Reveal>
 
-        </div>
+          {/* Gallery nằm trong .container, thẳng lề với phần chữ phía trên. Bảng Airtable chưa
+              có mẫu nào thì CustomDesignsGallery tự ẩn, phần chữ + CTA vẫn giữ. Bấm vào 1 ảnh
+              sẽ mở popup xem chi tiết, có next/prev. */}
+          <Reveal as="div" delay={80}>
+            <CustomDesignsGallery designs={customDesigns} />
+          </Reveal>
 
-        {/* Đặt NGOÀI .container để dải ảnh chạy ra tận hai mép màn hình. Để bên trong rồi kéo
-            rộng bằng 100vw thì thừa ra đúng bề ngang thanh cuộn và làm dải lệch tâm.
-            Bảng Airtable chưa có mẫu nào thì CustomDesignsGallery tự ẩn dải, phần chữ + CTA
-            bên dưới vẫn giữ. Bấm vào 1 ảnh sẽ mở popup xem chi tiết, có next/prev. */}
-        <CustomDesignsGallery designs={customDesigns} />
-
-        <div className="container">
           <Reveal as="p" className="products-note">
             Muốn trao đổi trước?{' '}
             <Link href="/lien-he">Liên hệ để bàn về thiết kế</Link>.
