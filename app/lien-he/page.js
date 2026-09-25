@@ -58,36 +58,45 @@ export default function ContactPage() {
       <section className="section contact" id="lien-he">
         <div className="container">
           <div className="contact-grid">
-            {/* Cả thẻ là một link gọi — số điện thoại là hành động chính của trang,
-                nên để cỡ chữ lớn nhất và bấm được ở bất cứ đâu trong thẻ. */}
+            {/* Thẻ liên hệ: hai hành động tách riêng — bấm số điện thoại để gọi, bấm nút để mở
+                Zalo (cùng số). Trước đây cả thẻ là một link tel:, giờ nút chính mở Zalo nên
+                không bọc cả thẻ trong một <a> được nữa (link lồng trong link là HTML sai). */}
             <Reveal as="div">
-              <a className="contact-call" href={siteConfig.phoneHref}>
+              <div className="contact-call">
                 <div className="contact-glow" aria-hidden="true" />
                 <span className="contact-call-label">
                   <PhoneIcon className="i" />
                   Gọi hoặc nhắn Zalo
                 </span>
-                <span className="contact-call-number">{siteConfig.phoneDisplay}</span>
-                <span className="contact-call-cta">Bấm để gọi ngay</span>
+                <a className="contact-call-number" href={siteConfig.phoneHref}>
+                  {siteConfig.phoneDisplay}
+                </a>
+                <a
+                  className="contact-call-cta"
+                  href={siteConfig.zaloHref}
+                  target="_blank"
+                  // noopener chặn tab Zalo vừa mở với tới window.opener của mình; noreferrer
+                  // để không gửi kèm địa chỉ trang đang xem.
+                  rel="noopener noreferrer"
+                >
+                  Bấm để nhắn Zalo
+                </a>
                 <span className="contact-call-note">
                   Trả lời trong vòng 2 phút · Freeship Hà Nội · Giao hàng toàn quốc
                 </span>
-              </a>
+              </div>
             </Reveal>
 
             <Reveal as="ol" className="contact-steps" delay={80}>
               <li>
-                <span className="contact-step-num" aria-hidden="true">1</span>
                 <h3>Cho chúng tôi tên &amp; địa chỉ quán</h3>
                 <p>Chỉ vậy thôi — chúng tôi tự tìm trang đánh giá của quán bạn.</p>
               </li>
               <li>
-                <span className="contact-step-num" aria-hidden="true">2</span>
                 <h3>Duyệt mẫu thiết kế</h3>
                 <p>Chúng tôi lên mẫu theo logo &amp; màu thương hiệu, bạn xem rồi duyệt.</p>
               </li>
               <li>
-                <span className="contact-step-num" aria-hidden="true">3</span>
                 <h3>Nhận hàng, đặt lên quầy</h3>
                 <p>Giao tận nơi toàn quốc, miễn phí tại Hà Nội. Cài sẵn rồi, không phải thiết lập gì thêm.</p>
               </li>

@@ -576,7 +576,6 @@ p { text-wrap: pretty; }
   border: 1px solid var(--line-2);
 }
 
-.header-cta { display: none; }
 
 /* ----- Nút hamburger + menu trượt (chỉ có ở màn hẹp) ----- */
 .nav-toggle {
@@ -704,19 +703,11 @@ p { text-wrap: pretty; }
   background: var(--accent-soft);
   color: var(--accent);
 }
-.mobile-nav-cta { width: 100%; }
-.mobile-nav-note {
-  margin-top: .7rem;
-  font-size: .85rem;
-  color: var(--ink-3);
-  text-align: center;
-}
 
-/* Ngưỡng nâng từ 860px lên 1040px: nav giờ có 5 mục (Sản phẩm + 4 khối nội dung) thay vì 2,
-   nhét cùng logo và nút "Liên hệ" vào 860px là chúng dính sát nhau tới mức khó bấm. */
+/* Ngưỡng 1040px: nav có 6 mục (Sản phẩm + 4 khối nội dung + Liên hệ), nhét cùng logo và giỏ
+   hàng vào màn hẹp hơn là chúng dính sát nhau tới mức khó bấm. */
 @media (min-width: 1040px) {
   .site-nav { display: flex; }
-  .header-cta { display: inline-flex; }
   /* Ở desktop đã có nav đầy đủ — ẩn hẳn hamburger và menu trượt. */
   .nav-toggle,
   .nav-scrim,
@@ -1240,8 +1231,8 @@ p { text-wrap: pretty; }
 /* Không ép tỉ lệ: khung cao theo đúng tỉ lệ ảnh, thay ảnh khác cỡ cũng không bị cắt rìa. */
 .lineup-photo img { display: block; width: 100%; height: auto; border-radius: var(--radius); }
 
-/* ---------- Video sản phẩm (section riêng ngay sau Hero — xem media.heroVideo trong
-   lib/airtable.js) ---------- */
+/* ---------- Video ở Hero (xem media.heroVideo trong lib/airtable.js) ---------- */
+.hero-video { margin-top: clamp(22px, 3.5vw, 40px); }
 /* Cùng cách xử lý như .howto-video: tỉ lệ dưới đây chỉ là dự phòng lúc chờ metadata, tỉ lệ
    thật do HeroVideo.jsx gán đè. Trước đây ghim cứng 1920/946 theo đúng một file video cụ thể —
    thay video khác tỉ lệ là bị cắt mà không ai hay. */
@@ -1257,11 +1248,12 @@ p { text-wrap: pretty; }
 /* Có bản dọc (heroVideoMobile): dưới 640px HeroVideo chiếu video 9:16, nên tỉ lệ dự phòng
    cũng phải là 9:16 — để 16:9 thì khung nhảy cao vọt lên khi metadata về. Khung dọc còn bị
    chặn chiều cao theo màn hình, không thì video dọc cao hơn cả màn điện thoại, khách phải
-   cuộn mới xem hết. Mốc 640px phải khớp DESKTOP_MEDIA trong components/HeroVideo.jsx. */
+   cuộn mới xem hết — ở Hero còn phải chừa chỗ cho tiêu đề phía trên nên chặn thấp hơn nữa.
+   Mốc 640px phải khớp DESKTOP_MEDIA trong components/HeroVideo.jsx. */
 @media (max-width: 639px) {
   .video-showcase-media.has-mobile video {
     aspect-ratio: 9 / 16;
-    width: min(100%, calc(82svh * 9 / 16));
+    width: min(100%, calc(72svh * 9 / 16));
     margin-inline: auto;
     display: block;
   }
@@ -2025,21 +2017,18 @@ a.product-split-media:hover svg { transform: scale(1.03); }
 .contact-grid { display: grid; gap: clamp(24px, 4vw, 40px); align-items: start; }
 @media (min-width: 880px) { .contact-grid { grid-template-columns: 1fr 1fr; } }
 
-/* Thẻ gọi: cả khối là link tel:. Số điện thoại để cỡ chữ lớn nhất trang vì đây là
-   hành động chính duy nhất — trước đây nó nằm trong một hộp xám mờ giữa khối đen
-   rỗng nên trông như thông tin thụ động chứ không phải nút bấm. */
+/* Thẻ liên hệ nền tối: số điện thoại (link tel:) cỡ chữ lớn nhất trang, bên dưới là nút mở
+   Zalo. Thẻ không còn là một link duy nhất nên bỏ hiệu ứng nhấc cả thẻ khi rê chuột — hai
+   link bên trong tự có trạng thái hover riêng. */
 .contact-call {
   position: relative;
   overflow: hidden;
   display: block;
-  text-decoration: none;
   padding: clamp(32px, 4.5vw, 44px);
   border-radius: var(--radius-lg);
   background: var(--panel-ink);
   color: #fff;
-  transition: transform .3s var(--ease);
 }
-.contact-call:hover { transform: translateY(-3px); }
 /* Lớp sáng trên nền tối: chỉ là ánh trắng rất nhạt, không màu. */
 .contact-glow {
   position: absolute;
@@ -2068,7 +2057,10 @@ a.product-split-media:hover svg { transform: scale(1.03); }
   letter-spacing: var(--tracking-title);
   line-height: 1.1;
   color: #fff;
+  width: fit-content;
+  text-decoration: none;
 }
+.contact-call-number:hover { color: color-mix(in srgb, #fff 80%, var(--accent)); }
 .contact-call-cta {
   margin-top: 1.4rem;
   width: fit-content;
@@ -2078,9 +2070,12 @@ a.product-split-media:hover svg { transform: scale(1.03); }
   color: #fff;
   font-size: 1rem;
   font-weight: 500;
+  text-decoration: none;
   transition: background-color .25s var(--ease);
 }
-.contact-call:hover .contact-call-cta { background: color-mix(in srgb, var(--accent) 85%, #fff); }
+.contact-call-cta:hover { background: color-mix(in srgb, var(--accent) 85%, #fff); }
+.contact-call-number:focus-visible,
+.contact-call-cta:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 .contact-call-note {
   margin-top: 1.6rem;
   padding-top: 1.2rem;
@@ -2095,17 +2090,6 @@ a.product-split-media:hover svg { transform: scale(1.03); }
   padding: 22px 24px;
   border-radius: var(--radius);
   background: var(--bg-alt);
-}
-.contact-step-num {
-  display: grid;
-  place-items: center;
-  width: 28px; height: 28px;
-  margin-bottom: .8rem;
-  border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: .85rem;
-  font-weight: 600;
 }
 .contact-steps h3 { font-size: 1.05rem; margin-bottom: .35rem; }
 .contact-steps p { color: var(--ink-2); font-size: .95rem; line-height: 1.5; }
@@ -2543,75 +2527,15 @@ a.product-split-media:hover svg { transform: scale(1.03); }
   }
 }
 
-/* ---------- Nút Zalo nổi (góc phải dưới, mọi trang) ----------
-   z-index thấp hơn drawer menu (70–80) và lightbox (200) — nút chat không được nằm đè
-   lên thứ đang mở. */
-.zalo-fab {
-  /* Đúng màu xanh trong file logo — lệch một chút là thấy ngay đường viền vuông của
-     hình nổi lên trên nền tròn của nút. */
-  --zalo-blue: #0068ff;
-  position: fixed;
-  right: max(16px, env(safe-area-inset-right));
-  bottom: calc(20px + env(safe-area-inset-bottom));
-  z-index: 55;
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--zalo-blue);
-  box-shadow: 0 10px 28px -8px rgba(0, 104, 255, .55), var(--shadow-sm);
-  transition: transform .25s var(--ease), box-shadow .25s var(--ease);
-}
-.zalo-fab:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 34px -8px rgba(0, 104, 255, .6), var(--shadow-sm);
-}
-.zalo-fab:active { transform: translateY(0); }
-.zalo-fab:focus-visible { outline: 2px solid var(--zalo-blue); outline-offset: 3px; }
-.zalo-fab-logo { width: 44px; height: 44px; }
-
-/* Vòng sáng lan ra để mắt bắt được nút giữa lúc đang cuộn đọc. Nằm dưới nội dung nút
-   (z-index âm) và không nhận chuột, nên không cản cú bấm. */
-.zalo-fab-pulse {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: var(--zalo-blue);
-  pointer-events: none;
-  animation: zalo-pulse 2.6s var(--ease) infinite;
-}
-@keyframes zalo-pulse {
-  0%   { transform: scale(1);    opacity: .45; }
-  70%  { transform: scale(1.35); opacity: 0; }
-  100% { transform: scale(1.35); opacity: 0; }
-}
-/* Khách bật "giảm hiệu ứng chuyển động": bỏ hẳn vòng sáng. Chỉ dựa vào rule chung ở đầu
-   file (rút animation còn .001ms) thì vòng sáng đứng yên ở khung hình cuối — vẫn còn một
-   quầng mờ bám quanh nút. */
-@media (prefers-reduced-motion: reduce) {
-  .zalo-fab-pulse { display: none; }
-}
-
-/* Trên mobile thu nhỏ lại một nhịp cho đỡ chiếm màn hình. */
-@media (max-width: 859px) {
-  .zalo-fab { width: 52px; height: 52px; }
-  .zalo-fab-logo { width: 40px; height: 40px; }
-}
-
 /* ---------- Khung chat (components/ChatWidget.jsx) ----------
-   Nút chat xếp NGAY TRÊN nút Zalo thành một cột ở góc phải dưới. Thứ tự cố ý: Zalo ở dưới
-   cùng — vị trí ngón cái với tới dễ nhất — vì đó là kênh đang mang đơn thật về; chat là máy
-   trả lời ngay, đứng trên.
-
-   Mốc dọc phải khớp với .zalo-fab ở trên: 20px lề dưới + 56px chiều cao nút Zalo + 12px khe.
-   Sửa kích thước nút Zalo thì nhớ sửa cả hai con số bên dưới, nếu không hai nút sẽ dính vào
-   nhau hoặc hở một khoảng lạ. */
+   Nút nổi duy nhất, ở sát góc phải dưới — vị trí ngón cái với tới dễ nhất. (Trước đây nút
+   Zalo nổi chiếm góc này và chat xếp trên nó; nút Zalo đã bỏ.)
+   z-index thấp hơn drawer menu (70–80) và lightbox (200) — nút chat không được nằm đè lên
+   thứ đang mở. */
 .chat-fab {
   position: fixed;
   right: max(16px, env(safe-area-inset-right));
-  bottom: calc(88px + env(safe-area-inset-bottom));
+  bottom: calc(20px + env(safe-area-inset-bottom));
   z-index: 55;
   display: grid;
   place-items: center;
@@ -2666,17 +2590,17 @@ a.product-split-media:hover svg { transform: scale(1.03); }
 .chat-fab:active { transform: translateY(0) scale(.98); }
 .chat-fab:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-/* Khung chat nằm PHÍA TRÊN cả cột hai nút (88px + 56px nút chat + 8px khe) để không che nút
-   nào — khách vẫn bấm sang Zalo được trong lúc khung chat đang mở. */
+/* Khung chat nằm ngay PHÍA TRÊN nút chat (20px + 56px nút + 8px khe) để không che nút —
+   nút đổi thành dấu "thu gọn" trong lúc khung mở. */
 .chat-panel {
   position: fixed;
   right: max(16px, env(safe-area-inset-right));
-  bottom: calc(152px + env(safe-area-inset-bottom));
+  bottom: calc(84px + env(safe-area-inset-bottom));
   z-index: 60;
   display: flex;
   flex-direction: column;
   width: min(384px, calc(100vw - 32px));
-  height: min(580px, calc(100vh - 200px));
+  height: min(580px, calc(100vh - 132px));
   overflow: hidden;
   border: 1px solid var(--line-2);
   border-radius: 20px;
@@ -2932,7 +2856,7 @@ a.product-split-media:hover svg { transform: scale(1.03); }
    Chừa 28% chiều cao phía trên để vẫn thấy trang nằm sau — đúng quy ước bottom sheet mà điện
    thoại dùng cho mọi hộp thoại phụ. */
 @media (max-width: 859px) {
-  .chat-fab { width: 52px; height: 52px; bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .chat-fab { width: 52px; height: 52px; }
   .chat-panel {
     left: 0;
     right: 0;
@@ -3414,28 +3338,32 @@ a.product-split-media:hover svg { transform: scale(1.03); }
    trong suốt nối hai chân. Mỗi tấm là một hộp 6 mặt nên xoay tới cạnh nào cũng
    thấy bề dày 2mm của giấy.
    ========================================================================== */
-/* Trong hero: chừa khoảng thở với cặp nút phía trên, và hạ bớt chiều cao sân khấu để cả
-   tiêu đề + nút + mô hình cùng lọt một màn hình. */
-/* Khung 3D KHÔNG nằm trong .container: nó tràn gần hết bề ngang màn hình, chỉ chừa một
+/* Khung bọc mô hình — dùng ở section #mo-hinh-3d, hoặc ở Hero khi chưa có video.
+   Khung 3D KHÔNG nằm trong .container: nó tràn gần hết bề ngang màn hình, chỉ chừa một
    lề mỏng hai bên. Chặn trên 1720px để màn siêu rộng không thành một dải tối dài ngoẵng
    với sản phẩm bé tí ở giữa. */
-.hero-model {
+.model-showcase {
   margin-top: clamp(26px, 4vw, 44px);
   padding-inline: clamp(12px, 2vw, 32px);
 }
-.hero-model .std3d { max-width: min(1720px, 100%); }
-.hero-model .std3d-stage { min-height: clamp(380px, 56vh, 560px); }
+.model-showcase .std3d { max-width: min(1720px, 100%); }
+.model-showcase .std3d-stage { min-height: clamp(380px, 56vh, 560px); }
 /* Desktop có chỗ nên cho khung cao hẳn lên — standee dáng dọc, khung thấp là nó bị bó.
    Mô hình không phóng to theo khung: khoảng đệm dọc trong Standee3D.jsx là số px cố định,
    nên khung càng cao thì phần dôi ra thành khoảng thở, không phải sản phẩm to thêm.
-   Màn nhỏ giữ nguyên: cao thêm nữa thì đẩy cặp nút CTA xuống quá sâu dưới màn hình. */
+   Màn nhỏ giữ nguyên: cao thêm nữa thì mô hình không còn lọt trọn một màn hình. */
 @media (min-width: 900px) {
-  .hero-model .std3d-stage { min-height: clamp(560px, 74vh, 760px); }
+  .model-showcase .std3d-stage { min-height: clamp(560px, 74vh, 760px); }
 }
 
 .std3d {
   display: grid;
   gap: clamp(14px, 2vw, 20px);
+  /* Kéo chuột để xoay mô hình, không phải để chọn chữ: không chặn thì mỗi lần kéo lệch ra
+     ngoài là bôi xanh cả tên mẫu, thông số, nhãn nút. Áp cho cả khối (sân khấu + hàng nút). */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
   /* Bó cả khối vào một cột hẹp hơn container: khung càng rộng thì standee (vốn dáng dọc)
      càng lọt thỏm giữa hai mảng tối trống hai bên. */
   max-width: 920px;
@@ -3449,11 +3377,10 @@ a.product-split-media:hover svg { transform: scale(1.03); }
   place-items: center;
   min-height: clamp(420px, 68vh, 680px);
   border-radius: var(--radius-lg);
-  /* Standee toàn màu sáng, đặt trên nền trắng của trang thì chìm. Cho vào một hộp tối
-     kiểu phòng chụp studio: một vệt sáng hắt sau lưng sản phẩm, còn lại tối dần ra rìa. */
-  background:
-    radial-gradient(52% 42% at 50% 40%, rgba(255,255,255,.13), transparent 72%),
-    radial-gradient(130% 105% at 50% 12%, #35353b, #1b1b1f 58%, #101012);
+  /* Nền trắng trơn, không viền — hoà liền vào nền trang (trước đây là hộp tối kiểu studio).
+     Standee màu sáng vẫn tách được khỏi nền nhờ bóng đổ dưới chân (.std3d-shadow) và cạnh
+     dày 2mm của tấm. */
+  background: var(--surface);
   overflow: hidden;
   /* Kéo bằng ngón tay là để xoay mô hình, không phải cuộn trang. */
   touch-action: none;
@@ -3465,11 +3392,11 @@ a.product-split-media:hover svg { transform: scale(1.03); }
 
 .std3d-hint {
   position: absolute;
-  /* Hai chú thích nằm hai góc dưới, chừa trống chính giữa cho sản phẩm. */
+  /* Nằm góc phải dưới, chừa trống chính giữa cho sản phẩm. */
   inset: auto clamp(14px, 2.2vw, 20px) clamp(12px, 2vw, 16px) auto;
   font-size: .62rem;
   letter-spacing: var(--tracking-caption);
-  color: rgba(255,255,255,.62);
+  color: var(--ink-3);
   pointer-events: none;
   transition: opacity .4s var(--ease);
 }
@@ -3523,7 +3450,11 @@ a.product-split-media:hover svg { transform: scale(1.03); }
              translateY(calc(var(--feet) + var(--th) / 2 - .6 * var(--mm)))
              rotateX(-90deg);
 }
-.std3d-n-shadow { transform: translateY(calc(var(--feet) + var(--th) + 2 * var(--mm))) rotateX(90deg); }
+.std3d-n-shadow {
+  /* --shx/--shz (mm): bóng lệch về phía ngược đèn, do applyLight() trong Standee3D.jsx tính. */
+  transform: translate3d(calc(var(--shx, 0) * var(--mm)), 0, calc(var(--shz, 0) * var(--mm)))
+             translateY(calc(var(--feet) + var(--th) + 2 * var(--mm))) rotateX(90deg);
+}
 .std3d-n-base, .std3d-rig { transition: transform .55s var(--ease); }
 
 /* ----- Một tấm = hộp 6 mặt ----- */
@@ -3563,8 +3494,30 @@ a.product-split-media:hover svg { transform: scale(1.03); }
    Chọn lớp tô bằng class 2 tên (.std3d-f.std3d-art-front) để thắng .std3d-slab > .std3d-f. */
 .std3d-f.std3d-art-front { background: #fff var(--front) center/100% 100% no-repeat; }
 .std3d-f.std3d-art-back { background: #fff var(--back) center/100% 100% no-repeat; }
-/* Mặt sau quay vào bóng của chính standee nên tối hơn mặt trước một chút. */
-.std3d-f.std3d-art-back::after { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,.06); }
+/* Ánh sáng từ đèn góc trên-trái (tính trong Standee3D.jsx → applyLight): lớp phủ gồm vệt
+   loé trắng ở vị trí --*-hx/--*-hy và lớp tối --*-shade khi mặt quay đi khỏi đèn. Mặt trước
+   đọc biến --f-*, mặt sau (.std3d-lit-b) đọc --b-*. Trước khi JS chạy các biến chưa có, giá
+   trị dự phòng 0 = không phủ gì. (Mặt sau trước đây tối cố định 6% — giờ do đèn quyết định.) */
+.std3d-lit::before {
+  --shade: var(--f-shade, 0);
+  --spec: var(--f-spec, 0);
+  --hx: var(--f-hx, 30%);
+  --hy: var(--f-hy, 20%);
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 75% 60% at var(--hx) var(--hy), rgba(255,255,255,var(--spec)), transparent 70%),
+    linear-gradient(rgba(0,0,0,var(--shade)), rgba(0,0,0,var(--shade)));
+}
+.std3d-lit-b::before {
+  --shade: var(--b-shade, 0);
+  --spec: var(--b-spec, 0);
+  --hx: var(--b-hx, 70%);
+  --hy: var(--b-hy, 20%);
+}
 
 /* ----- Bảng vuông: tấm phẳng bo góc, dày 2mm ----- */
 .std3d-cardslab { --w: var(--cs); --h: var(--cs); }
@@ -3608,7 +3561,8 @@ a.product-split-media:hover svg { transform: scale(1.03); }
 
 /* Bảng dựng đứng nên bóng đổ dưới chân là một vệt hẹp, không rộng như đáy standee. */
 .std3d-n-cardshadow {
-  transform: translateY(calc(var(--cs) / 2 + 4 * var(--mm))) rotateX(90deg);
+  transform: translate3d(calc(var(--shx, 0) * var(--mm)), 0, calc(var(--shz, 0) * var(--mm)))
+             translateY(calc(var(--cs) / 2 + 4 * var(--mm))) rotateX(90deg);
 }
 .std3d-n-cardshadow .std3d-shadow {
   left: calc(var(--cs) * -.75);
@@ -3620,7 +3574,9 @@ a.product-split-media:hover svg { transform: scale(1.03); }
 /* ----- Mặt đáy: tấm trong, hai cánh gấp gặp nhau bằng đường khớp giữa ----- */
 .std3d-base > .std3d-f {
   background: linear-gradient(150deg, rgba(255,255,255,.58), rgba(255,255,255,.42) 46%, rgba(255,255,255,.56));
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.42);
+  /* Viền tối rất mảnh: nền khung giờ sáng, viền trắng như trước sẽ chìm mất và tấm mica
+     trong suốt gần như biến mất. */
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.10);
 }
 .std3d-base > .std3d-out, .std3d-base > .std3d-in {
   background:
@@ -3648,7 +3604,8 @@ a.product-split-media:hover svg { transform: scale(1.03); }
   top: calc(var(--depth) * -1.35);
   width: calc(var(--pw) * 1.7);
   height: calc(var(--depth) * 2.7);
-  background: radial-gradient(ellipse at center, rgba(0,0,0,.55) 0%, transparent 66%);
+  /* Nền sáng nên bóng nhạt hơn hồi khung tối (.55) — đậm quá thành một vũng đen dưới chân. */
+  background: radial-gradient(ellipse at center, rgba(0,0,0,.32) 0%, transparent 66%);
   filter: blur(10px);
   pointer-events: none;
 }
@@ -3672,7 +3629,7 @@ a.product-split-media:hover svg { transform: scale(1.03); }
 .std3d-btn.is-on { background: var(--ink); border-color: var(--ink); color: #fff; }
 .std3d-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* ----- Tên mẫu, nút chuyển mẫu, thông số: đều nằm trong khung tối ----- */
+/* ----- Tên mẫu, nút chuyển mẫu, thông số: đều nằm trong khung (nền sáng) ----- */
 .std3d-name {
   position: absolute;
   inset: clamp(12px, 2vw, 18px) 0 auto;
@@ -3683,15 +3640,15 @@ a.product-split-media:hover svg { transform: scale(1.03); }
   text-align: center;
   pointer-events: none;
 }
-.std3d-name b { font-size: .95rem; font-weight: 600; color: #fff; letter-spacing: var(--tracking-sub); }
-.std3d-name span { font-size: .76rem; color: rgba(255,255,255,.55); }
+.std3d-name b { font-size: .95rem; font-weight: 600; color: var(--ink); letter-spacing: var(--tracking-sub); }
+.std3d-name span { font-size: .76rem; color: var(--ink-3); }
 
 .std3d-count {
   position: absolute;
   inset: clamp(12px, 2vw, 18px) clamp(14px, 2.2vw, 20px) auto auto;
   z-index: 2;
   font-size: .72rem;
-  color: rgba(255,255,255,.42);
+  color: var(--ink-3);
   font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
@@ -3710,15 +3667,15 @@ a.product-split-media:hover svg { transform: scale(1.03); }
   height: 44px;
   border: 0;
   background: none;
-  /* Mũi tên trắng có lúc đè lên phần sáng của sản phẩm; bóng đổ mảnh giữ cho nó luôn tách
+  /* Mũi tên tối có lúc đè lên phần tối của bản in; quầng trắng mảnh giữ cho nó luôn tách
      khỏi nền dù phía sau là gì. */
-  color: rgba(255,255,255,.72);
-  filter: drop-shadow(0 1px 3px rgba(0,0,0,.55));
+  color: var(--ink-2);
+  filter: drop-shadow(0 0 3px rgba(255,255,255,.9));
   cursor: pointer;
   transition: color .2s var(--ease), transform .2s var(--ease);
 }
-.std3d-nav:hover { color: #fff; }
-.std3d-nav:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 50%; }
+.std3d-nav:hover { color: var(--ink); }
+.std3d-nav:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 50%; }
 /* Không còn vòng tròn bao quanh nên mũi tên 18px trông lọt thỏm — nới ra cho cân với khung. */
 .std3d-nav svg { width: 22px; height: 22px; }
 .std3d-prev { left: clamp(10px, 1.6vw, 18px); }
@@ -3726,17 +3683,6 @@ a.product-split-media:hover svg { transform: scale(1.03); }
 .std3d-next { right: clamp(10px, 1.6vw, 18px); }
 .std3d-prev:hover { transform: translateX(-2px); }
 .std3d-next:hover { transform: translateX(2px); }
-
-.std3d-spec {
-  position: absolute;
-  inset: auto auto clamp(12px, 2vw, 16px) clamp(14px, 2.2vw, 20px);
-  font-size: .62rem;
-  color: rgba(255,255,255,.42);
-  font-variant-numeric: tabular-nums;
-  pointer-events: none;
-}
-/* Điện thoại: hai dòng chú thích dưới đáy khung đâm vào nhau, bỏ thông số cho thoáng. */
-@media (max-width: 560px) { .std3d-spec { display: none; } }
 
 /* ============================================================================
    GIỎ HÀNG & THANH TOÁN  (CartLink, AddToCartButton, CheckoutView)

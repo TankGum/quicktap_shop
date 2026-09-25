@@ -9,7 +9,7 @@ import { siteConfig } from '@/lib/siteConfig';
 import { products } from '@/data/products';
 import ProgressiveImg from './ProgressiveImg';
 import MetallicText, { inkMetal } from './MetallicText';
-import { PhoneIcon, NfcWaveIcon, MenuIcon, CloseIcon, ChevronDownIcon } from './icons';
+import { NfcWaveIcon, MenuIcon, CloseIcon, ChevronDownIcon } from './icons';
 
 // Lấy tên trực tiếp từ data/products.js (nguồn duy nhất của tên sản phẩm) thay vì hardcode
 // lại ở đây — trước đây header tự chép tay 'Bảng NFC'/'Standee', sửa tên sản phẩm ở
@@ -30,6 +30,8 @@ const SECTION_LINKS = [
   { href: '/thiet-ke-rieng', label: 'Thiết kế riêng', hot: true },
   { href: '/#loi-ich', label: 'Lợi ích' },
   { href: '/#faq', label: 'Câu hỏi' },
+  // Trang riêng, không phải khối trên trang chủ — sáng lên qua isActive() như "Thiết kế riêng".
+  { href: '/lien-he', label: 'Liên hệ' },
 ];
 
 // Đích của mục "Sản phẩm": khối giới thiệu 2 dòng sản phẩm ngoài trang chủ.
@@ -41,8 +43,9 @@ const hashId = (href) => (href.startsWith('/#') ? href.slice(2) : null);
 // Các khối trên trang chủ mà menu trỏ tới — dùng để biết khách đang xem khối nào.
 const TRACKED_IDS = [PRODUCTS_HREF, ...SECTION_LINKS.map((l) => l.href)].map(hashId);
 
-// Không có mục "Liên hệ" riêng trong nav — nút CTA bên cạnh (btn-primary, nổi bật hơn hẳn
-// 1 link chữ thường) đã trỏ /lien-he rồi, thêm 1 link "Liên hệ" nữa trong nav sẽ trùng lặp.
+// "Liên hệ" là một mục thường trong nav (cuối SECTION_LINKS), không còn nút xanh nổi bật riêng
+// ở header / nút to trong menu mobile: nó chỉ dẫn sang trang /lien-he như mọi mục khác, và
+// hành động thật (nhắn Zalo, gọi) nằm ngay trên trang đó.
 
 export default function Header({ productLinks }) {
   const PRODUCT_LINKS = productLinks?.length ? productLinks : FALLBACK_PRODUCT_LINKS;
@@ -223,11 +226,6 @@ export default function Header({ productLinks }) {
         {/* Luôn hiện, kể cả giỏ trống — xem components/CartLink.jsx. */}
         <CartLink />
 
-        <Link className="btn btn-primary btn-sm header-cta" href="/lien-he">
-          <PhoneIcon className="i" />
-          Liên hệ
-        </Link>
-
         <button
           type="button"
           className="nav-toggle"
@@ -350,11 +348,6 @@ export default function Header({ productLinks }) {
           ))}
         </ul>
 
-        <Link className="btn btn-primary btn-lg mobile-nav-cta" href="/lien-he">
-          <PhoneIcon className="i" />
-          Liên hệ ngay
-        </Link>
-        <p className="mobile-nav-note">Trả lời trong vòng 2 phút · Đặt 1 cái cũng nhận</p>
       </nav>
     </>
   );

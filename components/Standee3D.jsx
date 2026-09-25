@@ -21,9 +21,8 @@ const DEPTH = 47;    // chiều sâu mặt đáy (mm) — phải khớp DEPTH_MM
 const FOLD = Math.asin(DEPTH / (2 * PH));           // góc gấp so với phương thẳng đứng
 const HEIGHT = PH * Math.cos(FOLD) + TH;            // chiều cao thật khi dựng lên
 
-// Bảng vuông: tấm phẳng 100×100mm, bo góc 8mm, dày 2mm.
+// Bảng vuông: tấm phẳng 100×100mm, bo góc 8mm (bo góc khai trong CSS: --cr), dày 2mm.
 const CARD = 100;
-const CARD_R = 8;
 
 // [ngẩng, xoay] tính bằng độ. rotateX ÂM là nhìn từ trên xuống.
 // `idle` là góc 3/4 lúc mới vào — đẹp hơn nhìn thẳng, và cho thấy ngay đây là khối 3D.
@@ -45,6 +44,74 @@ const BOX = {
   standee: [PW, HEIGHT],
   card: [CARD, CARD],
 };
+
+// ----- Ánh sáng -----
+// Một đèn đặt ở góc trên-trái phía trước, CỐ ĐỊNH theo máy quay (khách xoay mô hình chứ không
+// xoay đèn). Mỗi lần góc xoay đổi, tính lại cho từng mặt in lớn:
+//   - độ tối: mặt quay đi khỏi đèn thì tối dần
+//   - vệt bóng loáng: mặt mica bóng loé sáng khi gần đúng góc phản chiếu đèn về phía mắt
+//     (Blinn-Phong), vị trí vệt trượt trên mặt theo hướng đèn
+// rồi đẩy ra CSS qua biến --f-* (mặt trước) / --b-* (mặt sau), xem .std3d-lit trong
+// globals.css. Bóng đổ dưới chân cũng lệch về phía ngược đèn (--shx/--shz).
+//
+// Toạ độ theo CSS: x sang phải, y xuống dưới, z hướng về phía người xem.
+const norm = ([x, y, z]) => {
+  const l = Math.hypot(x, y, z);
+  return [x / l, y / l, z / l];
+};
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+const rotX = (a, [x, y, z]) => [x, y * Math.cos(a) - z * Math.sin(a), y * Math.sin(a) + z * Math.cos(a)];
+const rotY = (a, [x, y, z]) => [x * Math.cos(a) + z * Math.sin(a), y, -x * Math.sin(a) + z * Math.cos(a)];
+const RAD = Math.PI / 180;
+
+const LIGHT = norm([-0.55, -0.75, 0.5]);            // hướng từ bề mặt tới đèn
+const HALF = norm([LIGHT[0], LIGHT[1], LIGHT[2] + 1]); // nửa đường giữa hướng đèn và hướng nhìn
+const SHADE_MAX = 0.22;  // mặt quay lưng hẳn với đèn tối tới mức này
+const SPEC_MAX = 0.6;    // độ loé tối đa của vệt bóng loáng
+const SHININESS = 6;     // càng lớn vệt loé càng gắt, chỉ hiện ở dải góc hẹp
+const LIT_FULL = 0.45;   // mặt hướng về đèn từ mức này trở lên: sáng trọn, không tối chút nào
+const LIT_NONE = -0.35;  // từ mức này trở xuống: tối hẳn SHADE_MAX
+const SHADOW_MM = 9;     // bóng đổ lệch khỏi chân bao nhiêu mm
+
+// Hệ trục (u = ngang, v = dọc, n = pháp tuyến) của mặt in, trong hệ toạ độ mô hình — khớp
+// transform của .std3d-n-front / .std3d-n-back / tấm bảng vuông trong globals.css.
+const faceAxes = (tf) => [tf([1, 0, 0]), tf([0, 1, 0]), tf([0, 0, 1])];
+const FACES = {
+  standee: {
+    f: faceAxes((p) => rotX(FOLD, p)),
+    b: faceAxes((p) => rotX(-FOLD, rotY(Math.PI, p))),
+  },
+  card: {
+    f: faceAxes((p) => p),
+    b: faceAxes((p) => rotY(Math.PI, p)),
+  },
+};
+
+function applyLight(el, type, rxDeg, ryDeg) {
+  const rx = rxDeg * RAD;
+  const ry = ryDeg * RAD;
+  const toView = (p) => rotX(rx, rotY(ry, p));
+  const faces = FACES[type] || FACES.standee;
+  for (const key of ['f', 'b']) {
+    const [u, v, n] = faces[key].map(toView);
+    // Không tối theo đúng Lambert: đèn chiếu xiên nên mặt nhìn thẳng cũng chỉ hứng ~½ lượng
+    // sáng, tối theo tỉ lệ thì góc chính diện đã xám đục. Mặt còn hướng khá về phía đèn
+    // (facing ≥ LIT_FULL) giữ trắng trọn, tối dần (smoothstep) tới khi quay hẳn đi.
+    const facing = dot(n, LIGHT);
+    const t = Math.min(1, Math.max(0, (LIT_FULL - facing) / (LIT_FULL - LIT_NONE)));
+    const spec = Math.pow(Math.max(0, dot(n, HALF)), SHININESS);
+    el.style.setProperty(`--${key}-shade`, (SHADE_MAX * t * t * (3 - 2 * t)).toFixed(3));
+    el.style.setProperty(`--${key}-spec`, (SPEC_MAX * spec).toFixed(3));
+    // Vệt loé nằm về phía đèn trên mặt: chiếu hướng nửa-đường lên hai trục của mặt.
+    el.style.setProperty(`--${key}-hx`, `${(50 + 75 * dot(HALF, u)).toFixed(1)}%`);
+    el.style.setProperty(`--${key}-hy`, `${(50 + 75 * dot(HALF, v)).toFixed(1)}%`);
+  }
+  // Bóng ngả về sau-phải (ngược đèn) trên mặt sàn. Sàn quay theo mô hình nên phải xoay
+  // ngược độ lệch đó quanh trục đứng thì bóng mới đứng yên so với đèn.
+  const [sx, , sz] = rotY(-ry, [SHADOW_MM, 0, -SHADOW_MM * 0.8]);
+  el.style.setProperty('--shx', sx.toFixed(2));
+  el.style.setProperty('--shz', sz.toFixed(2));
+}
 
 const DRAG_X = 0.38;     // 1px kéo ngang = bao nhiêu độ xoay quanh trục đứng
 const DRAG_Y = 0.30;
@@ -74,6 +141,9 @@ export default function Standee3D({ models }) {
   // fit() nằm trong effect chạy một lần nên không thấy `model` mới; đọc loại qua ref.
   const typeRef = useRef(model.type);
   const refit = useRef(() => {});
+  // Ghi góc xoay + ánh sáng lên DOM. Gán trong effect bên dưới; các handler kéo/phím gọi qua
+  // ref này để ánh sáng luôn cập nhật cùng góc xoay.
+  const applyRef = useRef(() => {});
 
   // ----- đặt lại transform lên DOM -----
   useEffect(() => {
@@ -86,7 +156,9 @@ export default function Standee3D({ models }) {
       stand.style.setProperty('--rx', `${v.rx.toFixed(2)}deg`);
       stand.style.setProperty('--ry', `${v.ry.toFixed(2)}deg`);
       stand.style.setProperty('--scale', v.fit.toFixed(3));
+      applyLight(stand, typeRef.current, v.rx, v.ry);
     };
+    applyRef.current = apply;
 
     // Khung hình luôn vừa khít khung nhìn: tính hệ số thu phóng từ bề rộng/chiều cao thật
     // của standee (mm) so với ô chứa nó.
@@ -179,6 +251,7 @@ export default function Standee3D({ models }) {
   useEffect(() => {
     typeRef.current = model.type;
     refit.current();
+    applyRef.current();
     if (model.type === 'card' && pose === 'base') {
       setPose(null);
       tweenRef.current = {
@@ -218,11 +291,7 @@ export default function Standee3D({ models }) {
     v.rx = clampRx(v.rx - dy * DRAG_Y);
     v.vx = dx * DRAG_X;
     v.vy = -dy * DRAG_Y;
-    const stand = standRef.current;
-    if (stand) {
-      stand.style.setProperty('--rx', `${v.rx.toFixed(2)}deg`);
-      stand.style.setProperty('--ry', `${v.ry.toFixed(2)}deg`);
-    }
+    applyRef.current();
   };
 
   const onPointerUp = (e) => {
@@ -242,11 +311,7 @@ export default function Standee3D({ models }) {
     v.ry += step[0];
     v.rx = clampRx(v.rx + step[1]);
     setHinted(true);
-    const stand = standRef.current;
-    if (stand) {
-      stand.style.setProperty('--rx', `${v.rx.toFixed(2)}deg`);
-      stand.style.setProperty('--ry', `${v.ry.toFixed(2)}deg`);
-    }
+    applyRef.current();
   };
 
   // Xoay tới một góc nhìn đặt sẵn, đi đường ngắn nhất (không quay thừa mấy vòng).
@@ -299,8 +364,8 @@ export default function Standee3D({ models }) {
             {isCard ? (
               <div className="std3d-node">
                 <div className="std3d-slab std3d-cardslab">
-                  <i className="std3d-f std3d-out std3d-art-front" />
-                  <i className="std3d-f std3d-in" />
+                  <i className="std3d-f std3d-out std3d-art-front std3d-lit" />
+                  <i className="std3d-f std3d-in std3d-lit std3d-lit-b" />
                   {/* Viền quanh tấm: 4 cạnh thẳng, cộng 4 mặt vát ở góc thay cho cung bo.
                       Một mặt phẳng cho mỗi cung 1/4 là đủ ở độ dày 2mm — sai lệch so với
                       cung thật nhỏ hơn bề dày tấm nên mắt không bắt được. */}
@@ -321,7 +386,7 @@ export default function Standee3D({ models }) {
             <div className="std3d-node std3d-rig">
               <div className="std3d-node std3d-n-front">
                 <div className="std3d-slab std3d-panel">
-                  <i className="std3d-f std3d-out std3d-art-front" />
+                  <i className="std3d-f std3d-out std3d-art-front std3d-lit" />
                   <i className="std3d-f std3d-in" />
                   <i className="std3d-f std3d-sl" />
                   <i className="std3d-f std3d-sr" />
@@ -332,7 +397,7 @@ export default function Standee3D({ models }) {
 
               <div className="std3d-node std3d-n-back">
                 <div className="std3d-slab std3d-panel">
-                  <i className="std3d-f std3d-out std3d-art-back" />
+                  <i className="std3d-f std3d-out std3d-art-back std3d-lit std3d-lit-b" />
                   <i className="std3d-f std3d-in" />
                   <i className="std3d-f std3d-sl" />
                   <i className="std3d-f std3d-sr" />
@@ -388,11 +453,6 @@ export default function Standee3D({ models }) {
 
         <p className="std3d-count" aria-hidden="true">
           {active + 1}/{models.length}
-        </p>
-        <p className="std3d-spec">
-          {isCard
-            ? `${CARD}×${CARD} mm · dày ${TH} mm · bo góc ${CARD_R} mm`
-            : `A6 ${PW}×${PH} mm · dày ${TH} mm · đáy ${PW}×${DEPTH} mm · cao ${Math.round(HEIGHT)} mm`}
         </p>
         <p className={`std3d-hint${hinted ? ' is-off' : ''}`} aria-hidden="true">
           Kéo để xoay

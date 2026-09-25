@@ -145,10 +145,10 @@ export default async function HomePage() {
   // Ảnh mẫu "Thiết kế riêng" — bảng Airtable riêng, xem lib/airtable.js.
   const customDesigns = await getCustomDesigns();
 
-  // Video demo — bảng "media trang chủ" riêng trên Airtable. Ô trống thì null; heroVideo giờ
-  // chỉ dùng cho section "VIDEO SẢN PHẨM" riêng ngay sau Hero (không còn nằm trong Hero nữa —
-  // Hero dùng ảnh thật của 2 dòng sản phẩm qua HeroShowcase ở trên).
+  // Video — bảng "media trang chủ" riêng trên Airtable. Ô trống thì null. heroVideo (+ bản dọc
+  // heroVideoMobile) là nhân vật chính của Hero; chưa có thì Hero lùi về mô hình 3D.
   const media = await getSiteMedia();
+  const heroVideo = media.heroVideo;
 
   return (
     <>
@@ -185,14 +185,30 @@ export default async function HomePage() {
 
         </div>
 
-        {/* Nhân vật chính của hero: mô hình 3D của chính sản phẩm, xoay được ngay tại đây —
-            xem components/Standee3D.jsx. KHÔNG bọc Reveal: khối này là thứ khách nhìn thấy
-            đầu tiên, để nó mờ rồi mới hiện là mất luôn cảm giác "chạm được vào hàng". */}
-        <div className="hero-model">
-          <Standee3D models={standeeModels} />
-        </div>
+        {/* Nhân vật chính của hero: video motion graphic (dựng bằng Remotion — mã nguồn ở
+            video/, xem video/README.md). Hai bản: heroVideo ngang 16:9 cho desktop,
+            heroVideoMobile dọc 9:16 cho điện thoại. Mô hình 3D xoay được nằm ở section ngay
+            dưới dải điểm mạnh; Airtable chưa có video thì mô hình 3D quay về đây làm hero.
 
-        {/* Cặp nút đặt SAU mô hình: khách xem hàng xong mới tới lúc gọi hành động. */}
+            KHÔNG bọc Reveal: khối này là thứ khách nhìn thấy đầu tiên, để nó mờ rồi mới hiện
+            là mất luôn cảm giác mở trang ra là thấy ngay sản phẩm. */}
+        {heroVideo ? (
+          <div className="container hero-video">
+            <div className={`video-showcase-media${media.heroVideoMobile ? ' has-mobile' : ''}`}>
+              <HeroVideo
+                src={heroVideo.url}
+                mobileSrc={media.heroVideoMobile?.url}
+                alt={heroVideo.alt || siteConfig.heroImageAlt}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="model-showcase">
+            <Standee3D models={standeeModels} />
+          </div>
+        )}
+
+        {/* Cặp nút đặt SAU video/mô hình: khách xem hàng xong mới tới lúc gọi hành động. */}
         <div className="container hero-cta">
           <Reveal as="div" className="hero-actions">
             <Link className="btn btn-lg btn-metal btn-aura" href="/lien-he">
@@ -241,32 +257,22 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ============ VIDEO SẢN PHẨM ============ */}
-      {/* Trước đây video này nằm trong Hero (field heroVideo) — chuyển xuống thành section
-          riêng ngay sau Hero để Hero tập trung vào ảnh sản phẩm. Airtable chưa có heroVideo
-          thì ẩn hẳn section, không để khung trống.
-
-          Video hiện tại là video motion graphic dựng bằng Remotion (mã nguồn ở video/, xem
-          video/README.md), có hai bản: heroVideo ngang 16:9 cho desktop và heroVideoMobile dọc
-          9:16 cho điện thoại. */}
-      {media.heroVideo && (
-        <section className="section video-showcase" id="video-san-pham">
+      {/* ============ MÔ HÌNH 3D ============ */}
+      {/* Mô hình 3D của chính sản phẩm, khách tự xoay/lật xem mặt sau, mặt đáy — xem
+          components/Standee3D.jsx. Trước đây nằm trong Hero; giờ Hero chiếu video, mô hình
+          chuyển xuống đây (đúng chỗ section video cũ). Chưa có video thì mô hình vẫn ở Hero và
+          section này ẩn, không hiện hai mô hình. */}
+      {heroVideo && (
+        <section className="section" id="mo-hinh-3d">
           <div className="container">
             <Reveal as="header" className="section-head">
-              <h2>Một chạm, trang đánh giá mở ra ngay</h2>
-            </Reveal>
-            <Reveal
-              as="div"
-              className={`video-showcase-media${media.heroVideoMobile ? ' has-mobile' : ''}`}
-              delay={80}
-            >
-              <HeroVideo
-                src={media.heroVideo.url}
-                mobileSrc={media.heroVideoMobile?.url}
-                alt={media.heroVideo.alt || siteConfig.heroImageAlt}
-              />
+              <p className="kicker">Xem mẫu 3D</p>
+              <h2>Xoay, lật, xem kỹ từng mẫu trước khi đặt</h2>
             </Reveal>
           </div>
+          <Reveal as="div" className="model-showcase" delay={80}>
+            <Standee3D models={standeeModels} />
+          </Reveal>
         </section>
       )}
 

@@ -18,7 +18,6 @@ const inter = Inter({
 });
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import ZaloButton from '@/components/ZaloButton';
 import ChatWidget from '@/components/ChatWidget';
 import { CartProvider } from '@/components/CartStore';
 import { siteConfig } from '@/lib/siteConfig';
@@ -120,12 +119,12 @@ export default async function RootLayout({ children }) {
           <main id="main">{children}</main>
         </CartProvider>
         <Footer />
-        {/* Hai nút nổi ở góc phải dưới, xếp dọc (xem .chat-fab/.zalo-fab trong
-            globals.css): chat trả lời ngay bằng máy, Zalo để người thật trả lời sau.
-            ChatWidget là client component nên khi JS không chạy nó không render gì —
-            nút Zalo vẫn còn, trang không mất kênh liên hệ nào. */}
+        {/* Nút nổi duy nhất ở góc phải dưới: chat trả lời ngay bằng máy (xem .chat-fab trong
+            globals.css). Nút Zalo nổi từng nằm ở đây đã bỏ — Zalo vẫn có ở trang Liên hệ
+            ("Gọi hoặc nhắn Zalo" cùng số hotline) và trong câu trả lời của chatbot. ChatWidget
+            là client component nên khi JS không chạy nó không render gì; khách vẫn còn
+            hotline ở footer và trang Liên hệ. */}
         <ChatWidget />
-        <ZaloButton />
       </body>
     </html>
   );

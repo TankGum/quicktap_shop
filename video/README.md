@@ -7,8 +7,9 @@ Video motion graphic 20 giây, 30fps, không tiếng, hai bản:
 | `Desktop`   | 1920×1080   | `out/quicktap-promo-desktop.mp4`   | `heroVideo`                       |
 | `Mobile`    | 1080×1920   | `out/quicktap-promo-mobile.mp4`    | `heroVideoMobile`                 |
 
-Trang chủ chiếu nó ở section "VIDEO SẢN PHẨM" (`#video-san-pham`): màn rộng từ 640px nhận
-bản ngang, màn hẹp hơn nhận bản dọc (xem `components/HeroVideo.jsx`).
+Trang chủ chiếu nó ở Hero, ngay dưới tiêu đề: màn rộng từ 640px nhận bản ngang, màn hẹp hơn
+nhận bản dọc (xem `components/HeroVideo.jsx`). Mô hình 3D xoay được nằm ở section `#mo-hinh-3d`
+bên dưới.
 
 Ảnh sản phẩm lấy thẳng từ `../public/assets/standee3d/` (xem `remotion.config.js`), và hình khối
 3D là bản chép của mô hình ở hero (`components/Standee3D.jsx` + khối `.std3d-*` trong

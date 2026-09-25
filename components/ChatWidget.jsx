@@ -1,13 +1,11 @@
 'use client';
 
-// Khung chat nổi ở góc phải dưới, có mặt trên MỌI trang (gắn trong app/layout.js).
-//
-// Đi cặp với nút Zalo chứ không thay thế: nút này là máy trả lời ngay 24/7, nút kia là người
-// thật trả lời sau — khách tự chọn. Zalo vẫn nằm dưới cùng vì đó là kênh đang mang đơn thật về.
+// Khung chat nổi ở góc phải dưới, có mặt trên MỌI trang (gắn trong app/layout.js). Đây là
+// nút nổi duy nhất — nút Zalo nổi từng xếp dưới nó đã bỏ, chat chiếm luôn vị trí góc đó.
+// Khách cần người thật thì chatbot mời gọi hotline/nhắn Zalo (xem lib/chatPrompt.mjs).
 //
 // Không có JS thì component này không render gì (nó là client component), khung chat biến mất
-// và nút Zalo vẫn còn nguyên — đúng nguyên tắc của repo: trang phải đọc và dùng được đầy đủ
-// khi JS không chạy.
+// — trang vẫn đọc và liên hệ được qua hotline ở footer và trang Liên hệ (gọi hoặc nhắn Zalo).
 //
 // Backend là functions/api/chat.js (Cloudflare Pages Function), phát về một luồng SSE với
 // đúng ba dạng khung: {"t":"..."} một mẩu chữ, {"done":true} hết câu, {"error":"..."} đứt.
@@ -240,7 +238,7 @@ export default function ChatWidget() {
           <>
             {/* Ảnh robot là hình chính; chấm xanh ở góc báo trợ lý đang hoạt động.
                 Dùng <img> thường chứ không phải next/image: site bật images.unoptimized cho
-                static export nên next/image không thêm được gì, y như components/ZaloButton.jsx. */}
+                static export nên next/image không thêm được gì. */}
             <img
               className="chat-fab-photo"
               src="/assets/chatbot/chatbot.png"
