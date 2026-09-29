@@ -53,3 +53,18 @@ Render một khung để soát nhanh: `npx remotion still src/index.js Mobile ou
 Upload file vào bảng media trang chủ trên Airtable: `out/quicktap-promo-desktop.mp4` vào dòng
 `heroVideo`, `out/quicktap-promo-mobile.mp4` vào dòng `heroVideoMobile` (chưa có thì thêm dòng
 mới, cột Key ghi `heroVideoMobile`). Lần build sau site tự lấy về và đẩy lên Cloudinary.
+
+## Video "Liên hệ đặt hàng" (trước footer, mọi trang)
+
+Video thứ hai, 15 giây, phong cách khối màu (xanh thương hiệu · đen · trắng, chữ in hoa cực đậm,
+tấm màu quét phủ khung; không icon, không chữ chuyển màu), dựng trong `src/contact/`. Khối chốt
+`EndCard.jsx` xuất hiện ở khung đầu và cảnh cuối nên video lặp liền mạch. Chữ in hoa tiếng Việt có
+dấu chồng hai tầng — giữ `lineHeight` ≥ 1.0 và đệm của `Line` trong `kit.jsx`, sát hơn là mất dấu:
+
+| Composition      | Kích thước | File render                            | Ô Airtable        |
+|------------------|------------|----------------------------------------|-------------------|
+| `ContactDesktop` | 1920×1080  | `out/quicktap-contact-desktop.mp4`     | `ctaVideo`        |
+| `ContactMobile`  | 1080×1920  | `out/quicktap-contact-mobile.mp4`      | `ctaVideoMobile`  |
+
+Render: `npm run render:contact`. Site hiển thị nó qua `components/CtaBand.jsx` (gắn trong
+`app/layout.js`, ngay trước footer); chưa có video trên Airtable thì hiện khối chữ dự phòng.

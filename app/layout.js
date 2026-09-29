@@ -19,10 +19,11 @@ const inter = Inter({
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ChatWidget from '@/components/ChatWidget';
+import CtaBand from '@/components/CtaBand';
 import { CartProvider } from '@/components/CartStore';
 import { siteConfig } from '@/lib/siteConfig';
 import { products } from '@/data/products';
-import { getVariantsByProduct } from '@/lib/airtable';
+import { getVariantsByProduct, getSiteMedia } from '@/lib/airtable';
 
 export const metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
@@ -86,6 +87,7 @@ export default async function RootLayout({ children }) {
   // tự gọi Airtable được — layout (Server Component) đọc sẵn rồi truyền xuống dạng chuỗi.
   // getVariantsByProduct có cache riêng nên trang chủ gọi lại cũng không tốn thêm request.
   const variantsByProduct = await getVariantsByProduct();
+  const media = await getSiteMedia();
   const productLinks = products.map((p) => ({
     href: p.href,
     label: p.title,
@@ -118,6 +120,8 @@ export default async function RootLayout({ children }) {
           <Header productLinks={productLinks} />
           <main id="main">{children}</main>
         </CartProvider>
+        {/* Khối liên hệ đặt hàng (video) ngay trước footer, mọi trang. */}
+        <CtaBand video={media.ctaVideo} mobileVideo={media.ctaVideoMobile} />
         <Footer />
         {/* Nút nổi duy nhất ở góc phải dưới: chat trả lời ngay bằng máy (xem .chat-fab trong
             globals.css). Nút Zalo nổi từng nằm ở đây đã bỏ — Zalo vẫn có ở trang Liên hệ

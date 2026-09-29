@@ -2128,6 +2128,23 @@ a.product-split-media:hover svg { transform: scale(1.03); }
   justify-content: center;
   gap: 12px;
 }
+/* Khối video "Liên hệ đặt hàng" trước footer (components/CtaBand.jsx): chỉ có video, bo góc và
+   bóng đổ gắn thẳng vào thẻ <video> — gắn vào khung bao thì trên điện thoại (video dọc bị chặn
+   chiều cao nên hẹp hơn khung) lộ hai dải nền thừa hai bên. Nền dự phòng lúc chưa tải là màu
+   xanh của khung đầu video, để lúc video hiện ra không bị nháy màu. Tỉ lệ dự phòng như video hero. */
+.cta-video-media video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  margin-inline: auto;
+  border-radius: var(--radius-lg);
+  background: #0071e3;
+  box-shadow: var(--shadow-lg);
+}
+@media (max-width: 639px) {
+  .cta-video-media.has-mobile video { aspect-ratio: 9 / 16; width: min(100%, calc(80svh * 9 / 16)); }
+}
 .cta-band-actions .btn-outline {
   background: transparent;
   border-color: rgba(255,255,255,.3);

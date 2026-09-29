@@ -15,6 +15,6 @@ export const C = {
 // nên video dùng thẳng Inter. Phải nạp subset vietnamese, không thì dấu tiếng Việt rơi về
 // font hệ thống và lệch nét với phần còn lại của chữ.
 export const { fontFamily } = loadFont('normal', {
-  weights: ['500', '600', '700'],
+  weights: ['500', '600', '700', '800', '900'],
   subsets: ['latin', 'vietnamese'],
 });

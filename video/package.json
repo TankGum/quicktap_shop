@@ -5,7 +5,10 @@
     "studio": "remotion studio src/index.js",
     "render:desktop": "remotion render src/index.js Desktop out/quicktap-promo-desktop.mp4",
     "render:mobile": "remotion render src/index.js Mobile out/quicktap-promo-mobile.mp4",
-    "render": "npm run render:desktop && npm run render:mobile"
+    "render": "npm run render:desktop && npm run render:mobile",
+    "render:contact:desktop": "remotion render src/index.js ContactDesktop out/quicktap-contact-desktop.mp4",
+    "render:contact:mobile": "remotion render src/index.js ContactMobile out/quicktap-contact-mobile.mp4",
+    "render:contact": "npm run render:contact:desktop && npm run render:contact:mobile"
   },
   "dependencies": {
     "@remotion/cli": "4.0.529",

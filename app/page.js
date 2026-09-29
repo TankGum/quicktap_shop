@@ -546,22 +546,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ============ CTA CUỐI TRANG ============ */}
-      <section className="section cta-band">
-        <div className="container">
-          <Reveal as="div" className="cta-card">
-            <div className="contact-glow" aria-hidden="true" />
-            <p className="kicker">Sẵn sàng chưa?</p>
-            <h2>Gửi tên và địa chỉ cho chúng tôi</h2>
-            <p className="contact-sub">
-              Chỉ cần tên và địa chỉ, chúng tôi lo phần còn lại và giao tận nơi. Trả lời trong vòng 2 phút.
-            </p>
-            <div className="cta-band-actions">
-              <Link className="btn btn-primary btn-lg" href="/lien-he">Liên hệ đặt hàng</Link>
-            </div>
-          </Reveal>
-        </div>
-      </section>
 
       <JsonLd
         data={{

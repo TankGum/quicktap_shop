@@ -20,8 +20,22 @@ import { useEffect, useRef, useState } from 'react';
 
 const DESKTOP_MEDIA = '(min-width: 640px)';
 
-export default function HeroVideo({ src, mobileSrc, poster, alt }) {
+export default function HeroVideo({ src, mobileSrc, poster, alt, lazy = false }) {
   const ref = useRef(null);
+  // lazy: chưa gắn nguồn video cho tới khi khối cuộn tới gần (cách 500px) — dùng cho video ở
+  // cuối trang. Không có IntersectionObserver thì gắn ngay.
+  const [armed, setArmed] = useState(!lazy);
+  useEffect(() => {
+    if (armed) return;
+    const el = ref.current;
+    if (!el || !('IntersectionObserver' in window)) { setArmed(true); return; }
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setArmed(true); io.disconnect(); } }, { rootMargin: '500px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [armed]);
+  // <video> đã có sẵn trong DOM khi nguồn mới được gắn nên phải gọi load() để nó bắt đầu tải.
+  useEffect(() => { if (lazy && armed) ref.current?.load(); }, [lazy, armed]);
+
   const [ratio, setRatio] = useState(null);
 
   const readRatio = (el) => {
@@ -43,7 +57,7 @@ export default function HeroVideo({ src, mobileSrc, poster, alt }) {
   return (
     <video
       ref={ref}
-      src={mobileSrc ? undefined : src}
+      src={armed && !mobileSrc ? src : undefined}
       poster={poster}
       autoPlay
       muted
@@ -55,8 +69,8 @@ export default function HeroVideo({ src, mobileSrc, poster, alt }) {
       // Đè lên tỉ lệ dự phòng khai báo trong globals.css.
       style={ratio ? { aspectRatio: ratio } : undefined}
     >
-      {mobileSrc && <source src={src} media={DESKTOP_MEDIA} type="video/mp4" />}
-      {mobileSrc && <source src={mobileSrc} type="video/mp4" />}
+      {armed && mobileSrc && <source src={src} media={DESKTOP_MEDIA} type="video/mp4" />}
+      {armed && mobileSrc && <source src={mobileSrc} type="video/mp4" />}
     </video>
   );
 }
