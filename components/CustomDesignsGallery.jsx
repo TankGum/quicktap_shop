@@ -7,10 +7,12 @@
 // VariantGallery.jsx ở trang chi tiết mẫu).
 //
 // Trước đây là dải ảnh tự trôi ngang (marquee). Đổi sang lưới đứng yên: khách thấy trọn mọi
-// mẫu cùng lúc, không phải chờ ảnh trôi tới hay nhắm bấm vào một ảnh đang chạy. Bố cục lưới
-// xem .custom-gallery trong app/globals.css.
+// mẫu cùng lúc, không phải chờ ảnh trôi tới hay nhắm bấm vào một ảnh đang chạy. Lưới giờ là
+// kiểu "tường ảnh" so le — cột xen kẽ đẩy lệch xuống, tên quán đè lên đáy ảnh. Xem
+// .custom-gallery trong app/globals.css.
 
 import { useCallback, useRef, useState } from 'react';
+import { Maximize2 } from 'lucide-react';
 import ProgressiveImg from './ProgressiveImg';
 import Lightbox from './Lightbox';
 
@@ -56,10 +58,13 @@ export default function CustomDesignsGallery({ designs }) {
                   className="custom-item-img"
                   sizes="(min-width: 1000px) 270px, (min-width: 700px) 33vw, 50vw"
                 />
+                {/* Cột Alt trên Airtable chính là tên quán — hiện luôn làm chú thích, đè lên đáy
+                    ảnh: vừa để khách biết mẫu của ai, vừa là "đã có quán thật dùng". */}
+                {d.alt && <span className="custom-item-name">{d.alt}</span>}
+                <span className="custom-item-zoom" aria-hidden="true">
+                  <Maximize2 size={15} strokeWidth={2.2} />
+                </span>
               </span>
-              {/* Cột Alt trên Airtable chính là tên quán — hiện luôn làm chú thích, vừa để khách
-                  biết mẫu của ai, vừa là "đã có quán thật dùng". */}
-              {d.alt && <span className="custom-item-name">{d.alt}</span>}
             </button>
           </li>
         ))}

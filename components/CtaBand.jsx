@@ -25,31 +25,38 @@ export default function CtaBand({ video, mobileVideo }) {
     </div>
   );
 
+  // Có video thì video là cả khối, tràn sát hai mép màn hình (không .container, không bo góc,
+  // không đệm trên dưới) — một dải phim ngang kết trang ngay trên footer. Chưa có video thì
+  // quay về thẻ chữ nền tối nằm trong container như cũ.
+  if (video) {
+    return (
+      <section className="cta-band cta-band-bleed" id="lien-he-nhanh">
+        <div className={`cta-video-media${mobileVideo ? ' has-mobile' : ''}`}>
+          {/* lazy: chỉ bắt đầu tải khi khách cuộn gần tới — khối này nằm cuối mọi trang,
+              không nên giành băng thông với nội dung phía trên. */}
+          <HeroVideo
+            lazy
+            src={video.url}
+            mobileSrc={mobileVideo?.url}
+            alt={video.alt || 'Liên hệ đặt hàng QuickTapReview: gọi hotline, nhắn Zalo hoặc chat, chỉ cần tên và địa chỉ quán, trả lời trong vòng 2 phút'}
+          />
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="section cta-band" id="lien-he-nhanh">
       <div className="container">
-        {video ? (
-          <div className={`cta-video-media${mobileVideo ? ' has-mobile' : ''}`}>
-            {/* lazy: chỉ bắt đầu tải khi khách cuộn gần tới — khối này nằm cuối mọi trang,
-                không nên giành băng thông với nội dung phía trên. */}
-            <HeroVideo
-              lazy
-              src={video.url}
-              mobileSrc={mobileVideo?.url}
-              alt={video.alt || 'Liên hệ đặt hàng QuickTapReview: gọi hotline, nhắn Zalo hoặc chat, chỉ cần tên và địa chỉ quán, trả lời trong vòng 2 phút'}
-            />
-          </div>
-        ) : (
-          <Reveal as="div" className="cta-card">
-            <div className="contact-glow" aria-hidden="true" />
-            <p className="kicker">Sẵn sàng chưa?</p>
-            <h2>Gửi tên và địa chỉ cho chúng tôi</h2>
-            <p className="contact-sub">
-              Chỉ cần tên và địa chỉ, chúng tôi lo phần còn lại và giao tận nơi. Trả lời trong vòng 2 phút.
-            </p>
-            {actions}
-          </Reveal>
-        )}
+        <Reveal as="div" className="cta-card">
+          <div className="contact-glow" aria-hidden="true" />
+          <p className="kicker">Sẵn sàng chưa?</p>
+          <h2>Gửi tên và địa chỉ cho chúng tôi</h2>
+          <p className="contact-sub">
+            Chỉ cần tên và địa chỉ, chúng tôi lo phần còn lại và giao tận nơi. Trả lời trong vòng 2 phút.
+          </p>
+          {actions}
+        </Reveal>
       </div>
     </section>
   );

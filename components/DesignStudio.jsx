@@ -15,13 +15,14 @@ import Link from 'next/link';
 import { designTemplates, bgPresets } from '@/data/designTemplates';
 import {
   drawDesign, renderToBlob, loadImageFile, loadMockup,
-  slotFrameFor, imageDeltaToUnit, inspectLogo, relativeLuminance,
+  slotFrameFor, imageDeltaToUnit, inspectLogo, relativeLuminance, logoBoxInSlot, slotClipPath,
   DEFAULT_VIEW, MIN_ZOOM, MAX_ZOOM, MIN_LOGO_EDGE, MIN_BG_LUMINANCE,
 } from '@/lib/designPreview';
 import { siteConfig } from '@/lib/siteConfig';
 // Luật kiểm tra dùng chung với Pages Function nhận đơn — xem lib/orderValidation.js.
 import { validateOrder, LIMITS } from '@/lib/orderValidation';
 import { CheckIcon, WarningIcon, PhoneIcon, CloseIcon } from './icons';
+import Standee3D from './Standee3D';
 
 // Logo gốc được gửi NGUYÊN BẢN, không nén lại: file này dùng để lên bản in thật, hạ chất
 // lượng ở đây là hỏng việc. Chỉ chặn trên để một cú tải nhầm ảnh RAW không làm nghẽn endpoint.
@@ -67,12 +68,18 @@ export default function DesignStudio() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [status, setStatus] = useState({ state: 'idle' }); // idle | sending | done | error
 
-  const canvasRef = useRef(null);
+  // Mô hình 3D thay cho ảnh chụp: mặt in phẳng của mẫu (template.flat) ghép logo + màu nền
+  // thành một ảnh, bọc lên khối 3D. `stageMode`: 'rotate' = kéo để xoay, 'edit' = kéo để dời logo.
+  const [stageMode, setStageMode] = useState('rotate');
+  const [flatMock, setFlatMock] = useState(null);
+  const [texture, setTexture] = useState(null);
+  const [fontTick, setFontTick] = useState(0);
+  const composeRef = useRef(null);
   const fileInputRef = useRef(null);
-  // Số pixel ẢNH trên mỗi pixel CSS của canvas — dùng để quy quãng kéo trên màn hình về
-  // quãng dịch trên ảnh. paint() cập nhật mỗi lần vẽ.
+  // Số pixel của ẢNH MẶT IN PHẲNG trên mỗi pixel CSS của mặt trước mô hình 3D — dùng để quy
+  // quãng kéo trên màn hình về quãng dịch trên ảnh. Standee3D cập nhật qua onFaceWidth.
   const imgPerCssRef = useRef(1);
-  // Các ngón/chuột đang chạm canvas, để phân biệt kéo (1 điểm) với chụm phóng to (2 điểm).
+  // Các ngón/chuột đang chạm mô hình, để phân biệt kéo (1 điểm) với chụm phóng to (2 điểm).
   const pointersRef = useRef(new Map());
   const pinchRef = useRef(null);
   // Font thật của trang, đọc từ DOM chứ không chép tay lại danh sách font: sửa --font trong
@@ -98,65 +105,104 @@ export default function DesignStudio() {
   const bgTooDark = Boolean(activeBg) && relativeLuminance(activeBg) < MIN_BG_LUMINANCE;
 
   // ----- Vẽ lại preview mỗi khi có gì đó đổi -----
-  const paint = useCallback(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    // Bề rộng hiển thị do CSS quyết định; canvas chỉ việc bám theo để nét không bị mờ.
-    const cssW = canvas.clientWidth;
-    if (!cssW) return;
-    const cssH = cssW * (template.size.h / template.size.w);
-
-    canvas.width = Math.round(cssW * dpr);
-    canvas.height = Math.round(cssH * dpr);
-    canvas.style.height = `${cssH}px`;
-
-    const ctx = canvas.getContext('2d');
-    const scale = (cssW * dpr) / template.size.w;
-    imgPerCssRef.current = template.size.w / cssW;
-    ctx.setTransform(scale, 0, 0, scale, 0, 0);
-
-    drawDesign(ctx, {
-      template,
-      mockup: mockupImg,
-      bgColor: activeBg,
-      tintWidth: canvas.width,
-      logo: logo?.image || null,
-      view,
-      fontFamily: fontRef.current,
-    });
-  }, [template, mockupImg, activeBg, logo, view]);
+  // Mặt in phẳng của mẫu đang chọn. id riêng (":flat") vì bộ tô màu cache theo template.id —
+  // dùng chung id với ảnh chụp thì lấy nhầm mặt nạ của ảnh kia.
+  const flat = template.flat;
+  const flatTpl = useMemo(() => ({ ...flat, id: `${template.id}:flat` }), [flat, template.id]);
+  const flatImg = flatMock?.src === flat.image ? flatMock.img : null;
 
   useEffect(() => {
-    fontRef.current = getComputedStyle(document.body).fontFamily || 'sans-serif';
+    let cancelled = false;
+    loadMockup(flat.image).then((img) => {
+      if (!cancelled) setFlatMock({ src: flat.image, img });
+    });
+    return () => { cancelled = true; };
+  }, [flat.image]);
 
-    // Font chữ tải xong sau khi vẽ lần đầu thì phải vẽ lại, nếu không dòng chữ trên mẫu vẫn
-    // là font dự phòng trong khi cả trang đã đổi sang Inter.
+  // Font của trang (SN Pro) tải xong thì vẽ lại: dòng chữ "Logo của bạn" trong ô trống vẽ lên
+  // canvas, vẽ trước khi font về là ra font dự phòng.
+  useEffect(() => {
+    fontRef.current = getComputedStyle(document.body).fontFamily || 'sans-serif';
     let cancelled = false;
     document.fonts?.ready.then(() => {
       if (cancelled) return;
       fontRef.current = getComputedStyle(document.body).fontFamily || 'sans-serif';
-      paint();
+      setFontTick((t) => t + 1);
     });
     return () => { cancelled = true; };
-  }, [paint]);
+  }, []);
 
-  // ResizeObserver chứ không phải sự kiện resize của cửa sổ: ở lần vẽ đầu canvas có thể chưa
-  // được dàn trang (clientWidth = 0) nên paint() bỏ qua, mà cửa sổ thì chẳng đổi kích thước
-  // để có dịp vẽ lại — kết quả là một ô trống. RO báo đúng lúc canvas có kích thước thật, và
-  // cũng bắt luôn cả trường hợp đổi mẫu (standee cao hơn bảng vuông) lẫn xoay ngang máy.
+  // Ảnh NỀN mặt in: mẫu phẳng + màu nền (+ khung nét đứt "Logo của bạn" khi chưa có logo).
+  // KHÔNG chứa logo — logo là lớp riêng chồng lên (faceOverlay bên dưới), nên kéo / phóng logo
+  // không phải dựng lại ảnh này. Trước đây logo vẽ thẳng vào đây: mỗi khung hình kéo là một lần
+  // vẽ + nén JPEG ~900×1267 rồi trình duyệt giải mã lại — đo được ~240ms mỗi lần, kéo giật hẳn.
+  // Giờ ảnh này chỉ dựng lại khi đổi mẫu / màu / có-hay-chưa logo. toBlob (nén ngoài luồng
+  // chính) + object URL thay cho toDataURL (nén đồng bộ, chuỗi base64 to).
+  const hasLogo = Boolean(logo?.image);
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    paint();
-    const ro = new ResizeObserver(() => paint());
-    ro.observe(canvas);
-    return () => ro.disconnect();
-  }, [paint]);
+    if (!flatImg) return undefined;
+    let cancelled = false;
+    const raf = requestAnimationFrame(() => {
+      const c = composeRef.current || (composeRef.current = document.createElement('canvas'));
+      c.width = flatTpl.size.w;
+      c.height = flatTpl.size.h;
+      drawDesign(c.getContext('2d'), {
+        template: flatTpl,
+        mockup: flatImg,
+        bgColor: activeBg,
+        tintWidth: flatTpl.size.w,
+        logo: null,
+        placeholder: !hasLogo,
+        fontFamily: fontRef.current,
+      });
+      c.toBlob((blob) => {
+        if (cancelled || !blob) return;
+        const url = URL.createObjectURL(blob);
+        setTexture((prev) => {
+          if (prev) setTimeout(() => URL.revokeObjectURL(prev), 1000);
+          return url;
+        });
+      }, 'image/jpeg', 0.9);
+    });
+    return () => { cancelled = true; cancelAnimationFrame(raf); };
+  }, [flatTpl, flatImg, activeBg, hasLogo, fontTick]);
 
-  // Đổi mẫu -> tải ảnh chụp tương ứng. Xoá ảnh cũ trước để không hiện nhầm ảnh mẫu trước đó
-  // trong lúc ảnh mới còn đang tải.
+  // Rời trang thì trả bộ nhớ của ảnh nền cuối cùng (các bản cũ hơn đã trả lúc thay ảnh).
+  const textureRef = useRef(null);
+  textureRef.current = texture;
+  useEffect(() => () => { if (textureRef.current) URL.revokeObjectURL(textureRef.current); }, []);
+
+  // Lớp logo chồng lên mặt in: một thẻ <img> đặt bằng % theo đúng phép tính của bộ vẽ
+  // (logoBoxInSlot), cắt theo hình ô chừa bằng clip-path.
+  const logoBox = hasLogo
+    ? logoBoxInSlot(flat.slot, logo.image.naturalWidth || logo.image.width, logo.image.naturalHeight || logo.image.height, view)
+    : null;
+  const pct = (v, total) => `${((v / total) * 100).toFixed(3)}%`;
+  const faceOverlay = logoBox ? (
+    <span className="std3d-overlay" style={{ clipPath: slotClipPath(flat.slot, flat.size) }}>
+      <img
+        src={logo.url}
+        alt=""
+        draggable={false}
+        style={{
+          left: pct(logoBox.x, flat.size.w),
+          top: pct(logoBox.y, flat.size.h),
+          width: pct(logoBox.w, flat.size.w),
+          height: pct(logoBox.h, flat.size.h),
+        }}
+      />
+    </span>
+  ) : null;
+
+  // Standee in hai mặt cùng một mẫu; bảng vuông chỉ có mặt trước.
+  const model3d = useMemo(() => (texture ? [{
+    id: `studio-${template.id}`,
+    type: flat.type,
+    front: texture,
+    back: texture,
+    base: flat.base,
+  }] : null), [texture, template.id, flat.type, flat.base]);
+
   useEffect(() => {
     let cancelled = false;
     setMockup(null);
@@ -232,11 +278,14 @@ export default function DesignStudio() {
   const panBy = useCallback((dxCss, dyCss) => {
     const img = logo?.image;
     if (!img) return;
-    const frame = slotFrameFor(template.slot, (img.naturalWidth || 1) / (img.naturalHeight || 1));
+    // Quãng kéo trên màn hình quy về pixel của MẶT IN PHẲNG (imgPerCssRef do Standee3D báo
+    // qua onFaceWidth), rồi về đơn vị của ô logo. `view` tính theo tỉ lệ ô nên dùng chung được
+    // cho cả mặt in 3D lẫn ảnh chụp gửi kèm đơn.
+    const frame = slotFrameFor(flat.slot, (img.naturalWidth || 1) / (img.naturalHeight || 1));
     const k = imgPerCssRef.current;
     const { du, dv } = imageDeltaToUnit(frame, dxCss * k, dyCss * k);
     setView((v) => ({ ...v, dx: v.dx + du, dy: v.dy + dv }));
-  }, [logo, template]);
+  }, [logo, flat]);
 
   function onPointerDown(e) {
     if (!canAdjust) return;
@@ -274,7 +323,6 @@ export default function DesignStudio() {
 
   function onWheel(e) {
     if (!canAdjust) return;
-    e.preventDefault();
     setView((v) => ({ ...v, scale: clampZoom(v.scale * (e.deltaY > 0 ? 0.94 : 1.06)) }));
   }
 
@@ -301,6 +349,9 @@ export default function DesignStudio() {
     // Màu đang dùng có phải do MÁY tự lấy từ logo cũ không (khác với màu khách tự chọn tay).
     const prevAuto = logo?.info?.tint;
     setLogo({ image, url, file, info });
+    // Có logo thì chuyển ngay sang chế độ chỉnh: mô hình quay về chính diện, logo nằm thẳng
+    // trước mặt để khách kéo / phóng cho vừa.
+    setStageMode('edit');
 
     // Tự lấy màu nền theo tông chủ đạo của logo mới.
     if (info.tint) setBgColor(info.tint);
@@ -312,6 +363,7 @@ export default function DesignStudio() {
 
   function clearLogo() {
     setLogo(null);
+    setStageMode('rotate');
     setLogoError(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
@@ -472,26 +524,51 @@ export default function DesignStudio() {
         {/* Tỉ lệ mẫu đưa xuống CSS để nó chặn bề rộng sao cho CHIỀU CAO luôn vừa màn hình:
             standee A6 cao gần gấp rưỡi bảng vuông, chặn theo bề rộng như nhau thì mẫu standee
             dài quá tầm nhìn, mà cột này lại dính theo màn hình khi cuộn. */}
-        <div
-          className={`studio-canvas-wrap${mockupImg ? '' : ' is-loading'}`}
-          style={{ '--studio-aspect': template.size.w / template.size.h }}
-        >
-          {/* Canvas là hình trang trí do khách tự dựng — nội dung của nó đã được mô tả bằng
-              chữ ở các ô điều khiển bên cạnh, nên trình đọc màn hình không cần đọc lại. */}
-          <canvas
-            ref={canvasRef}
-            className={`studio-canvas${canAdjust ? ' is-draggable' : ''}`}
-            aria-hidden="true"
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
-            onWheel={onWheel}
-          />
+        {/* Mô hình 3D của chính sản phẩm, mặt in là logo + màu khách chọn (thay cho ảnh chụp
+            phẳng trước đây). Hai chế độ: xoay xem mọi phía, hoặc chỉnh logo — chỉ hiện khi đã có
+            logo. Ảnh gửi kèm đơn vẫn dựng trên ảnh chụp sản phẩm (renderToBlob), không đổi. */}
+        {canAdjust && (
+          <div className="studio-mode" role="group" aria-label="Chế độ xem mẫu">
+            <button
+              type="button"
+              className={stageMode === 'edit' ? 'is-on' : ''}
+              aria-pressed={stageMode === 'edit'}
+              onClick={() => setStageMode('edit')}
+            >
+              Chỉnh logo
+            </button>
+            <button
+              type="button"
+              className={stageMode === 'rotate' ? 'is-on' : ''}
+              aria-pressed={stageMode === 'rotate'}
+              onClick={() => setStageMode('rotate')}
+            >
+              Xoay 3D
+            </button>
+          </div>
+        )}
+        <div className={`studio-3d${model3d ? '' : ' is-loading'}`}>
+          {model3d && (
+            <Standee3D
+              key={flat.type}
+              models={model3d}
+              faceOverlay={faceOverlay}
+              editor={{
+                active: canAdjust && stageMode === 'edit',
+                onPointerDown,
+                onPointerMove,
+                onPointerUp,
+                onWheel,
+                onFaceWidth: (px) => { if (px > 0) imgPerCssRef.current = flat.size.w / px; },
+              }}
+            />
+          )}
         </div>
         {canAdjust && (
           <p className="studio-stage-note studio-stage-tip">
-            Kéo logo để đổi vị trí, chụm hai ngón hoặc lăn chuột để phóng to / thu nhỏ.
+            {stageMode === 'edit'
+              ? 'Kéo logo để đổi vị trí, chụm hai ngón hoặc lăn chuột để phóng to / thu nhỏ.'
+              : 'Kéo để xoay xem mọi phía. Bấm "Chỉnh logo" để quay lại chỉnh vị trí.'}
           </p>
         )}
 
@@ -578,9 +655,6 @@ export default function DesignStudio() {
           )}
 
           <ul className="studio-specs">
-            <li><b>Tốt nhất:</b> file vector <code>.svg</code> — in cỡ nào cũng nét.</li>
-            <li><b>Hoặc:</b> <code>.png</code> nền trong suốt, cạnh dài từ {MIN_LOGO_EDGE}px (lý tưởng 1500px).</li>
-            <li><b>Tránh:</b> ảnh chụp logo, ảnh nền trắng, ảnh cắt từ Word/Facebook — in ra hay bị vỡ hoặc lộ viền.</li>
             <li>Nhận <code>.png</code> <code>.jpg</code> <code>.webp</code> <code>.svg</code>, tối đa 10MB.</li>
           </ul>
 

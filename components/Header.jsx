@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import CartLink from '@/components/CartLink';
@@ -8,8 +8,8 @@ import { PRODUCTS_HREF } from '@/data/products';
 import { siteConfig } from '@/lib/siteConfig';
 import { products } from '@/data/products';
 import ProgressiveImg from './ProgressiveImg';
-import MetallicText, { inkMetal } from './MetallicText';
-import { NfcWaveIcon, MenuIcon, CloseIcon, ChevronDownIcon } from './icons';
+import { Menu, X } from 'lucide-react';
+import { NfcWaveIcon, ChevronDownIcon } from './icons';
 
 // Lấy tên trực tiếp từ data/products.js (nguồn duy nhất của tên sản phẩm) thay vì hardcode
 // lại ở đây — trước đây header tự chép tay 'Bảng NFC'/'Standee', sửa tên sản phẩm ở
@@ -51,6 +51,10 @@ export default function Header({ productLinks }) {
   const PRODUCT_LINKS = productLinks?.length ? productLinks : FALLBACK_PRODUCT_LINKS;
   const [stuck, setStuck] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Dropdown "Sản phẩm" trên desktop: mở bằng CLICK, không phải rê chuột (rê chuột làm mũi tên
+  // xoay qua lại liên tục mỗi lần con trỏ lướt ngang header).
+  const [productsOpen, setProductsOpen] = useState(false);
+  const productsRef = useRef(null);
   const pathname = usePathname();
 
   // Mục đang xem: khớp chính xác, hoặc đang ở trang con của nó (vd trang chi tiết
@@ -121,7 +125,27 @@ export default function Header({ productLinks }) {
   }, []);
 
   // Đổi trang thì đóng menu — nếu không, bấm một link xong menu vẫn nằm đè lên trang mới.
-  useEffect(() => { setMenuOpen(false); }, [pathname]);
+  useEffect(() => { setMenuOpen(false); setProductsOpen(false); }, [pathname]);
+
+  // Dropdown đang mở: click / chạm bất kỳ đâu NGOÀI cụm "Sản phẩm" thì đóng, Esc cũng đóng
+  // (và trả focus về nút để người dùng bàn phím không bị lạc).
+  useEffect(() => {
+    if (!productsOpen) return undefined;
+    const onDown = (e) => {
+      if (productsRef.current && !productsRef.current.contains(e.target)) setProductsOpen(false);
+    };
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return;
+      setProductsOpen(false);
+      productsRef.current?.querySelector('.nav-trigger')?.focus();
+    };
+    document.addEventListener('pointerdown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [productsOpen]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -161,35 +185,40 @@ export default function Header({ productLinks }) {
             <NfcWaveIcon />
           </span>
           <span className="brand-name">
-            {/* "Review" phủ hiệu ứng kim loại lỏng — xem components/MetallicText.jsx.
-                scale nhỏ hơn 2 chỗ kia vì chữ ở đây chỉ cao ~14px: để nguyên scale mặc định
-                thì các dải kim loại chen nhau trong vài pixel, nhìn ra nhiễu chứ không ra kim loại. */}
+            {/* "QuickTap" đậm + "Review" xám nhạt, chữ tĩnh (kiểu "**One**Notch" của tryonenotch).
+                Không hiệu ứng động. */}
             {siteConfig.brandFirst}
-            <MetallicText text={siteConfig.brandLast} {...inkMetal} scale={1.8} />
+            <span>{siteConfig.brandLast}</span>
           </span>
         </Link>
 
         <nav className="site-nav" aria-label="Điều hướng chính">
-          {/* Dropdown mở bằng CSS thuần (:hover / :focus-within), KHÔNG dùng state React —
-              nhờ vậy nó vẫn mở được cả khi JS chưa chạy, và bản thân "Sản phẩm" là một link
-              thật (không phải <button>) nên máy cảm ứng bấm vào vẫn tới được khối sản phẩm
-              ngoài trang chủ thay vì bấm hụt. Tab tới link này cũng làm bung dropdown, từ đó
-              tab tiếp vào được các mục bên trong — xem .nav-item:focus-within trong globals.css. */}
-          <div className="nav-item">
-            <Link
+          {/* Dropdown mở bằng CLICK (state productsOpen), đóng khi click ra ngoài / Esc / chọn
+              một mục / chuyển trang. "Sản phẩm" giờ là <button> chứ không còn là link — đường
+              tới khối sản phẩm ở trang chủ chuyển thành dòng "Xem tất cả sản phẩm" cuối danh
+              sách. (Trước đây mở bằng :hover thuần CSS.) */}
+          <div className={`nav-item${productsOpen ? ' is-open' : ''}`} ref={productsRef}>
+            <button
+              type="button"
               className="nav-trigger"
-              href={PRODUCTS_HREF}
+              aria-expanded={productsOpen}
+              aria-controls="nav-products"
               aria-current={onProductPage || isSectionActive(PRODUCTS_HREF) ? 'page' : undefined}
+              onClick={() => setProductsOpen((v) => !v)}
             >
               Sản phẩm
               <ChevronDownIcon className="nav-caret" aria-hidden="true" />
-            </Link>
+            </button>
 
-            <div className="nav-dropdown">
+            <div className="nav-dropdown" id="nav-products">
               <ul>
                 {PRODUCT_LINKS.map((p) => (
                   <li key={p.href}>
-                    <Link href={p.href} aria-current={isActive(p.href) ? 'page' : undefined}>
+                    <Link
+                      href={p.href}
+                      aria-current={isActive(p.href) ? 'page' : undefined}
+                      onClick={() => setProductsOpen(false)}
+                    >
                       {/* alt rỗng: tên sản phẩm nằm ngay bên cạnh, đặt alt nữa thì trình đọc
                           màn hình đọc đúng một cái tên hai lần cho mỗi mục. */}
                       {p.image && (
@@ -204,6 +233,11 @@ export default function Header({ productLinks }) {
                     </Link>
                   </li>
                 ))}
+                <li className="nav-dropdown-all">
+                  <Link href={PRODUCTS_HREF} onClick={() => setProductsOpen(false)}>
+                    Xem tất cả sản phẩm
+                  </Link>
+                </li>
               </ul>
             </div>
           </div>
@@ -234,7 +268,7 @@ export default function Header({ productLinks }) {
           aria-controls="mobileMenu"
           onClick={() => setMenuOpen((v) => !v)}
         >
-          <MenuIcon />
+          <Menu strokeWidth={1.8} aria-hidden="true" />
         </button>
         </div>
       </header>
@@ -263,7 +297,7 @@ export default function Header({ productLinks }) {
             aria-label="Đóng menu"
             onClick={() => setMenuOpen(false)}
           >
-            <CloseIcon />
+            <X strokeWidth={1.8} aria-hidden="true" />
           </button>
         </div>
 

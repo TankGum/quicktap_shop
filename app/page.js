@@ -4,20 +4,19 @@ import FaqAccordion from '@/components/FaqAccordion';
 import JsonLd from '@/components/JsonLd';
 import ProgressiveImg from '@/components/ProgressiveImg';
 import HeroVideo from '@/components/HeroVideo';
+import IndustryArt from '@/components/IndustryArt';
 import HeroCarousel3D from '@/components/HeroCarousel3D';
 import CustomDesignsGallery from '@/components/CustomDesignsGallery';
-import HowtoToggle from '@/components/HowtoToggle';
 import Standee3D from '@/components/Standee3D';
 import { NfcPlateArt, StandeeArt } from '@/components/illustrations';
 import { siteConfig } from '@/lib/siteConfig';
 import { products } from '@/data/products';
 import { standeeModels } from '@/data/standee3d';
-import { industries as industryData } from '@/data/industries';
+import { industries } from '@/data/industries';
 import { getVariantsByProduct, getCustomDesigns, getSiteMedia } from '@/lib/airtable';
 import {
   PhoneIcon, ArrowRightIcon, WarningIcon,
   BarsIcon, PinIcon, BoltIcon, PhoneOutlineIcon, LayersIcon, RefreshIcon,
-  HotelIcon, HomestayIcon, RestaurantIcon, CafeIcon, SpaIcon, ShopIcon,
 } from '@/components/icons';
 import { localBusinessSchema, websiteSchema, faqSchema } from '@/lib/schema';
 
@@ -55,12 +54,18 @@ function interleave(lists) {
   return out;
 }
 
-// Dải ngay dưới hero — mỗi ý vài chữ, không phải câu dài (khuôn "top features" của Samsung).
+// Các ý bán hàng ngắn — 3 ý đầu hiện ở dòng thông tin nhỏ dưới nút hero (.hero-meta).
 const highlights = [
   { Icon: PhoneOutlineIcon, title: 'Không cần cài app', body: 'Khách chạm là xong' },
   { Icon: RefreshIcon, title: 'Đổi link bất cứ lúc nào', body: 'Không phải làm bảng mới' },
   { Icon: BoltIcon, title: 'Dùng được ngay', body: 'Không phải cài đặt gì' },
   { Icon: LayersIcon, title: 'Freeship Hà Nội', body: 'Đặt 1 cái cũng miễn phí giao' },
+];
+
+// Hai quy trình để khách đặt cạnh nhau mà so ở khối "Cách hoạt động".
+const howtoFlows = [
+  { label: 'Trước đây', count: '5 bước', steps: ['Mở app', 'Tìm tên quán', 'Chọn chi nhánh', 'Cuộn tìm nút', 'Viết'] },
+  { label: 'Với QuickTap', count: '1 chạm', steps: ['Chạm hoặc quét', 'Viết'], accent: true },
 ];
 
 const benefits = [
@@ -72,16 +77,6 @@ const benefits = [
   { Icon: RefreshIcon, title: 'Đổi link bất cứ lúc nào', body: 'Không cần làm bảng mới.' },
 ];
 
-// Icon chỉ còn vai trò dự phòng khi mục đó chưa có ảnh thật (xem data/industries.js).
-const INDUSTRY_ICON = {
-  hotel: HotelIcon,
-  homestay: HomestayIcon,
-  restaurant: RestaurantIcon,
-  cafe: CafeIcon,
-  spa: SpaIcon,
-  shop: ShopIcon,
-};
-const industries = industryData.map((it) => ({ ...it, Icon: INDUSTRY_ICON[it.id] }));
 
 const faqs = [
   {
@@ -156,33 +151,48 @@ export default async function HomePage() {
       <section className="hero" id="top">
         <div className="hero-glow" aria-hidden="true" />
 
+        {/* Bố cục hero theo tryonenotch.com: nhãn thương hiệu viết tay trong viên thuốc đen →
+            tiêu đề → một câu mô tả → ghi chú tay + nút → dòng thông tin nhỏ, RỒI mới tới hình
+            sản phẩm lớn. Nút đứng TRƯỚC video (trước đây đặt sau) để khách thấy ngay lời mời
+            trong màn hình đầu tiên mà không phải cuộn qua cả khung video. */}
         <div className="container hero-lead">
-          <Reveal as="h1">Tăng đánh giá 5 sao <em>chỉ với 1 chạm</em></Reveal>
+          {/* \u00a0 giữa "5" và "sao": không để số rơi lẻ cuối dòng ("Tăng đánh giá 5 / sao…").
+              Tag treo lủng lẳng ở cuối vế nhấn như một tag giá — thuần trang trí nên
+              aria-hidden, để tên tiêu đề với trình đọc màn hình vẫn chỉ là câu chữ. */}
+          <Reveal as="h1">
+            Tăng đánh giá 5{'\u00a0'}sao<br />
+            <em>
+              chỉ với 1 chạm
+              <span className="hero-tag" aria-hidden="true">
+                <svg className="hero-tag-string" viewBox="0 0 40 44" fill="none">
+                  <path d="M2 2C6 14 14 26 26 38" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+                  <circle cx="2" cy="2" r="2.2" fill="currentColor" />
+                </svg>
+                <span className="hero-tag-body">SALE</span>
+              </span>
+            </em>
+          </Reveal>
           <Reveal as="p" className="lede">
             Khách chạm điện thoại hoặc quét mã là mở thẳng form đánh giá.
           </Reveal>
 
-          {/* Gradient tô nét icon của cặp nút kim loại bên dưới — nhúng một lần cho cả trang,
-              đặt NGOÀI .hero-actions vì svg rỗng vẫn tính là một flex item và ăn mất một
-              khoảng gap. Xem .btn-metal trong globals.css. */}
-          <svg className="metal-defs" width="0" height="0" aria-hidden="true" focusable="false">
-            <defs>
-              <linearGradient id="qt-metal-ink" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#4c4d55" />
-                <stop offset="0.44" stopColor="#141518" />
-                <stop offset="0.53" stopColor="#9c9da5" />
-                <stop offset="0.63" stopColor="#3a3b42" />
-                <stop offset="1" stopColor="#26272c" />
-              </linearGradient>
-              <linearGradient id="qt-metal-soft" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor="#8a8b94" />
-                <stop offset="0.46" stopColor="#4a4b52" />
-                <stop offset="0.55" stopColor="#b4b5bc" />
-                <stop offset="1" stopColor="#5e5f67" />
-              </linearGradient>
-            </defs>
-          </svg>
-
+          {/* Một viên thuốc đen + một link chữ — như nút "Tải cho Mac" của tryonenotch. Cặp nút
+              kim loại trước đây không ăn với hero chữ phẳng mới: hai khối bóng loáng cỡ lớn
+              giành hết sự chú ý của tiêu đề. Nút phụ hạ xuống thành link để không tranh với
+              nút chính. */}
+          <Reveal as="div" className="hero-actions">
+            <Link className="btn btn-lg btn-primary" href="/lien-he">
+              <PhoneIcon className="i" />
+              Liên hệ đặt hàng
+            </Link>
+            <Link className="btn btn-lg btn-text" href="#san-pham">
+              Xem sản phẩm
+              <ArrowRightIcon className="i" />
+            </Link>
+          </Reveal>
+          <Reveal as="ul" className="hero-meta" aria-label="Điểm nổi bật">
+            {highlights.slice(0, 3).map(({ title }) => <li key={title}>{title}</li>)}
+          </Reveal>
         </div>
 
         {/* Nhân vật chính của hero: video motion graphic (dựng bằng Remotion — mã nguồn ở
@@ -208,19 +218,6 @@ export default async function HomePage() {
           </div>
         )}
 
-        {/* Cặp nút đặt SAU video/mô hình: khách xem hàng xong mới tới lúc gọi hành động. */}
-        <div className="container hero-cta">
-          <Reveal as="div" className="hero-actions">
-            <Link className="btn btn-lg btn-metal btn-aura" href="/lien-he">
-              <PhoneIcon className="i" />
-              <span className="btn-metal-label">Liên hệ đặt hàng</span>
-            </Link>
-            <Link className="btn btn-lg btn-metal btn-metal-soft" href="#san-pham">
-              <span className="btn-metal-label">Xem sản phẩm</span>
-              <ArrowRightIcon className="i" />
-            </Link>
-          </Reveal>
-        </div>
       </section>
 
       {/* ============ VÒNG XOAY MẪU ============ */}
@@ -232,30 +229,6 @@ export default async function HomePage() {
         </div>
         <HeroCarousel3D items={heroItems} />
       </section> */}
-
-      {/* ============ DẢI ĐIỂM MẠNH ============ */}
-      {/* Khuôn "top features" của Samsung: ngay dưới hero là một dải ngắn các ý bán hàng, mỗi ý
-          một icon và vài chữ — không phải đoạn văn. Trước đây các ý này bị nhồi vào chân hero
-          làm hero rối. */}
-      <section className="section section-tight" id="diem-manh">
-        <div className="container">
-          {/* Theo khuôn hàng dịch vụ của apple.com: mỗi ý là một CỘT CHỮ canh giữa, không thẻ
-              không nền không viền — ngăn nhau bằng khoảng trống. Xem .highlight-strip trong
-              globals.css để biết vì sao bỏ thẻ.
-
-              Chỉ có chữ, KHÔNG icon và KHÔNG số thứ tự: mỗi ý vỏn vẹn 3-5 chữ nên thêm một
-              hình nhỏ ở đầu chỉ làm loãng, mà số thì không mang nghĩa thứ tự — vì vậy <ul>
-              chứ không phải <ol>. */}
-          <Reveal as="ul" className="highlight-strip">
-            {highlights.map(({ title, body }) => (
-              <li className="highlight-item" key={title}>
-                <h3>{title}</h3>
-                <p>{body}</p>
-              </li>
-            ))}
-          </Reveal>
-        </div>
-      </section>
 
       {/* ============ MÔ HÌNH 3D ============ */}
       {/* Mô hình 3D của chính sản phẩm, khách tự xoay/lật xem mặt sau, mặt đáy — xem
@@ -281,35 +254,48 @@ export default async function HomePage() {
         <div className="container">
           <Reveal as="header" className="section-head">
             <p className="kicker">Cách hoạt động</p>
-            <h2>Rút gọn tất cả xuống còn <em>một bước</em></h2>
+            <h2>Rút gọn tất cả xuống còn <em className="marker">một bước</em></h2>
           </Reveal>
 
-          <div className="howto" id="giai-phap">
-            {/* Chưa có dòng demoVideo trong Airtable thì bỏ hẳn khung video, để bảng
-                so sánh Trước/Sau chiếm trọn chỗ — không chừa ô đen trống. */}
+          {/* Thẻ so sánh bên trái cao bằng video bên phải. Video demo là khổ DỌC 9:16 nên chỉ
+              cho nó một cột hẹp (~380px) và nghiêng nhẹ — kiểu khung video của tryonenotch.
+              Trước đây video chiếm hơn nửa bề ngang (cao ~1000px) và thẻ chữ chỉ là một ô nhỏ
+              lơ lửng giữa khoảng trống bên cạnh.
+
+              Hai quy trình Trước / Sau hiện CÙNG LÚC, xếp chồng để mắt so ngay độ dài hai
+              chuỗi bước — bản cũ dùng công tắc gạt, khách phải bấm mới thấy được phía kia. */}
+          <div className={`howto${media.demoVideo ? ' has-video' : ''}`} id="giai-phap">
+            <Reveal as="div" className="howto-compare">
+              <p className="howto-lede">
+                Không cần mở app, không cần dò tìm tên quán trên bản đồ — <strong>khách chạm
+                điện thoại vào bảng NFC hoặc quét mã QR là trang đánh giá mở ra ngay.</strong>
+              </p>
+
+              <div className="howto-flows">
+                {howtoFlows.map(({ label, count, steps, accent }) => (
+                  <div className={`howto-flow${accent ? ' is-accent' : ''}`} key={label}>
+                    <p className="howto-flow-head">
+                      <span>{label}</span>
+                      <b>{count}</b>
+                    </p>
+                    <ol className="howto-flow-steps">
+                      {steps.map((step) => <li key={step}>{step}</li>)}
+                    </ol>
+                  </div>
+                ))}
+              </div>
+            </Reveal>
+
+            {/* Chưa có dòng demoVideo trong Airtable thì bỏ hẳn khung video, thẻ so sánh
+                đứng một mình ở giữa — không chừa ô trống. */}
             {media.demoVideo && (
-              <Reveal as="div" className="howto-video">
+              <Reveal as="div" className="howto-video" delay={80}>
                 <HeroVideo
                   src={media.demoVideo.url}
                   alt={media.demoVideo.alt || siteConfig.demoVideoAlt}
                 />
               </Reveal>
             )}
-
-            <Reveal as="div" className="howto-compare" delay={80}>
-              {/* Câu dẫn mở đầu — nói bằng lời trước khi vào phần số liệu bên dưới. */}
-              <div className="howto-row">
-                <p className="howto-lede">
-                  Không cần mở app, không cần dò tìm tên quán trên bản đồ — khách chạm điện
-                  thoại vào bảng NFC hoặc quét mã QR là trang đánh giá mở ra ngay.
-                </p>
-              </div>
-
-              {/* Nút gạt Trước/Sau — bấm để đổi nội dung tại chỗ, xem components/HowtoToggle.jsx. */}
-              <div className="howto-row">
-                <HowtoToggle />
-              </div>
-            </Reveal>
           </div>
         </div>
       </section>
@@ -365,46 +351,39 @@ export default async function HomePage() {
           </Reveal>
         </div>
 
-        <div className="product-splits">
-          {showcase.map((p, i) => (
-            <Reveal as="article" key={p.id} className={`product-split${i % 2 ? ' is-flipped' : ''}`}>
-              {/* Ảnh cũng là đường vào trang chi tiết: bấm vào ảnh đi đúng chỗ mà nút "Chi tiết"
-                  bên dưới dẫn tới. Đặt aria-hidden + tabIndex -1 vì nút "Chi tiết" đã trỏ cùng
-                  một đích — để cả hai cùng nhận tab thì bàn phím phải bấm hai lần cho một nơi,
-                  và trình đọc màn hình đọc lặp. Tên sản phẩm vẫn còn nguyên ở <h3> bên cạnh. */}
-              <Link href={p.href} className="product-split-media" aria-hidden="true" tabIndex={-1}>
-                {p.image ? (
-                  <ProgressiveImg src={p.image} alt={p.title} sizes="(min-width: 860px) 50vw, 100vw" />
-                ) : (
-                  <p.Art aria-label={p.artLabel} />
-                )}
-              </Link>
-
-              <div className="product-split-copy">
-                <p className="kicker">{p.kicker}</p>
-                <h3>{p.title}</h3>
-                <p className="product-split-desc">{p.body}</p>
-
-                <ul className="product-split-ticks">
-                  {p.ticks.map((t) => <li key={t}>{t}</li>)}
-                </ul>
-
-                {p.priceFrom && (
-                  <p className="product-split-price">
-                    <span>Chỉ</span>
-                    <b>{p.priceFrom}</b>
-                  </p>
-                )}
-
-                <div className="product-split-actions">
-                  <Link className="btn btn-ghost" href={p.href}>
-                    {p.detail}
-                    <ArrowRightIcon className="i" />
-                  </Link>
+        {/* Hai ô lớn nền xám đặt cạnh nhau, chữ ở trên — ảnh ở dưới: khuôn ô "Lịch / Hẹn giờ"
+            của tryonenotch.com. Điện thoại thì xếp chồng. Ảnh vẫn là đường vào trang chi tiết
+            (aria-hidden + tabIndex -1 vì nút "Chi tiết" đã trỏ cùng một đích). */}
+        <div className="container">
+          <div className="product-tiles">
+            {showcase.map((p, i) => (
+              <Reveal as="article" key={p.id} className="product-tile" delay={i * 80}>
+                <div className="product-tile-copy">
+                  <p className="kicker">{p.kicker}</p>
+                  <h3>{p.title}</h3>
+                  <p className="product-tile-desc">{p.body}</p>
+                  <div className="product-tile-buy">
+                    {p.priceFrom && (
+                      <p className="product-tile-price">
+                        <span>Chỉ</span> <b>{p.priceFrom}</b>
+                      </p>
+                    )}
+                    <Link className="btn btn-primary" href={p.href}>
+                      {p.detail}
+                      <ArrowRightIcon className="i" />
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            </Reveal>
-          ))}
+                <Link href={p.href} className="product-tile-media" aria-hidden="true" tabIndex={-1}>
+                  {p.image ? (
+                    <ProgressiveImg src={p.image} alt={p.title} sizes="(min-width: 860px) 50vw, 100vw" />
+                  ) : (
+                    <p.Art aria-label={p.artLabel} />
+                  )}
+                </Link>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -447,15 +426,14 @@ export default async function HomePage() {
         <div className="container">
           <Reveal as="header" className="section-head">
             <p className="kicker">Thiết kế riêng</p>
-            <h2>In theo logo &amp; màu thương hiệu của bạn giá không đổi</h2>
+            <h2>In theo logo &amp; màu thương hiệu của bạn <em className="marker marker-yellow">giá không đổi</em></h2>
             <p className="section-sub">
               Tải logo lên là thấy ngay nó nằm trên bảng, kéo chỉnh cho vừa ý rồi gửi —
               hoặc cứ gửi logo để chúng tôi lên mẫu cho bạn duyệt trước khi in.
             </p>
-            {/* Cùng bộ kim loại với cặp nút ở hero (xem .btn-metal trong globals.css). Bộ
-                gradient tô nét icon nhúng một lần trên đầu trang, trong .hero-lead. */}
-            <Link className="btn btn-lg btn-metal btn-aura section-head-cta" href="/thiet-ke-rieng">
-              <span className="btn-metal-label">Tự lên mẫu ngay</span>
+            {/* Cùng kiểu viên thuốc đen với nút chính ở hero. */}
+            <Link className="btn btn-lg btn-primary section-head-cta" href="/thiet-ke-rieng">
+              Tự lên mẫu ngay
               <ArrowRightIcon className="i" />
             </Link>
           </Reveal>
@@ -514,10 +492,12 @@ export default async function HomePage() {
           </Reveal>
 
           <ul className="industries">
-            {industries.map(({ id, label, image, Icon }, i) => (
+            {/* Minh hoạ phẳng kiểu hoạt hình vẽ bằng SVG (components/IndustryArt.jsx), thay cho
+                ảnh chụp thật trước đây — cùng một phong cách cho cả 6 ô. */}
+            {industries.map(({ id, label }, i) => (
               <Reveal as="li" className="industry" key={id} delay={(i % 6) * 45}>
                 <span className="industry-media" aria-hidden="true">
-                  {image ? <ProgressiveImg src={image} alt="" /> : <Icon />}
+                  <IndustryArt id={id} className="industry-art" />
                 </span>
                 <span className="industry-label">{label}</span>
               </Reveal>
@@ -528,21 +508,24 @@ export default async function HomePage() {
 
       {/* ============ FAQ ============ */}
       <section className="section" id="faq">
-        <div className="container">
+        {/* .faq-layout: desktop chia hai cột, tiêu đề trái — danh sách phải (xem globals.css). */}
+        <div className="container faq-layout">
           <Reveal as="header" className="section-head">
             <p className="kicker">Câu hỏi thường gặp</p>
             <h2>Còn thắc mắc gì trước khi đặt hàng?</h2>
           </Reveal>
-          <Reveal as="div">
-            <FaqAccordion items={faqs} />
-          </Reveal>
+          <div>
+            <Reveal as="div">
+              <FaqAccordion items={faqs} />
+            </Reveal>
 
-          {/* Lưu ý này trước đây nằm ở chân hero — một câu dài giữa toàn cụm ngắn, làm hero
-              rối. Đây mới đúng chỗ của nó: khối giải đáp thắc mắc trước khi đặt hàng. */}
-          <Reveal as="p" className="faq-note" delay={80}>
-            <WarningIcon className="faq-note-icon" aria-hidden="true" />
-            Một số điện thoại Android có chip NFC nằm ở giữa mặt lưng thay vì gần camera phía trên — khách chạm không nhận thì thử di chuyển sát khu vực đó.
-          </Reveal>
+            {/* Lưu ý này trước đây nằm ở chân hero — một câu dài giữa toàn cụm ngắn, làm hero
+                rối. Đây mới đúng chỗ của nó: khối giải đáp thắc mắc trước khi đặt hàng. */}
+            <Reveal as="p" className="faq-note" delay={80}>
+              <WarningIcon className="faq-note-icon" aria-hidden="true" />
+              Một số điện thoại Android có chip NFC nằm ở giữa mặt lưng thay vì gần camera phía trên — khách chạm không nhận thì thử di chuyển sát khu vực đó.
+            </Reveal>
+          </div>
         </div>
       </section>
 

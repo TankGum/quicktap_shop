@@ -118,7 +118,17 @@ const DRAG_Y = 0.30;
 const FRICTION = 0.93;   // trớn còn lại mỗi frame sau khi thả tay
 const AUTO_SPEED = 0.2;  // độ mỗi frame khi tự xoay
 
-export default function Standee3D({ models }) {
+// `editor` (tuỳ chọn) — dùng trong công cụ "Thiết kế riêng" (components/DesignStudio.jsx):
+//   { active, onPointerDown, onPointerMove, onPointerUp, onWheel, onFaceWidth }
+// Khi `active`, mô hình quay về chính diện, thôi tự xoay, và thao tác kéo / lăn chuột trên sân
+// khấu được chuyển cho bên ngoài (để dời / phóng logo) thay vì xoay mô hình. `onFaceWidth`
+// báo bề rộng mặt trước trên màn hình (px CSS) mỗi lần co giãn, để bên ngoài quy quãng kéo
+// trên màn hình về pixel của ảnh mặt in.
+//
+// `faceOverlay` (tuỳ chọn) — phần tử đặt CHỒNG lên ảnh mặt in (mặt trước, và mặt sau với
+// standee), toạ độ theo % của mặt in. Công cụ Thiết kế riêng dùng nó cho logo: kéo logo chỉ
+// đổi vị trí lớp này, ảnh mặt in giữ nguyên — không phải dựng/nén lại ảnh mỗi khung hình.
+export default function Standee3D({ models, editor = null, faceOverlay = null }) {
   const stageRef = useRef(null);
   const standRef = useRef(null);
 
@@ -140,6 +150,10 @@ export default function Standee3D({ models }) {
 
   // fit() nằm trong effect chạy một lần nên không thấy `model` mới; đọc loại qua ref.
   const typeRef = useRef(model.type);
+  const editorRef = useRef(editor);
+  editorRef.current = editor;
+  const editing = Boolean(editor?.active);
+  const single = models.length === 1;
   const refit = useRef(() => {});
   // Ghi góc xoay + ánh sáng lên DOM. Gán trong effect bên dưới; các handler kéo/phím gọi qua
   // ref này để ánh sáng luôn cập nhật cùng góc xoay.
@@ -178,6 +192,7 @@ export default function Standee3D({ models }) {
         0.3,
         Math.min((r.width * 0.72) / (boxW * mm), availH / (boxH * mm)),
       );
+      editorRef.current?.onFaceWidth?.(boxW * mm * view.current.fit);
       apply();
     };
     refit.current = fit;
@@ -263,8 +278,44 @@ export default function Standee3D({ models }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [model.type]);
 
+  // Vào chế độ chỉnh logo: quay về chính diện và thôi tự xoay, để logo nằm thẳng trước mặt
+  // khi kéo. Ra khỏi chế độ thì để nguyên góc nhìn — khách tự xoay tiếp nếu muốn.
+  useEffect(() => {
+    if (!editing) return;
+    const [rx1, ryTarget] = VIEWS.front;
+    const v = view.current;
+    const delta = (((ryTarget - v.ry + 180) % 360) + 360) % 360 - 180;
+    autoRef.current = false;
+    v.vx = 0;
+    v.vy = 0;
+    tweenRef.current = { rx0: v.rx, rx1, ry0: v.ry, ry1: v.ry + delta, t0: performance.now(), ms: 600 };
+    setPose(null);
+    setHinted(false); // hiện lại gợi ý — giờ là "Kéo để dời logo"
+  }, [editing]);
+
+  // Lăn chuột phải chặn cuộn trang (preventDefault) nên gắn bằng addEventListener với
+  // passive:false — onWheel của React là passive, gọi preventDefault ở đó không có tác dụng.
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return undefined;
+    const onWheel = (e) => {
+      const ed = editorRef.current;
+      if (!ed?.active || !ed.onWheel) return;
+      e.preventDefault();
+      ed.onWheel(e);
+    };
+    stage.addEventListener('wheel', onWheel, { passive: false });
+    return () => stage.removeEventListener('wheel', onWheel);
+  }, []);
+
   // ----- kéo để xoay -----
   const onPointerDown = (e) => {
+    if (editing) {
+      e.currentTarget.setPointerCapture(e.pointerId);
+      editor.onPointerDown?.(e);
+      setHinted(true);
+      return;
+    }
     const d = dragRef.current;
     if (d.id !== null) return;
     d.id = e.pointerId;
@@ -280,6 +331,10 @@ export default function Standee3D({ models }) {
   };
 
   const onPointerMove = (e) => {
+    if (editing) {
+      editor.onPointerMove?.(e);
+      return;
+    }
     const d = dragRef.current;
     if (!d.on || e.pointerId !== d.id) return;
     const dx = e.clientX - d.x;
@@ -295,6 +350,7 @@ export default function Standee3D({ models }) {
   };
 
   const onPointerUp = (e) => {
+    if (editing) editor.onPointerUp?.(e);
     const d = dragRef.current;
     if (e.pointerId !== d.id) return;
     d.on = false;
@@ -335,13 +391,15 @@ export default function Standee3D({ models }) {
   const stopBubble = (e) => e.stopPropagation();
 
   return (
-    <div className={`std3d${pose === 'base' && !isCard ? ' is-peek' : ''}`}>
+    <div className={`std3d${pose === 'base' && !isCard ? ' is-peek' : ''}${editing ? ' is-editing' : ''}${single ? ' is-single' : ''}`}>
       <div
         ref={stageRef}
         className="std3d-stage"
         tabIndex={0}
         role="application"
-        aria-label={`Mẫu standee ${model.name} dạng 3D — kéo hoặc dùng phím mũi tên để xoay`}
+        aria-label={editing
+          ? 'Mẫu 3D đang ở chế độ chỉnh logo — kéo để dời logo, lăn chuột để phóng to / thu nhỏ'
+          : `Mẫu ${model.name || 'sản phẩm'} dạng 3D — kéo hoặc dùng phím mũi tên để xoay`}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -364,7 +422,7 @@ export default function Standee3D({ models }) {
             {isCard ? (
               <div className="std3d-node">
                 <div className="std3d-slab std3d-cardslab">
-                  <i className="std3d-f std3d-out std3d-art-front std3d-lit" />
+                  <i className="std3d-f std3d-out std3d-art-front std3d-lit">{faceOverlay}</i>
                   <i className="std3d-f std3d-in std3d-lit std3d-lit-b" />
                   {/* Viền quanh tấm: 4 cạnh thẳng, cộng 4 mặt vát ở góc thay cho cung bo.
                       Một mặt phẳng cho mỗi cung 1/4 là đủ ở độ dày 2mm — sai lệch so với
@@ -386,7 +444,7 @@ export default function Standee3D({ models }) {
             <div className="std3d-node std3d-rig">
               <div className="std3d-node std3d-n-front">
                 <div className="std3d-slab std3d-panel">
-                  <i className="std3d-f std3d-out std3d-art-front std3d-lit" />
+                  <i className="std3d-f std3d-out std3d-art-front std3d-lit">{faceOverlay}</i>
                   <i className="std3d-f std3d-in" />
                   <i className="std3d-f std3d-sl" />
                   <i className="std3d-f std3d-sr" />
@@ -397,7 +455,7 @@ export default function Standee3D({ models }) {
 
               <div className="std3d-node std3d-n-back">
                 <div className="std3d-slab std3d-panel">
-                  <i className="std3d-f std3d-out std3d-art-back std3d-lit std3d-lit-b" />
+                  <i className="std3d-f std3d-out std3d-art-back std3d-lit std3d-lit-b">{faceOverlay}</i>
                   <i className="std3d-f std3d-in" />
                   <i className="std3d-f std3d-sl" />
                   <i className="std3d-f std3d-sr" />
@@ -425,11 +483,16 @@ export default function Standee3D({ models }) {
           </div>
         </div>
 
-        <p className="std3d-name" aria-live="polite">
-          <b>{model.name}</b>
-          <span>{model.note}</span>
-        </p>
+        {model.name && (
+          <p className="std3d-name" aria-live="polite">
+            <b>{model.name}</b>
+            <span>{model.note}</span>
+          </p>
+        )}
 
+        {/* Chỉ một mẫu (công cụ Thiết kế riêng) thì không có gì để chuyển — bỏ hai mũi tên và
+            bộ đếm. */}
+        {!single && (<>
         {/* Chặn pointerdown: để nó nổi lên sân khấu thì stage bắt con trỏ
             (setPointerCapture) và nút mất luôn sự kiện click. */}
         <button
@@ -454,8 +517,9 @@ export default function Standee3D({ models }) {
         <p className="std3d-count" aria-hidden="true">
           {active + 1}/{models.length}
         </p>
+        </>)}
         <p className={`std3d-hint${hinted ? ' is-off' : ''}`} aria-hidden="true">
-          Kéo để xoay
+          {editing ? 'Kéo để dời logo' : 'Kéo để xoay'}
         </p>
       </div>
 

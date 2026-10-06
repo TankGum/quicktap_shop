@@ -29,7 +29,7 @@ export default async function CustomDesignPage() {
         <div className="container">
           <Reveal as="header" className="section-head">
             <p className="kicker">Thiết kế riêng</p>
-            <h1>Xem trước logo của quán trên sản phẩm thật</h1>
+            <h1>Xem trước logo của quán trên <em className="marker marker-yellow">sản phẩm thật</em></h1>
             <p className="section-sub">
               Chọn mẫu, tải logo lên rồi kéo chỉnh cho vừa ý — bạn thấy ngay logo của mình nằm
               trên sản phẩm thật. Giá vẫn như mẫu có sẵn, thiết kế riêng không tính thêm.
@@ -50,11 +50,13 @@ export default async function CustomDesignPage() {
             <p className="kicker">Đã làm cho quán khác</p>
             <h2>Một vài mẫu chúng tôi đã lên</h2>
           </Reveal>
-        </div>
 
-        <CustomDesignsGallery designs={customDesigns} />
+          {/* Gallery nằm TRONG .container, thẳng lề với tiêu đề — cùng cách đặt với khối
+              #thiet-ke-rieng ở trang chủ. Để ngoài container thì lưới tràn sát hai mép màn. */}
+          <Reveal as="div" delay={80}>
+            <CustomDesignsGallery designs={customDesigns} />
+          </Reveal>
 
-        <div className="container">
           <Reveal as="p" className="products-note">
             Muốn trao đổi kỹ hơn trước khi chốt?{' '}
             <Link href="/lien-he">Gọi cho chúng tôi</Link> — trả lời trong vòng 2 phút.

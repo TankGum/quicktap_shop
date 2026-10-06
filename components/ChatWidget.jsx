@@ -18,11 +18,16 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Minus, SendHorizontal } from 'lucide-react';
 import { splitSseEvents, sseData } from '@/lib/chatStream.mjs';
 import { siteConfig } from '@/lib/siteConfig';
+import ChatOrb, { useOrbReactions, greetOrb } from './ChatOrb';
 
 // Lời chào là chữ TĨNH, không phải câu do model sinh: mở khung chat ra mà phải chờ (và tốn
 // một lượt gọi model) chỉ để đọc "chào bạn" thì vừa chậm vừa tốn tiền cho zero thông tin.
+// Tên linh vật của khung chat — quả cầu "Tapi" (components/ChatOrb.jsx). Prompt phía server
+// (lib/chatPrompt.mjs) cũng xưng đúng tên này, để khách hỏi "bạn tên gì" thì câu trả lời khớp.
+const BOT_NAME = 'Tapi';
+
 const GREETING =
-  'Chào bạn! Mình là trợ lý của QuickTapReview. Bạn cần tư vấn bảng NFC / standee, hay muốn tra đơn đã đặt?';
+  `Chào bạn! Mình là ${BOT_NAME}, trợ lý của QuickTapReview. Bạn cần tư vấn bảng NFC / standee, hay muốn tra đơn đã đặt?`;
 
 // Gợi ý bấm nhanh — đồng thời là cách nói cho khách biết khung chat này trả lời được gì.
 const MAX_INPUT_CHARS = 500;
@@ -63,6 +68,15 @@ export default function ChatWidget() {
   const listRef = useRef(null);
   const inputRef = useRef(null);
   const panelRef = useRef(null);
+  const fabOrbRef = useRef(null);
+  const headOrbRef = useRef(null);
+
+  // Tapi phản ứng với cả trang: dõi theo con trỏ, nảy khi click, lắc khi cuộn, ngủ gật.
+  useOrbReactions();
+
+  // Vừa trả lời xong thì cười một lúc; đang gõ thì nhìn xuống ô nhập.
+  const [justAnswered, setJustAnswered] = useState(false);
+  const [typing, setTyping] = useState(false);
 
   // Đọc sessionStorage trong effect chứ không lúc render: bản HTML tĩnh dựng lúc build không
   // biết gì về máy khách, đọc lúc render là lệch hydrate.
@@ -141,6 +155,7 @@ export default function ChatWidget() {
 
       setError(null);
       setInput('');
+      setTyping(false);
 
       // Lịch sử gửi lên PHẢI là bản vừa thêm câu mới, không phải `messages` của lần render
       // trước — nếu không thì câu vừa gõ bị bỏ sót khỏi ngữ cảnh.
@@ -217,6 +232,33 @@ export default function ChatWidget() {
     [messages, streaming]
   );
 
+  // Tâm trạng của Tapi theo cuộc trò chuyện: đang chờ câu trả lời thì "nghĩ" (vòng quỹ đạo
+  // quay, mắt ngước lên), chữ đang chảy về thì "nói" (miệng mấp máy), xong thì cười.
+  const lastRole = messages[messages.length - 1]?.role;
+  const mood = streaming
+    ? (lastRole === 'user' ? 'thinking' : 'talking')
+    : justAnswered ? 'happy' : typing ? 'listening' : 'idle';
+
+  const wasStreaming = useRef(false);
+  useEffect(() => {
+    if (wasStreaming.current && !streaming && !error) {
+      setJustAnswered(true);
+      const t = setTimeout(() => setJustAnswered(false), 1600);
+      wasStreaming.current = streaming;
+      return () => clearTimeout(t);
+    }
+    wasStreaming.current = streaming;
+    return undefined;
+  }, [streaming, error]);
+
+  // Mở khung chat ra (kể cả tự mở lúc vào trang) thì Tapi "chào" một cái.
+  useEffect(() => {
+    if (!open) return;
+    // Chỉ một trong hai đang hiện (desktop: Tapi ở nút nổi; điện thoại: Tapi ở đầu tấm chat).
+    greetOrb(fabOrbRef.current);
+    greetOrb(headOrbRef.current);
+  }, [open]);
+
   const onSubmit = (e) => {
     e.preventDefault();
     send(input);
@@ -226,31 +268,17 @@ export default function ChatWidget() {
     <>
       <button
         type="button"
-        className={open ? "chat-fab chat-fab-minimize" : "chat-fab"}
+        className={open ? 'chat-fab is-open' : 'chat-fab'}
         onClick={() => doiTrangThai(!open)}
         aria-expanded={open}
         aria-controls="chat-panel"
-        aria-label={open ? 'Thu nhỏ khung chat' : 'Mở khung chat với trợ lý'}
+        aria-label={open ? 'Thu nhỏ khung chat' : `Mở khung chat với ${BOT_NAME}, trợ lý QuickTapReview`}
       >
-        {open ? (
-          <Minus size={22} strokeWidth={2.4} />
-        ) : (
-          <>
-            {/* Ảnh robot là hình chính; chấm xanh ở góc báo trợ lý đang hoạt động.
-                Dùng <img> thường chứ không phải next/image: site bật images.unoptimized cho
-                static export nên next/image không thêm được gì. */}
-            <img
-              className="chat-fab-photo"
-              src="/assets/chatbot/chatbot.png"
-              alt=""
-              width="56"
-              height="56"
-              loading="eager"
-              decoding="async"
-            />
-            <span className="chat-fab-badge" aria-hidden="true" />
-          </>
-        )}
+        {/* Tapi LUÔN ngồi ở đây, kể cả khi khung chat mở: khung chat là bong bóng lời thoại
+            mọc ra từ Tapi (có đuôi chĩa xuống), nên khi trả lời khách thấy chính nó đang nghĩ /
+            mấp máy miệng ngay bên dưới. Bấm lại vào Tapi (hoặc nút "—" trên đầu khung) để thu
+            nhỏ. (Trước đây khi mở, nút biến thành một khối đen có dấu "—".) */}
+        <ChatOrb ref={fabOrbRef} size={56} mood={mood} />
       </button>
 
       {/* Dùng hidden thay vì bỏ hẳn khỏi DOM: giữ nguyên vị trí cuộn và ô nhập đang gõ dở khi
@@ -262,22 +290,15 @@ export default function ChatWidget() {
         hidden={!open}
         role="dialog"
         aria-modal="false"
-        aria-label="Trợ lý QuickTapReview"
+        aria-label={`${BOT_NAME} — trợ lý QuickTapReview`}
       >
         <header className="chat-head">
-          {/* Cùng ảnh robot với nút nổi — mở khung ra thấy đúng khuôn mặt vừa bấm. */}
-          <img
-            className="chat-avatar"
-            src="/assets/chatbot/chatbot.png"
-            alt=""
-            width="36"
-            height="36"
-            loading="eager"
-            decoding="async"
-          />
+          {/* Chỉ hiện trên điện thoại: ở đó khung chat là tấm trượt từ đáy, phủ mất góc có nút
+              nổi — Tapi chuyển lên ngồi cạnh tên. Desktop thì Tapi vẫn ở nút nổi bên dưới. */}
+          <ChatOrb ref={headOrbRef} size={36} mood={mood} className="chat-head-orb" />
           <div className="chat-head-text">
-            <strong>Trợ lý QuickTapReview</strong>
-            <span className="chat-head-sub">Trả lời ngay, 24/7</span>
+            <strong>{BOT_NAME}</strong>
+            <span className="chat-head-sub">Trợ lý QuickTapReview · trả lời ngay 24/7</span>
           </div>
           {/* "Thu nhỏ" chứ không phải "Đóng": bấm vào đây không mất gì — hội thoại vẫn còn
               nguyên trong sessionStorage, panel chỉ ẩn đi và trở lại thành bong bóng nổi. Icon
@@ -330,7 +351,8 @@ export default function ChatWidget() {
             ref={inputRef}
             className="chat-input"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => { setInput(e.target.value); setTyping(e.target.value.trim() !== ''); }}
+            onBlur={() => setTyping(false)}
             placeholder="Bạn muốn hỏi gì?"
             maxLength={MAX_INPUT_CHARS}
             disabled={streaming}

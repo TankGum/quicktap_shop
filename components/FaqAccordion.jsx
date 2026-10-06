@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDownIcon } from './icons';
 
 export default function FaqAccordion({ items }) {
   const [openIndex, setOpenIndex] = useState(0);
@@ -21,7 +20,8 @@ export default function FaqAccordion({ items }) {
                 onClick={() => setOpenIndex(open ? -1 : i)}
               >
                 <span>{item.q}</span>
-                <ChevronDownIcon className="faq-chevron" />
+                {/* Dấu "+" trong ô tròn, mở ra thì xoay thành "×" — vẽ bằng CSS (.faq-plus). */}
+                <span className="faq-plus" aria-hidden="true" />
               </button>
             </h3>
             <div className="faq-panel" id={`faq-panel-${i}`} role="region" hidden={!open}>

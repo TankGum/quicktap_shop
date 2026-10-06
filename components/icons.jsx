@@ -18,14 +18,6 @@ export function MailIcon(props) {
   );
 }
 
-export function MenuIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true" {...props}>
-      <path d="M4 8h16M4 16h16" />
-    </svg>
-  );
-}
-
 export function CloseIcon(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true" {...props}>
@@ -161,55 +153,6 @@ export function RefreshIcon(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
       <path d="M21 12a9 9 0 1 1-3.2-6.9" /><path d="M22 4l-9.5 9.5-3-3" />
-    </svg>
-  );
-}
-
-export function HotelIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
-      <path d="M3 21V6.5A1.5 1.5 0 0 1 4.5 5H13v16" /><path d="M13 11h6.5A1.5 1.5 0 0 1 21 12.5V21" />
-      <path d="M6.5 9h3M6.5 13h3M6.5 17h3M16.5 15h1.5M16.5 18h1.5" /><path d="M2 21h20" />
-    </svg>
-  );
-}
-
-export function HomestayIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
-      <path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.6V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.6" /><path d="M10 21v-6h4v6" />
-    </svg>
-  );
-}
-
-export function RestaurantIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
-      <path d="M6 3v8a3 3 0 0 0 6 0V3" /><path d="M9 11v10" /><path d="M18 3c-1.6 1.6-2.4 3.4-2.4 5.4S16.4 12 18 13v8" />
-    </svg>
-  );
-}
-
-export function CafeIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
-      <path d="M4 9h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5Z" /><path d="M17 10.5h1.8a2.7 2.7 0 0 1 0 5.4H17" /><path d="M8 3v2.5M12 3v2.5" />
-    </svg>
-  );
-}
-
-export function SpaIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
-      <path d="M12 21c4.5-2.4 7-5.8 7-9.4A4.6 4.6 0 0 0 12 8a4.6 4.6 0 0 0-7 3.6c0 3.6 2.5 7 7 9.4Z" /><path d="M12 8V3" />
-    </svg>
-  );
-}
-
-export function ShopIcon(props) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}>
-      <path d="M3 7h18l-1.4 12.2a2 2 0 0 1-2 1.8H6.4a2 2 0 0 1-2-1.8Z" /><path d="M8.5 10V6.5a3.5 3.5 0 0 1 7 0V10" />
     </svg>
   );
 }

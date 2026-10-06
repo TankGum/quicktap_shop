@@ -47,7 +47,7 @@ export default function ContactPage() {
         <div className="hero-glow" aria-hidden="true" />
         <div className="container">
           <Reveal as="p" className="kicker">Liên hệ</Reveal>
-          <Reveal as="h1">Chỉ cần tên và địa chỉ quán của bạn</Reveal>
+          <Reveal as="h1">Chỉ cần <em className="marker">tên và địa chỉ</em> quán của bạn</Reveal>
           <Reveal as="p" className="page-hero-sub">
             Gọi cho chúng tôi — tư vấn chọn bảng hay standee và giao tận nơi.
             Bạn chỉ việc đặt lên quầy. Đặt từ 2 cái được giá tốt hơn.

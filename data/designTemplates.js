@@ -19,6 +19,17 @@
 // Hiện cả ba mẫu đều đổi màu được, nhưng phần kiểm tra vẫn giữ để thêm mẫu màu cố định sau
 // này không phải sửa lại giao diện.
 
+// `flat` = MẶT IN PHẲNG của cùng sản phẩm, để dựng mô hình 3D xoay được trong công cụ (xem
+// components/Standee3D.jsx). Khác `image` (ảnh chụp nghiêng, có tay cầm, dùng làm ảnh gửi kèm
+// đơn): đây là bản in nhìn thẳng, đã xoá sẵn ô logo. Ảnh nằm ở public/assets/studio3d:
+//   - hai mẫu standee lấy từ mặt in 3D ở trang chủ (public/assets/standee3d/*-front.png), tô
+//     trắng / tô xám đè lên chữ G Google để chừa ô;
+//   - bảng NFC cắt từ ảnh chụp chính diện custom/temp_5.png (ô tròn vốn đã trống).
+// Toạ độ `slot` / `face` tính theo pixel của chính ảnh phẳng đó, cùng quy ước với ảnh chụp.
+// `type` khớp với kiểu khối trong Standee3D ('standee' = chữ A có đáy, 'card' = bảng vuông).
+const flatDir = '/assets/studio3d';
+const fullFace = (w, h) => ({ tl: [0, 0], tr: [w, 0], br: [w, h], bl: [0, h], radius: 0 });
+
 export const designTemplates = [
   {
     id: 'standee-tap-scan',
@@ -43,6 +54,15 @@ export const designTemplates = [
       br: [919, 1244], bl: [162, 1244],
       radius: 8,
     },
+    flat: {
+      type: 'standee',
+      image: `${flatDir}/standee-tapscan.png`,
+      base: '/assets/standee3d/quicktap-base.png',
+      size: { w: 900, h: 1267 },
+      // Cả nửa trên trống (chữ G cũ nằm ở 190–690 × 102–608), khung "TAP OR SCAN" từ y≈672.
+      slot: { kind: 'quad', tl: [110, 110], tr: [790, 110], br: [790, 620], bl: [110, 620] },
+      face: fullFace(900, 1267),
+    },
   },
   {
     id: 'standee-google',
@@ -59,6 +79,15 @@ export const designTemplates = [
       tl: [166, 162], tr: [862, 162],
       br: [899, 1330], bl: [193, 1330],
       radius: 8,
+    },
+    flat: {
+      type: 'standee',
+      image: `${flatDir}/standee-google.png`,
+      base: '/assets/standee3d/google-base.png',
+      size: { w: 900, h: 1267 },
+      // Ô tròn xám, dò bằng pixel: tâm (449, 556), bán kính 296.
+      slot: { kind: 'ellipse', cx: 449, cy: 556, rx: 296, ry: 296 },
+      face: fullFace(900, 1267),
     },
   },
   {
@@ -77,6 +106,15 @@ export const designTemplates = [
       br: [1105, 1092], bl: [171, 1092],
       // Bảng mica bo góc khá tròn; thiếu bán kính này thì màu tô lem ra 4 góc.
       radius: 48,
+    },
+    flat: {
+      type: 'card',
+      image: `${flatDir}/card-google-trang.jpg`,
+      size: { w: 900, h: 900 },
+      // Ô tròn trắng của temp_5.png quy về khung cắt (183–1093 × 135–1080 → 900×900).
+      slot: { kind: 'ellipse', cx: 455, cy: 580, rx: 160, ry: 159 },
+      // Góc bo do khối 3D lo (bảng vuông bo 8mm), tô màu cả mặt là đủ.
+      face: fullFace(900, 900),
     },
   },
 ];

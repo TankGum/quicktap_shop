@@ -78,7 +78,7 @@ export default async function StandeePage() {
         <div className="container">
           <Reveal as="header" className="section-head">
             <p className="kicker">Cách hoạt động</p>
-            <h2>Cũng một trải nghiệm: chạm hoặc quét là xong</h2>
+            <h2>Cũng một trải nghiệm: chạm hoặc quét <em className="marker">là xong</em></h2>
             <p className="section-sub">Khách không cần biết NFC hay QR là gì. Chỉ cần chạm hoặc quét.</p>
           </Reveal>
 
