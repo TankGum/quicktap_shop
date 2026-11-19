@@ -220,7 +220,7 @@ async function lookupOrder(db, ref) {
   // với design_orders — khách vốn đã biết, còn model thì không nên có cơ hội đọc chúng ra.
   const items = await db
     .prepare(
-      `SELECT variant_name, unit_price, quantity
+      `SELECT variant_name, unit_price, quantity, plan, monthly_fee
          FROM shop_order_items
         WHERE order_code = ?`
     )
@@ -241,6 +241,8 @@ async function lookupOrder(db, ref) {
       name: r.variant_name,
       unitPrice: r.unit_price,
       quantity: r.quantity,
+      plan: r.plan,
+      monthlyFee: r.monthly_fee,
     })),
   };
 }

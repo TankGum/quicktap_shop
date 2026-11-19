@@ -16,7 +16,7 @@ import Link from 'next/link';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCart } from '@/components/CartStore';
 import ProgressiveImg from '@/components/ProgressiveImg';
-import { catalogFromKb, priceCart } from '@/lib/cartPricing.mjs';
+import { catalogFromKb, lineKey, priceCart } from '@/lib/cartPricing.mjs';
 import { siteConfig } from '@/lib/siteConfig';
 import { PRODUCTS_HREF } from '@/data/products';
 // Luật kiểm tra dùng CHUNG với functions/api/dat-hang.js — chốt chặn thật nằm ở server, ở đây
@@ -125,7 +125,7 @@ export default function CheckoutView() {
         body: JSON.stringify({
           // Chỉ gửi mã và số lượng. Mọi con số tiền do server tự dựng lại — xem chú thích đầu
           // functions/api/dat-hang.js.
-          items: items.map((it) => ({ href: it.href, qty: it.qty })),
+          items: items.map((it) => ({ href: it.href, qty: it.qty, plan: it.plan })),
           ...form,
         }),
       });
@@ -178,7 +178,7 @@ export default function CheckoutView() {
           <span>{priced.totalQty} sản phẩm</span>
         </div>
         {priced.lines.map((l) => (
-          <div className="ck-line" key={l.href}>
+          <div className="ck-line" key={lineKey(l.href, l.plan)}>
             {/* ProgressiveImg thay cho <img> thường ở mọi chỗ hiện ảnh sản phẩm: nó xin
                 Cloudinary bản đúng cỡ (thumbnail 64px không cần tải PNG 1,5MB) và hiện dần lên
                 thay vì nhấp nháy. Alt rỗng vì tên mẫu nằm ngay bên cạnh — trình đọc màn hình
@@ -188,22 +188,26 @@ export default function CheckoutView() {
               : <span className="ck-thumb ck-thumb-none" aria-hidden="true" />}
             <div className="ck-line-main">
               <Link className="ck-line-name" href={l.href}>{l.name}</Link>
-              <span className="ck-line-unit">{vnd(l.unitPrice)} / cái</span>
+              <span className="ck-line-unit">
+                {l.plan === 'monthly'
+                  ? <>Trả theo tháng · Trả lúc mua {vnd(l.unitPrice)}/cái (gồm tháng đầu) · Phí hằng tháng {vnd(l.monthlyFee)}/cái từ tháng 2</>
+                  : <>Mua đứt · Giá mua đứt {vnd(l.unitPrice)}/cái</>}
+              </span>
             </div>
             <div className="ck-line-qty">
-              <button type="button" onClick={() => setQty(l.href, l.qty - 1)} aria-label={`Bớt ${l.name}`}>−</button>
+              <button type="button" onClick={() => setQty(l.href, l.plan, l.qty - 1)} aria-label={`Bớt ${l.name}`}>−</button>
               <input
                 type="number"
                 min="1"
                 max="999"
                 value={l.qty}
-                onChange={(e) => setQty(l.href, Math.max(1, Math.min(999, Number(e.target.value) || 1)))}
+                onChange={(e) => setQty(l.href, l.plan, Math.max(1, Math.min(999, Number(e.target.value) || 1)))}
                 aria-label={`Số lượng ${l.name}`}
               />
-              <button type="button" onClick={() => setQty(l.href, l.qty + 1)} aria-label={`Thêm ${l.name}`}>+</button>
+              <button type="button" onClick={() => setQty(l.href, l.plan, l.qty + 1)} aria-label={`Thêm ${l.name}`}>+</button>
             </div>
             <div className="ck-line-total">{vnd(l.lineTotal)}</div>
-            <button type="button" className="ck-line-remove" onClick={() => remove(l.href)} aria-label={`Bỏ ${l.name} khỏi giỏ`}>
+            <button type="button" className="ck-line-remove" onClick={() => remove(l.href, l.plan)} aria-label={`Bỏ ${l.name} khỏi giỏ`}>
               Xoá
             </button>
           </div>
@@ -212,7 +216,7 @@ export default function CheckoutView() {
         {/* Mẫu bị gỡ hoặc hết hàng kể từ lúc khách bỏ vào giỏ. Giỏ ở localStorage sống lâu hơn
             một lần build nên chuyện này bình thường — nói rõ và cho xoá, không im lặng bỏ qua. */}
         {priced.errors.map((e) => (
-          <div className="ck-line ck-line-bad" key={e.href}>
+          <div className="ck-line ck-line-bad" key={lineKey(e.href, e.plan)}>
             <span className="ck-thumb ck-thumb-none" aria-hidden="true" />
             <div className="ck-line-main">
               <span className="ck-line-name">{e.href}</span>
@@ -221,9 +225,11 @@ export default function CheckoutView() {
                 {e.reason === 'chua-niem-yet' && 'Mẫu này chưa niêm yết giá, cần gọi hỏi'}
                 {e.reason === 'khong-ton-tai' && 'Mẫu này không còn bán'}
                 {e.reason === 'so-luong-khong-hop-le' && 'Số lượng không hợp lệ'}
+                {e.reason === 'khong-ban-tra-thang' && 'Mẫu này không còn bán trả theo tháng, bạn xoá rồi chọn lại mua đứt'}
+                {e.reason === 'cach-mua-khong-hop-le' && 'Cách mua không hợp lệ'}
               </span>
             </div>
-            <button type="button" className="ck-line-remove" onClick={() => remove(e.href)}>Xoá</button>
+            <button type="button" className="ck-line-remove" onClick={() => remove(e.href, e.plan)}>Xoá</button>
           </div>
         ))}
       </section>
@@ -344,11 +350,15 @@ function Field({ label, error, wide, required, children }) {
 
 function Summary({ priced, hasProvince }) {
   return (
+    <>
     <dl className="ck-sum">
       <div><dt>Tạm tính</dt><dd>{vnd(priced.subtotal)}</dd></div>
       {priced.discount > 0 && (
         <div className="ck-sum-off">
-          <dt>Giảm {Math.round(priced.discountRate * 100)}% (từ {priced.totalQty} cái)</dt>
+          <dt>
+            Giảm {Math.round(priced.discountRate * 100)}% (từ {priced.totalQty} cái
+            {priced.monthlyQty > 0 ? ', áp cho mua đứt' : ''})
+          </dt>
           <dd>−{vnd(priced.discount)}</dd>
         </div>
       )}
@@ -364,6 +374,15 @@ function Summary({ priced, hasProvince }) {
         <dd>{priced.total === null ? '—' : vnd(priced.total)}</dd>
       </div>
     </dl>
+      {/* Tiền về sau, KHÔNG cộng vào tổng — nhưng phải nói trước, khách không thích bất ngờ. */}
+      {priced.monthlyQty > 0 && (
+        <p className="ck-sum-monthly">
+          Phí hằng tháng từ tháng thứ 2: <b>{vnd(priced.monthlyFeeTotal)}/tháng</b>
+          {priced.monthlyQty > 1 ? ` cho ${priced.monthlyQty} thẻ` : ''}, chuyển khoản theo mã thẻ.
+          Nhắc hạn trước {siteConfig.monthlyPlan.remindDaysBefore} ngày.
+        </p>
+      )}
+    </>
   );
 }
 
@@ -382,6 +401,14 @@ function OrderDone({ order, phone }) {
       {transfer ? <TransferPanel order={order} phone={phone} /> : (
         <p className="ck-done-note">
           Tổng tiền <b>{vnd(order.total)}</b>, bạn trả cho shipper khi nhận hàng.
+        </p>
+      )}
+
+      {order.monthlyFeeTotal > 0 && (
+        <p className="ck-done-note">
+          Phần trả theo tháng: phí hằng tháng {vnd(order.monthlyFeeTotal)}, bắt đầu từ tháng thứ 2.
+          Bọn mình sẽ gửi mã thẻ để bạn ghi vào nội dung chuyển khoản, và nhắn nhắc trước hạn{' '}
+          {siteConfig.monthlyPlan.remindDaysBefore} ngày.
         </p>
       )}
 

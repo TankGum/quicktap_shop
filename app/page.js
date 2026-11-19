@@ -19,6 +19,7 @@ import {
   BarsIcon, PinIcon, BoltIcon, PhoneOutlineIcon, LayersIcon, RefreshIcon,
 } from '@/components/icons';
 import { localBusinessSchema, websiteSchema, faqSchema } from '@/lib/schema';
+import { parsePrice } from '@/lib/cartPricing.mjs';
 
 // Trang chủ trước đây KHÔNG có khối metadata riêng — nó là trang DUY NHẤT của site thiếu thẻ
 // canonical, mà lại là trang quan trọng nhất. Thiếu canonical thì mọi biến thể URL cùng trỏ về
@@ -34,12 +35,6 @@ export const metadata = {
 };
 
 const ART_BY_ID = { 'bang-nfc': NfcPlateArt, standee: StandeeArt };
-
-// "99.000 VND" -> 99000. Chỉ dùng để SO SÁNH giá, không dùng để hiển thị — chuỗi gốc đã định
-// dạng sẵn trong Airtable nên cứ hiện nguyên chuỗi đó.
-function toNumber(price) {
-  return Number(String(price).replace(/\D/g, '')) || 0;
-}
 
 // [[a1, a2, a3], [b1, b2]] -> [a1, b1, a2, b2, a3]. Danh sách nào hết trước thì thôi, phần dư
 // của danh sách dài hơn nối tiếp vào cuối — không bỏ sót mẫu nào.
@@ -77,6 +72,44 @@ const benefits = [
   { Icon: RefreshIcon, title: 'Đổi link bất cứ lúc nào', body: 'Không cần làm bảng mới.' },
 ];
 
+
+// Giá thấp nhất trong danh sách chuỗi giá ("99.000 VND") — chỉ tính chuỗi parsePrice đọc được,
+// để "Liên hệ" hay ô trống không bao giờ thắng cuộc so sánh và hiện ra thành "Chỉ Liên hệ".
+function cheapest(prices) {
+  return prices
+    .filter((v) => parsePrice(v) !== null)
+    .sort((a, b) => parsePrice(a) - parsePrice(b))[0] || null;
+}
+
+// Mẫu trả theo tháng có "giá trả lúc mua" thấp nhất của một dòng — kèm phí tháng CỦA CHÍNH
+// mẫu đó, để hai con số hiện cạnh nhau luôn thuộc về cùng một mẫu.
+function cheapestMonthly(variants) {
+  return variants
+    .filter((v) => parsePrice(v.upfrontPrice) !== null && parsePrice(v.monthlyFee) !== null)
+    .sort((a, b) => parsePrice(a.upfrontPrice) - parsePrice(b.upfrontPrice))[0] || null;
+}
+
+// Câu hỏi về trả theo tháng — CHỈ chèn vào FAQ khi có ít nhất một mẫu bán theo tháng (xem
+// HomePage). Chưa điền cột Upfront Price trên Airtable mà FAQ đã hứa trả theo tháng thì khách
+// vào trang mẫu sẽ không tìm thấy lựa chọn đó.
+//
+// `feeText`: phí hằng tháng lấy từ dữ liệu Airtable — một mức chung thì ghi số, các mẫu khác
+// mức nhau thì nói "theo từng mẫu" chứ không chọn bừa một con số.
+const { maxPrepayMonths, remindDaysBefore } = siteConfig.monthlyPlan;
+const monthlyFaqs = (feeText) => [
+  {
+    q: 'Mua đứt và trả theo tháng khác nhau thế nào?',
+    a: `Mua đứt: trả một lần, dùng mãi, không có phí duy trì và không bao giờ hết hạn. Trả theo tháng: lúc mua trả một khoản thấp hơn (giá trả lúc mua, đã gồm tháng đầu tiên); từ tháng thứ hai đóng phí hằng tháng ${feeText}, chuyển khoản với nội dung là mã thẻ. Có thể trả trước nhiều tháng một lần, tối đa ${maxPrepayMonths} tháng.`,
+  },
+  {
+    q: 'Hạn đóng phí trả theo tháng tính thế nào?',
+    a: `Tính theo ngày, không theo tháng dương lịch — mua ngày 15/11 thì hạn là 15/12. Đóng sớm thì hạn mới cộng nối tiếp vào hạn cũ, bạn không mất ngày nào. Khoảng ${remindDaysBefore} ngày trước hạn, ${siteConfig.brandName} sẽ nhắn tin nhắc.`,
+  },
+  {
+    q: 'Quá hạn chưa đóng phí thì thẻ có bị khoá không?',
+    a: 'Quá hạn mà chưa đóng thì thẻ có thể bị tạm ngưng: ai chạm hay quét sẽ thấy trang "Thẻ tạm ngưng do chưa thanh toán", kèm số tiền và mã VietQR để chủ quán quét trả ngay. Đóng xong thẻ chạy lại ngay khi bọn mình xác nhận đã nhận tiền, giữ nguyên cửa hàng và link review, không phải cài đặt lại. Đóng lúc thẻ đang ngưng thì hạn mới tính từ ngày đóng — bạn không phải trả cho những ngày bị ngưng.',
+  },
+];
 
 const faqs = [
   {
@@ -122,14 +155,21 @@ export default async function HomePage() {
       ...p,
       image: variants.find((v) => v.image)?.image || null,
       Art: ART_BY_ID[p.id],
-      // Giá thấp nhất của dòng, để hiện "Chỉ ..." ngay ngoài trang chủ. Giá trong Airtable
-      // là chuỗi đã định dạng ("99.000 VND") nên phải rút số ra mới so sánh được.
-      priceFrom: variants
-        .map((v) => v.price)
-        .filter(Boolean)
-        .sort((a, b) => toNumber(a) - toNumber(b))[0] || null,
+      // Giá thấp nhất của dòng, để hiện "Chỉ ..." ngay ngoài trang chủ — mua đứt và trả theo
+      // tháng (null khi chưa mẫu nào của dòng điền cột Upfront Price trên Airtable).
+      priceFrom: cheapest(variants.map((v) => v.price)),
+      monthly: cheapestMonthly(variants), // { upfrontPrice, monthlyFee } | null
     };
   });
+  // Có ít nhất một mẫu bán trả theo tháng thì mới hiện khối "Cách mua" và FAQ liên quan.
+  const hasMonthly = showcase.some((p) => p.monthly);
+  const fees = [...new Set(
+    Object.values(variantsByProduct).flat()
+      .filter((v) => parsePrice(v.upfrontPrice) !== null)
+      .map((v) => v.monthlyFee)
+  )];
+  const feeText = fees.length === 1 ? `${fees[0]}/tháng` : 'theo mức ghi ở từng mẫu';
+  const allFaqs = hasMonthly ? [...monthlyFaqs(feeText), ...faqs] : faqs;
 
   // Toàn bộ mẫu thật (có ảnh) cho dải chọn mẫu ở hero — XEN KẼ hai dòng sản phẩm thay vì nối
   // đuôi nhau, để dải không rơi vào cảnh "4 bảng liền một mạch rồi mới tới standee".
@@ -364,9 +404,17 @@ export default async function HomePage() {
                   <p className="product-tile-desc">{p.body}</p>
                   <div className="product-tile-buy">
                     {p.priceFrom && (
-                      <p className="product-tile-price">
-                        <span>Chỉ</span> <b>{p.priceFrom}</b>
-                      </p>
+                      <div className="product-tile-prices">
+                        <p className="product-tile-price">
+                          <span>Mua đứt</span> <b>{p.priceFrom}</b>
+                        </p>
+                        {p.monthly && (
+                          <p className="product-tile-monthly">
+                            hoặc trả theo tháng: <b>{p.monthly.upfrontPrice}</b> lúc mua
+                            + <b>{p.monthly.monthlyFee}</b>/tháng
+                          </p>
+                        )}
+                      </div>
                     )}
                     <Link className="btn btn-primary" href={p.href}>
                       {p.detail}
@@ -386,6 +434,78 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ============ CÁCH MUA ============ */}
+      {/* Hai cách mua đặt cạnh nhau, giá lấy từ Airtable (mẫu rẻ nhất mỗi dòng). Ẩn cả khối khi
+          chưa có mẫu nào bán theo tháng — hai ô mà một ô trống thì không còn là "chọn một trong
+          hai". id="cach-mua" để trang mẫu và giỏ hàng trỏ về đây. */}
+      {hasMonthly && (
+        <section className="section section-alt" id="cach-mua">
+          <div className="container">
+            <Reveal as="header" className="section-head">
+              <p className="kicker">Cách mua</p>
+              <h2>Mua đứt, hoặc <em className="marker marker-yellow">trả theo tháng</em></h2>
+              <p className="section-sub">Cùng một chiếc thẻ, chọn cách trả tiền hợp với quán bạn.</p>
+            </Reveal>
+
+            <div className="plan-cards">
+              <Reveal as="article" className="plan-card">
+                <h3>{siteConfig.plans.buy.label}</h3>
+                <p className="plan-card-lead">{siteConfig.plans.buy.short}</p>
+                <div className="plan-card-table" role="table" aria-label="Giá mua đứt">
+                  <div className="plan-row plan-row-head" role="row">
+                    <span role="columnheader">Sản phẩm</span>
+                    <span role="columnheader">Giá mua đứt</span>
+                  </div>
+                  {showcase.filter((p) => p.priceFrom).map((p) => (
+                    <div className="plan-row" role="row" key={p.id}>
+                      <span role="cell">{p.title}</span>
+                      <b role="cell">{p.priceFrom}</b>
+                    </div>
+                  ))}
+                </div>
+                <ul className="plan-card-ticks">
+                  <li>Trả một lần, dùng mãi</li>
+                  <li>Không phí hằng tháng, không bao giờ hết hạn</li>
+                  <li>
+                    Mua nhiều giảm thêm:{' '}
+                    {[...siteConfig.quantityTiers]
+                      .sort((x, y) => x.minQty - y.minQty)
+                      .map((t) => `từ ${t.minQty} cái giảm ${Math.round(t.rate * 100)}%`)
+                      .join(', ')}
+                  </li>
+                </ul>
+              </Reveal>
+
+              <Reveal as="article" className="plan-card plan-card-accent" delay={80}>
+                <h3>{siteConfig.plans.monthly.label}</h3>
+                <p className="plan-card-lead">{siteConfig.plans.monthly.short}</p>
+                <div className="plan-card-table plan-card-table-3" role="table" aria-label="Giá trả theo tháng">
+                  <div className="plan-row plan-row-head" role="row">
+                    <span role="columnheader">Sản phẩm</span>
+                    <span role="columnheader">Trả lúc mua</span>
+                    <span role="columnheader">Phí hằng tháng</span>
+                  </div>
+                  {showcase.filter((p) => p.monthly).map((p) => (
+                    <div className="plan-row" role="row" key={p.id}>
+                      <span role="cell">{p.title}</span>
+                      <b role="cell" data-label="Trả lúc mua">{p.monthly.upfrontPrice}</b>
+                      <b role="cell" data-label="Phí hằng tháng">{p.monthly.monthlyFee}</b>
+                    </div>
+                  ))}
+                </div>
+                <p className="plan-card-foot">Giá trả lúc mua đã gồm tháng đầu. Phí hằng tháng tính từ tháng thứ 2.</p>
+                <ul className="plan-card-ticks">
+                  <li>Chuyển khoản tiện lợi, nội dung là mã thẻ</li>
+                  <li>Trả trước tối đa {maxPrepayMonths} tháng, đóng sớm không mất ngày nào</li>
+                  <li>Nhắc hạn trước {remindDaysBefore} ngày</li>
+                  <li>Ngưng đóng thì thẻ tạm ngưng, đóng lại là chạy ngay, giữ nguyên link review</li>
+                </ul>
+              </Reveal>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ============ DÀN MẪU CÓ SẴN ============ */}
       {/* Trước đây chỗ này là lưới mosaic ghép từ ảnh Airtable, mỗi ô dẫn vào một trang mẫu.
@@ -516,7 +636,7 @@ export default async function HomePage() {
           </Reveal>
           <div>
             <Reveal as="div">
-              <FaqAccordion items={faqs} />
+              <FaqAccordion items={allFaqs} />
             </Reveal>
 
             {/* Lưu ý này trước đây nằm ở chân hero — một câu dài giữa toàn cụm ngắn, làm hero
@@ -536,7 +656,7 @@ export default async function HomePage() {
           '@graph': [
             localBusinessSchema,
             websiteSchema,
-            faqSchema(faqs),
+            faqSchema(allFaqs),
           ],
         }}
       />

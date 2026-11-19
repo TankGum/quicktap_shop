@@ -6,7 +6,7 @@
 // Luồng: CHẶN SPAM -> đọc JSON -> nạp danh mục -> DỰNG LẠI GIÁ Ở SERVER -> kiểm tra thông tin
 // -> ghi 2 bảng D1 trong một batch -> báo Telegram.
 //
-// Điểm quan trọng nhất của cả file: client chỉ được gửi lên { href, qty } và MÃ tỉnh/phường.
+// Điểm quan trọng nhất của cả file: client chỉ được gửi lên { href, qty, plan } và MÃ tỉnh/phường.
 // Mọi con số tiền và mọi cái TÊN đều do server tự tra lại. Tin con số client gửi thì một cú
 // curl đặt được đơn 1đ; tin cái tên client gửi thì đơn trong D1 ghi được địa chỉ do người khác
 // soạn sẵn.
@@ -78,7 +78,12 @@ async function notifyTelegram(env, order) {
 
   const when = new Date(order.orderDate).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
   const items = order.lines
-    .map((l) => `• ${esc(l.name)} × ${l.qty} — ${vnd(l.lineTotal)}`)
+    .map((l) => {
+      const plan = l.plan === 'monthly'
+        ? ` <b>[TRẢ THEO THÁNG]</b> lúc mua ${vnd(l.unitPrice)}, phí tháng ${vnd(l.monthlyFee)}`
+        : ' [mua đứt]';
+      return `• ${esc(l.name)}${plan} × ${l.qty} — ${vnd(l.lineTotal)}`;
+    })
     .join('\n');
 
   const lines = [
@@ -90,6 +95,9 @@ async function notifyTelegram(env, order) {
     order.discount > 0 ? `Giảm ${Math.round(order.discountRate * 100)}%: -${vnd(order.discount)}` : null,
     `Phí giao: ${order.shipping === 0 ? 'miễn phí' : vnd(order.shipping)}`,
     `<b>Tổng: ${vnd(order.total)}</b>`,
+    order.monthlyQty > 0
+      ? `Trả theo tháng: ${order.monthlyQty} thẻ — từ tháng 2 thu ${vnd(order.monthlyFeeTotal)}/tháng. Nhớ tạo thẻ gói tháng trên admin.`
+      : null,
     '',
     `Thanh toán: <b>${order.paymentMethod === 'cod' ? 'COD' : 'CHUYỂN KHOẢN — chờ tiền về'}</b>`,
     `Người nhận: ${esc(order.name)} — ${esc(order.phone)}`,
@@ -214,9 +222,15 @@ export async function onRequestPost({ request, env, waitUntil }) {
       ),
       ...priced.lines.map((l) =>
         env.DB.prepare(
-          `INSERT INTO shop_order_items (order_code, variant_href, variant_name, unit_price, quantity)
-           VALUES (?, ?, ?, ?, ?)`
-        ).bind(code, l.href, l.name, l.unitPrice, l.qty)
+          `INSERT INTO shop_order_items
+             (order_code, variant_href, variant_name, unit_price, quantity, plan, monthly_fee)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
+        ).bind(
+          code, l.href, l.name, l.unitPrice, l.qty, l.plan,
+          // Chép phí tháng LÚC ĐẶT, cùng lý do chép unit_price: đổi phí về sau thì đơn cũ vẫn
+          // ghi đúng mức khách đã đồng ý.
+          l.monthlyFee
+        )
       ),
     ]);
   } catch (err) {
@@ -278,6 +292,7 @@ export async function onRequestPost({ request, env, waitUntil }) {
     discount: priced.discount,
     shipping: priced.shipping,
     total: priced.total,
+    monthlyFeeTotal: priced.monthlyFeeTotal,
     payment,
   });
 }

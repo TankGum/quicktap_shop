@@ -13,7 +13,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/components/CartStore';
-import { isOutOfStock, parsePrice } from '@/lib/cartPricing.mjs';
+import { hasMonthlyPlan, isOutOfStock, parsePrice } from '@/lib/cartPricing.mjs';
 import { siteConfig } from '@/lib/siteConfig';
 import { ShoppingCart } from 'lucide-react';
 
@@ -22,6 +22,8 @@ export default function AddToCartButton({ variant }) {
   const router = useRouter();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [plan, setPlan] = useState('buy');
+  const monthly = hasMonthlyPlan(variant);
 
   if (isOutOfStock(variant.name)) {
     return (
@@ -43,6 +45,35 @@ export default function AddToCartButton({ variant }) {
 
   return (
     <div className="cart-add">
+      {/* Hai cách mua. Mẫu chưa có giá tháng trên Airtable thì không hiện cụm chọn — chỉ có mua
+          đứt, cùng luật với priceCart ở server (lib/cartPricing.mjs). */}
+      {monthly && (
+        <fieldset className="plan-pick">
+          <legend className="sr-only">Chọn cách mua</legend>
+          <label className={`plan-opt${plan === 'buy' ? ' is-on' : ''}`}>
+            <input type="radio" name="plan" value="buy" checked={plan === 'buy'} onChange={() => setPlan('buy')} />
+            <span className="plan-opt-name">{siteConfig.plans.buy.label}</span>
+            <span className="plan-opt-rows">
+              <span className="plan-opt-row"><span>Giá mua đứt</span><b>{variant.price}</b></span>
+            </span>
+            <span className="plan-opt-desc">{siteConfig.plans.buy.short}</span>
+          </label>
+          <label className={`plan-opt${plan === 'monthly' ? ' is-on' : ''}`}>
+            <input type="radio" name="plan" value="monthly" checked={plan === 'monthly'} onChange={() => setPlan('monthly')} />
+            <span className="plan-opt-name">{siteConfig.plans.monthly.label}</span>
+            <span className="plan-opt-rows">
+              <span className="plan-opt-row">
+                <span>Trả lúc mua <small>(gồm tháng đầu)</small></span><b>{variant.upfrontPrice}</b>
+              </span>
+              <span className="plan-opt-row">
+                <span>Phí hằng tháng <small>(từ tháng 2)</small></span><b>{variant.monthlyFee}</b>
+              </span>
+            </span>
+            <span className="plan-opt-desc">Chuyển khoản theo mã thẻ, nhắc hạn trước {siteConfig.monthlyPlan.remindDaysBefore} ngày.</span>
+          </label>
+        </fieldset>
+      )}
+
       <div className="cart-add-row">
         <div className="cart-add-stepper">
           <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} aria-label="Bớt một cái">−</button>
@@ -62,7 +93,7 @@ export default function AddToCartButton({ variant }) {
           type="button"
           className="btn btn-outline cart-add-main"
           onClick={() => {
-            add(variant.href, qty);
+            add(variant.href, qty, plan);
             setAdded(true);
           }}
         >
@@ -76,7 +107,7 @@ export default function AddToCartButton({ variant }) {
           type="button"
           className="btn btn-primary cart-add-main"
           onClick={() => {
-            add(variant.href, qty);
+            add(variant.href, qty, plan);
             router.push('/gio-hang');
           }}
         >
@@ -91,7 +122,10 @@ export default function AddToCartButton({ variant }) {
           Đã thêm vào giỏ. <Link href="/gio-hang">Xem giỏ hàng và đặt</Link>
         </p>
       )}
-      <p className="cart-add-note">{siteConfig.quantityPricing}</p>
+      <p className="cart-add-note">
+        {siteConfig.quantityPricing}
+        {monthly && <> <Link href="/#cach-mua">Xem cách tính phí trả theo tháng</Link></>}
+      </p>
     </div>
   );
 }

@@ -42,6 +42,8 @@ export async function GET() {
       // được, dù đây là câu khách hỏi nhiều nhất ngay trước lúc chốt đơn. Khai ở đây thì trợ
       // lý có nguồn thật để dẫn, không phải đoán.
       shipping: siteConfig.shippingPolicy,
+      // Hai cách mua (mua đứt / trả theo tháng) — chatPrompt.mjs đưa nguyên câu này vào prompt.
+      plans: siteConfig.monthlyPolicy,
     },
 
     // Cấu hình giá cho GIỎ HÀNG chạy ở trình duyệt. Cùng nguồn siteConfig mà Pages Function
@@ -73,7 +75,10 @@ export async function GET() {
       // Có test chặn ở test/chat.test.mjs để nếu sau này ai đó cho ảnh vào prompt thì đỏ ngay.
       variants: (variantsByProduct[p.id] || []).map((v) => ({
         name: v.name,
+        // Ba con số giá — xem lib/airtable.js. Mua đứt / trả lúc mua (trả theo tháng) / phí tháng.
         price: v.price,
+        upfrontPrice: v.upfrontPrice || '',
+        monthlyFee: v.upfrontPrice ? v.monthlyFee || '' : '',
         description: v.description,
         href: v.href,
         image: v.image || null,
