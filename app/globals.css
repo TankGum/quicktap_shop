@@ -4409,3 +4409,97 @@ select.ck-input {
   }
   .ck-pay-panel, .ck-card { padding: 1.1rem; }
 }
+
+/* ---------- Hai cách mua: mua đứt / trả theo tháng ----------
+   Khối "Cách mua" ở trang chủ (app/page.js, #cach-mua), cụm chọn cách mua trên trang mẫu
+   (components/AddToCartButton.jsx) và dòng phí tháng trong giỏ (components/CheckoutView.jsx). */
+.product-tile-prices { display: grid; justify-items: center; gap: .15rem; }
+.product-tile-monthly { color: var(--ink-2); font-size: .92rem; }
+.product-tile-monthly b { color: var(--ink); font-weight: 700; }
+
+.plan-cards { display: grid; gap: 16px; }
+@media (min-width: 860px) { .plan-cards { grid-template-columns: 1fr 1fr; gap: 20px; } }
+.plan-card {
+  display: flex;
+  flex-direction: column;
+  padding: clamp(26px, 3.5vw, 40px);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+}
+.plan-card-accent { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.plan-card h3 {
+  font-size: clamp(1.5rem, 2.4vw, 1.9rem);
+  font-weight: 700;
+  letter-spacing: var(--tracking-title);
+  line-height: 1.1;
+}
+.plan-card-lead { margin-top: .6rem; color: var(--ink-2); line-height: 1.55; }
+.plan-card-table { margin-top: 1.3rem; }
+.plan-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 1rem;
+  padding: .7rem 0;
+  border-top: 1px solid var(--line-2);
+}
+.plan-card-table-3 .plan-row { grid-template-columns: 1fr 7.5rem 7.5rem; }
+.plan-row:last-child { border-bottom: 1px solid var(--line-2); }
+.plan-row > span { color: var(--ink-2); font-size: .95rem; }
+.plan-row > b { font-size: 1.15rem; font-weight: 700; letter-spacing: -.02em; white-space: nowrap; text-align: right; }
+.plan-row-head { padding: .3rem 0 .5rem; border-top: 0; }
+.plan-row-head > span { color: var(--ink-3); font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.plan-row-head > span:not(:first-child) { text-align: right; }
+.plan-card-foot { margin-top: .6rem; color: var(--ink-3); font-size: .85rem; }
+.plan-card-ticks { margin-top: 1.2rem; display: grid; gap: .55rem; }
+.plan-card-ticks li { position: relative; padding-left: 1.5rem; color: var(--ink-2); font-size: .95rem; line-height: 1.45; }
+.plan-card-ticks li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+/* Điện thoại: bảng 3 cột không đủ chỗ — mỗi mẫu thành một khối, nhãn cột in ngay cạnh số. */
+@media (max-width: 520px) {
+  .plan-card-table-3 .plan-row-head { display: none; }
+  .plan-card-table-3 .plan-row { grid-template-columns: 1fr auto; gap: .2rem 1rem; }
+  .plan-card-table-3 .plan-row > span { grid-column: 1 / -1; color: var(--ink); font-weight: 600; }
+  .plan-card-table-3 .plan-row > b { display: contents; }
+  .plan-card-table-3 .plan-row > b::before { content: attr(data-label); color: var(--ink-2); font-size: .92rem; font-weight: 400; letter-spacing: 0; }
+}
+
+.plan-pick { border: 0; padding: 0; margin: 0 0 1rem; display: grid; gap: .6rem; }
+.plan-opt {
+  position: relative;
+  display: grid;
+  gap: .25rem;
+  padding: .85rem 1rem .85rem 2.6rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color .2s var(--ease), box-shadow .2s var(--ease);
+}
+.plan-opt:hover { border-color: var(--ink-3); }
+.plan-opt.is-on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.plan-opt input { position: absolute; left: 1rem; top: 1.05rem; margin: 0; accent-color: var(--accent); }
+.plan-opt input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.plan-opt-name { font-weight: 700; }
+.plan-opt-rows { display: grid; gap: .1rem; margin: .1rem 0 .15rem; }
+.plan-opt-row { display: flex; justify-content: space-between; align-items: baseline; gap: .8rem; font-size: .92rem; color: var(--ink-2); }
+.plan-opt-row b { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.plan-opt-row small { color: var(--ink-3); font-size: .8rem; }
+.plan-opt-desc { color: var(--ink-2); font-size: .88rem; line-height: 1.45; }
+
+.ck-sum-monthly {
+  margin: -.4rem 0 1.2rem;
+  padding: .7rem .85rem;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--ink-2);
+  font-size: .86rem;
+  line-height: 1.5;
+}
+.ck-sum-monthly b { color: var(--ink); }

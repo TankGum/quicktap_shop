@@ -86,6 +86,23 @@ export default function TermsPage() {
                 này đã tính sẵn trong tổng tiền hiển thị ở giỏ hàng.
               </li>
               <li>
+                <b>Hai cách mua.</b> <b>Mua đứt</b>: trả một lần, dùng mãi, không có phí duy trì
+                và không hết hạn. <b>Trả theo tháng</b>: giá lúc mua đã gồm tháng đầu tiên; từ
+                tháng thứ hai mỗi thẻ trả phí hằng tháng theo mức niêm yết ở từng mẫu bằng chuyển khoản,
+                nội dung chuyển khoản là mã thẻ. Có thể trả trước tối đa{' '}
+                {siteConfig.monthlyPlan.maxPrepayMonths} tháng. Thẻ đã bán giữ nguyên mức giá
+                lúc bán.
+              </li>
+              <li>
+                Hạn đóng phí tính theo ngày (mua ngày 15/11 thì hạn 15/12). Đóng sớm thì hạn mới
+                cộng nối tiếp hạn cũ. Chúng tôi nhắn nhắc khoảng{' '}
+                {siteConfig.monthlyPlan.remindDaysBefore} ngày trước hạn. Quá hạn chưa đóng thì
+                thẻ có thể bị <b>tạm ngưng</b>: người chạm/quét sẽ thấy trang báo thẻ tạm ngưng
+                kèm thông tin thanh toán. Đóng phí xong, thẻ hoạt động lại ngay khi chúng tôi xác
+                nhận đã nhận tiền, giữ nguyên cửa hàng và link đánh giá; hạn mới tính từ ngày đóng
+                và bạn không phải trả cho những ngày thẻ bị ngưng.
+              </li>
+              <li>
                 Sản phẩm in theo yêu cầu riêng (logo của quán) là hàng đặt làm riêng — mọi thay
                 đổi cần báo trước khi chúng tôi chuyển sang khâu in.
               </li>

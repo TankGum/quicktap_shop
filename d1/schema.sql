@@ -108,8 +108,13 @@ CREATE TABLE IF NOT EXISTS shop_order_items (
   order_code   TEXT    NOT NULL REFERENCES shop_orders(code),
   variant_href TEXT    NOT NULL,              -- khoá tra ngược sang kb.json / trang sản phẩm
   variant_name TEXT    NOT NULL,
-  unit_price   INTEGER NOT NULL,
-  quantity     INTEGER NOT NULL
+  unit_price   INTEGER NOT NULL,             -- giá LÚC MUA của cách mua bên dưới
+  quantity     INTEGER NOT NULL,
+  -- 'buy' (mua đứt) | 'monthly' (trả theo tháng). unit_price của dòng 'monthly' đã gồm tháng
+  -- đầu; monthly_fee là phí duy trì mỗi tháng từ tháng 2, chép lại lúc đặt. NULL với 'buy'.
+  -- DB đã tạo trước ngày 2026-11-19 thì chạy d1/migrations/2026-11-19-plan.sql để thêm 2 cột.
+  plan         TEXT    NOT NULL DEFAULT 'buy',
+  monthly_fee  INTEGER
 );
 
 CREATE INDEX IF NOT EXISTS idx_shop_order_items_order ON shop_order_items(order_code);

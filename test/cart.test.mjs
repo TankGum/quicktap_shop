@@ -20,6 +20,8 @@ import {
   shippingFeeFor,
   catalogFromKb,
   priceCart,
+  hasMonthlyPlan,
+  lineKey,
 } from '../lib/cartPricing.mjs';
 import { crc16, asciiFold, buildVietQrPayload } from '../lib/vietQr.mjs';
 
@@ -79,10 +81,11 @@ const kb = {
   products: [
     {
       variants: [
-        { name: 'Mẫu A', price: '199.000 VND', href: '/san-pham/standee/mau-a' },
+        { name: 'Mẫu A', price: '199.000 VND', upfrontPrice: '99.000 VND', monthlyFee: '10.000 VND', href: '/san-pham/standee/mau-a' },
         { name: 'Mẫu B (Hết hàng)', price: '199.000 VND', href: '/san-pham/standee/mau-b' },
         { name: 'Mẫu C', price: 'Liên hệ để biết giá', href: '/san-pham/standee/mau-c' },
-        { name: 'Bảng NFC A', price: '99.000 VND', href: '/san-pham/bang-nfc/mau-a' },
+        { name: 'Bảng NFC A', price: '99.000 VND', upfrontPrice: '49.000 VND', monthlyFee: '10.000 VND', href: '/san-pham/bang-nfc/mau-a' },
+        { name: 'Bảng NFC B', price: '99.000 VND', upfrontPrice: '', monthlyFee: '', href: '/san-pham/bang-nfc/mau-b' },
       ],
     },
   ],
@@ -174,6 +177,119 @@ test('priceCart: chưa chọn tỉnh thì KHÔNG có tổng', () => {
   assert.equal(r.subtotal, 199000);
   assert.equal(r.shipping, null);
   assert.equal(r.total, null, 'phải là null để màn hình không hiện một con số sai');
+});
+
+// ---------- Hai cách mua: mua đứt / trả theo tháng ----------
+
+const MCONFIG = CONFIG;
+
+test('priceCart: dòng không có plan (giỏ cũ) tính là mua đứt', () => {
+  const r = priceCart({
+    items: [{ href: '/san-pham/standee/mau-a', qty: 1 }],
+    catalog,
+    provinceCode: '01',
+    config: MCONFIG,
+  });
+  assert.equal(r.lines[0].plan, 'buy');
+  assert.equal(r.lines[0].unitPrice, 199000);
+  assert.equal(r.monthlyQty, 0);
+  assert.equal(r.monthlyFeeTotal, 0);
+});
+
+test('priceCart: trả theo tháng lấy Upfront Price làm giá lúc mua, Monthly Fee làm phí tháng, phí tháng KHÔNG cộng vào tổng', () => {
+  const r = priceCart({
+    items: [{ href: '/san-pham/bang-nfc/mau-a', qty: 1, plan: 'monthly' }],
+    catalog,
+    provinceCode: '01',
+    config: MCONFIG,
+  });
+  assert.equal(r.lines[0].unitPrice, 49000);
+  assert.equal(r.lines[0].monthlyFee, 10000);
+  assert.equal(r.total, 49000);
+  assert.equal(r.monthlyQty, 1);
+  assert.equal(r.monthlyFeeTotal, 10000);
+});
+
+test('priceCart: giảm theo số lượng CHỈ trừ trên dòng mua đứt, nhưng đếm cả dòng tháng để xét bậc', () => {
+  // 1 standee mua đứt + 1 bảng trả tháng = 2 cái -> bậc 5%, chỉ trừ trên 199.000.
+  const r = priceCart({
+    items: [
+      { href: '/san-pham/standee/mau-a', qty: 1, plan: 'buy' },
+      { href: '/san-pham/bang-nfc/mau-a', qty: 1, plan: 'monthly' },
+    ],
+    catalog,
+    provinceCode: '79',
+    config: MCONFIG,
+  });
+  assert.equal(r.totalQty, 2);
+  assert.equal(r.subtotal, 248000);
+  assert.equal(r.discountRate, 0.05);
+  assert.equal(r.discount, 9950);
+  assert.equal(r.total, 248000 - 9950 + 30000);
+});
+
+test('priceCart: cả đơn trả theo tháng thì không giảm, discountRate về 0', () => {
+  const r = priceCart({
+    items: [{ href: '/san-pham/standee/mau-a', qty: 10, plan: 'monthly' }],
+    catalog,
+    provinceCode: '01',
+    config: MCONFIG,
+  });
+  assert.equal(r.discount, 0);
+  assert.equal(r.discountRate, 0, 'không được hiện dòng "Giảm 12%" với số tiền 0đ');
+  assert.equal(r.total, 990000);
+  assert.equal(r.monthlyFeeTotal, 100000);
+});
+
+test('priceCart: cùng mẫu, hai cách mua là hai dòng với hai giá', () => {
+  const r = priceCart({
+    items: [
+      { href: '/san-pham/standee/mau-a', qty: 1, plan: 'buy' },
+      { href: '/san-pham/standee/mau-a', qty: 2, plan: 'monthly' },
+    ],
+    catalog,
+    provinceCode: '01',
+    config: MCONFIG,
+  });
+  assert.deepEqual(r.lines.map((l) => [l.plan, l.unitPrice, l.qty]), [['buy', 199000, 1], ['monthly', 99000, 2]]);
+  assert.notEqual(lineKey('/x', 'buy'), lineKey('/x', 'monthly'));
+  assert.equal(lineKey('/x', undefined), lineKey('/x', 'buy'));
+});
+
+test('priceCart: mẫu không bán theo tháng thì từ chối, KHÔNG lặng lẽ đổi sang giá mua đứt', () => {
+  const r = priceCart({
+    items: [
+      { href: '/san-pham/bang-nfc/mau-b', qty: 1, plan: 'monthly' },
+      { href: '/san-pham/standee/mau-a', qty: 1, plan: 'tra-gop' },
+    ],
+    catalog,
+    provinceCode: '01',
+    config: MCONFIG,
+  });
+  assert.equal(r.lines.length, 0);
+  assert.deepEqual(r.errors.map((e) => e.reason).sort(), ['cach-mua-khong-hop-le', 'khong-ban-tra-thang']);
+});
+
+test('hasMonthlyPlan: cần ĐỦ giá trả lúc mua và phí hằng tháng hợp lệ', () => {
+  assert.equal(hasMonthlyPlan({ upfrontPrice: '49.000 VND', monthlyFee: '10.000 VND' }), true);
+  assert.equal(hasMonthlyPlan({ upfrontPrice: '49.000 VND', monthlyFee: '' }), false);
+  assert.equal(hasMonthlyPlan({ upfrontPrice: '', monthlyFee: '10.000 VND' }), false);
+  assert.equal(hasMonthlyPlan({ upfrontPrice: 'Liên hệ', monthlyFee: '10.000 VND' }), false);
+  assert.equal(hasMonthlyPlan({}), false);
+});
+
+test('priceCart: phí tháng lấy THEO TỪNG MẪU, cộng dồn đúng', () => {
+  const cat = catalogFromKb({ products: [{ variants: [
+    { name: 'X', price: '199.000 VND', upfrontPrice: '99.000 VND', monthlyFee: '15.000 VND', href: '/x' },
+    { name: 'Y', price: '99.000 VND', upfrontPrice: '49.000 VND', monthlyFee: '10.000 VND', href: '/y' },
+  ] }] });
+  const r = priceCart({
+    items: [{ href: '/x', qty: 2, plan: 'monthly' }, { href: '/y', qty: 1, plan: 'monthly' }],
+    catalog: cat,
+    provinceCode: '01',
+    config: CONFIG,
+  });
+  assert.equal(r.monthlyFeeTotal, 40000); // 2 × 15.000 + 1 × 10.000
 });
 
 // ---------- lib/vietQr.mjs ----------

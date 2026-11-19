@@ -246,3 +246,38 @@ test('buildSystemPrompt: link ảnh KHÔNG lọt vào prompt', () => {
   };
   assert.doesNotMatch(buildSystemPrompt(withImages, null), /cloudinary|anh-mau\.png/i);
 });
+
+test('buildSystemPrompt: có giá trả theo tháng và chính sách hai cách mua khi KB có', () => {
+  const prompt = buildSystemPrompt(
+    {
+      ...kb,
+      brand: { ...kb.brand, plans: 'Trả theo tháng: từ tháng thứ hai mỗi tháng trả phí duy trì 10.000đ/thẻ.' },
+      products: kb.products.map((p) => ({
+        ...p,
+        variants: [
+          { ...p.variants[0], upfrontPrice: '99.000 VND', monthlyFee: '10.000 VND' },
+          { name: 'Mẫu B', price: '199.000 VND', upfrontPrice: '', monthlyFee: '', href: '/san-pham/standee/mau-b' },
+        ],
+      })),
+    },
+    null
+  );
+  assert.match(prompt, /Mẫu A": giá mua đứt 199\.000 VND; trả theo tháng: giá trả lúc mua 99\.000 VND \(gồm tháng đầu\), phí hằng tháng 10\.000 VND từ tháng 2/);
+  assert.match(prompt, /Mẫu B": giá mua đứt 199\.000 VND; chỉ bán mua đứt/);
+  assert.match(prompt, /Hai cách mua: Trả theo tháng/);
+});
+
+test('buildSystemPrompt: dòng hàng trả theo tháng trong dữ liệu đơn ghi rõ cách mua', () => {
+  const prompt = buildSystemPrompt(kb, {
+    kind: 'shop',
+    code: 'TK-8F3K',
+    orderDate: '2026-11-19T04:00:00.000Z',
+    paymentMethod: 'transfer',
+    status: 'pending_payment',
+    discount: 0,
+    shippingFee: 0,
+    total: 99000,
+    lines: [{ name: 'Mẫu A', quantity: 1, unitPrice: 99000, plan: 'monthly', monthlyFee: 10000 }],
+  });
+  assert.match(prompt, /Mẫu A × 1 \(trả theo tháng: giá trả lúc mua 99\.000đ\/cái, phí hằng tháng 10\.000đ\/cái\)/);
+});

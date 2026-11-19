@@ -16,6 +16,7 @@
 import { products } from '@/data/products';
 import { siteConfig } from '@/lib/siteConfig';
 import { getVariantsByProduct } from '@/lib/airtable';
+import { hasMonthlyPlan } from '@/lib/cartPricing.mjs';
 
 export const dynamic = 'force-static';
 
@@ -27,7 +28,16 @@ export async function GET() {
     const variants = variantsByProduct[p.id] || [];
     const lines = variants
       .filter((v) => v.name)
-      .map((v) => `- [${v.name}](${u(v.href)})${v.price ? `: ${v.price}` : ''}`);
+      // Ghi ĐỦ ba con số kèm nhãn (xem lib/airtable.js) — chỉ ghi "99.000 VND" trần thì AI đọc
+      // không biết đó là giá mua đứt hay giá trả lúc mua của gói tháng.
+      .map((v) => {
+        const prices = [
+          v.price && `giá mua đứt ${v.price}`,
+          hasMonthlyPlan(v) &&
+            `hoặc trả theo tháng: trả lúc mua ${v.upfrontPrice} (gồm tháng đầu), phí hằng tháng ${v.monthlyFee} từ tháng 2`,
+        ].filter(Boolean);
+        return `- [${v.name}](${u(v.href)})${prices.length ? `: ${prices.join('; ')}` : ''}`;
+      });
     // Dòng rỗng ở CUỐI mỗi khối: các khối được spread vào một mảng rồi join bằng '\n', nên
     // không có nó thì mẫu cuối của sản phẩm này dính liền vào tiêu đề của sản phẩm sau.
     return [`### ${p.title}`, '', `${p.body}`, '', `Trang: ${u(p.href)}`, '', ...lines, ''].join('\n');
@@ -50,6 +60,10 @@ export async function GET() {
     '',
     siteConfig.quantityPricing,
     '',
+    // Chỉ khi có mẫu bán trả theo tháng — cùng điều kiện với khối "Cách mua" ở trang chủ.
+    ...(Object.values(variantsByProduct).flat().some(hasMonthlyPlan)
+      ? ['## Hai cách mua: mua đứt hoặc trả theo tháng', '', siteConfig.monthlyPolicy, '']
+      : []),
     '## Giao hàng',
     '',
     siteConfig.shippingPolicy,
